@@ -1,0 +1,13 @@
+{
+  "name": "Caravana",
+  "short_name": "Caravana",
+  "description": "Quién lleva a quién, resuelto. Logística colaborativa para organizaciones.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#14181D",
+  "theme_color": "#14181D",
+  "lang": "es",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

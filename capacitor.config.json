@@ -1,0 +1,6 @@
+{
+  "appId": "ar.caravana.app",
+  "appName": "Caravana",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" }
+}

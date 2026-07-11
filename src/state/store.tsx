@@ -1,0 +1,548 @@
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState
+} from "react";
+import type {
+  AppState,
+  Assignment,
+  EventDoc,
+  JoinRequest,
+  Leg,
+  Member,
+  Notification,
+  Review,
+  Settings
+} from "./model";
+import { buildSeed } from "../seed";
+import { loadState, saveState, clearState } from "../services/storage";
+import { MockRoutingProvider } from "../engine/routing";
+import { solveMatching, validateMatch, applyManualMove } from "../engine/matching";
+import type { DriverLeg, MatchInput, MatchResult, PassengerLeg } from "../engine/types";
+import { minutesToHHMM } from "../engine/geo";
+import { systemNotify } from "../services/notify";
+import { translate, type Lang, type TKey } from "../i18n";
+
+type Action =
+  | { type: "hydrate"; state: AppState }
+  | { type: "setLeg"; leg: Leg }
+  | { type: "removeLeg"; memberId: string; eventId: string }
+  | { type: "setAssignment"; eventId: string; assignment: Assignment }
+  | { type: "addNotifs"; notifs: Notification[] }
+  | { type: "markNotifsRead" }
+  | { type: "updateMember"; member: Member }
+  | { type: "addEvent"; event: EventDoc }
+  | { type: "addJoinRequest"; request: JoinRequest }
+  | { type: "decideJoinRequest"; requestId: string; status: "approved" | "rejected"; decidedAt: string }
+  | { type: "addReview"; review: Review }
+  | { type: "setSettings"; patch: Partial<Settings> }
+  | { type: "setActiveOrg"; orgId: string }
+  | { type: "reset" };
+
+function reducer(s: AppState, a: Action): AppState {
+  switch (a.type) {
+    case "hydrate":
+      return a.state;
+    case "setLeg": {
+      const rest = s.legs.filter(
+        (l) => !(l.memberId === a.leg.memberId && l.eventId === a.leg.eventId)
+      );
+      return { ...s, legs: [...rest, a.leg] };
+    }
+    case "removeLeg":
+      return {
+        ...s,
+        legs: s.legs.filter((l) => !(l.memberId === a.memberId && l.eventId === a.eventId))
+      };
+    case "setAssignment":
+      return { ...s, assignments: { ...s.assignments, [a.eventId]: a.assignment } };
+    case "addNotifs":
+      return { ...s, notifications: [...a.notifs, ...s.notifications].slice(0, 100) };
+    case "markNotifsRead":
+      return { ...s, notifications: s.notifications.map((n) => ({ ...n, read: true })) };
+    case "updateMember":
+      return { ...s, members: s.members.map((m) => (m.id === a.member.id ? a.member : m)) };
+    case "addEvent":
+      return { ...s, events: [...s.events, a.event] };
+    case "addJoinRequest":
+      return { ...s, joinRequests: [...s.joinRequests, a.request] };
+    case "decideJoinRequest":
+      return {
+        ...s,
+        joinRequests: s.joinRequests.map((r) =>
+          r.id === a.requestId ? { ...r, status: a.status, decidedAt: a.decidedAt } : r
+        )
+      };
+    case "addReview": {
+      // Una reseña por par autor→destinatario: la nueva reemplaza la anterior
+      // (evita inflar/hundir el rating repitiendo reseñas).
+      const rest = s.reviews.filter(
+        (r) => !(r.fromMemberId === a.review.fromMemberId && r.toMemberId === a.review.toMemberId)
+      );
+      return { ...s, reviews: [...rest, a.review] };
+    }
+    case "setSettings":
+      return { ...s, settings: { ...s.settings, ...a.patch } };
+    case "setActiveOrg":
+      return { ...s, activeOrgId: a.orgId };
+    case "reset":
+      return buildSeed();
+    default:
+      return s;
+  }
+}
+
+/* ---------- estado de la app → input del motor ---------- */
+export function buildMatchInput(s: AppState, eventId: string, legsOverride?: Leg[]): MatchInput | null {
+  const ev = s.events.find((e) => e.id === eventId);
+  if (!ev) return null;
+  const org = s.orgs.find((o) => o.id === ev.orgId);
+  const byId = new Map(s.members.map((m) => [m.id, m]));
+  const drivers: DriverLeg[] = [];
+  const passengers: PassengerLeg[] = [];
+  const legs = (legsOverride ?? s.legs).filter((l) => l.eventId === eventId);
+  for (const leg of legs) {
+    const m = byId.get(leg.memberId);
+    if (!m) continue;
+    const origin = leg.origin ?? m.home;
+    if (leg.role === "driver" && m.vehicle) {
+      drivers.push({
+        id: leg.id,
+        memberId: m.id,
+        vehicleId: m.id,
+        origin,
+        destination: ev.destination,
+        window: leg.window,
+        capacity: m.vehicle.capacity,
+        maxDetourMin: leg.maxDetourMin ?? 20,
+        features: m.vehicle.features,
+        prefs: { subgroup: m.subgroup, smokeFree: m.vehicle.smokeFree }
+      });
+    } else if (leg.role === "passenger") {
+      passengers.push({
+        id: leg.id,
+        memberId: m.id,
+        origin,
+        destination: ev.destination,
+        window: leg.window,
+        maxWalkMin: leg.maxWalkMin ?? 10,
+        needs: leg.needs ?? [],
+        prefs: { subgroup: leg.soft?.subgroup, smokeFree: leg.soft?.smokeFree }
+      });
+    }
+  }
+  return {
+    drivers,
+    passengers,
+    meetingPoints: (org?.meetingPoints ?? []).map((mp) => ({ id: mp.id, name: mp.name, pos: mp.loc })),
+    options: { doorToDoor: true }
+  };
+}
+
+/* ---------- diff de asignaciones → avisos ---------- */
+function diffNotifs(
+  s: AppState,
+  eventId: string,
+  prev: MatchResult | null,
+  next: MatchResult
+): Notification[] {
+  const lang = s.settings.lang;
+  const T = (k: TKey, vars?: Record<string, string | number>) => translate(lang, k, vars);
+  const ev = s.events.find((e) => e.id === eventId);
+  const org = s.orgs.find((o) => o.id === ev?.orgId);
+  const mpName = (id?: string) =>
+    id ? org?.meetingPoints.find((m) => m.id === id)?.name ?? T("common.door") : T("common.door");
+  const legMember = new Map(s.legs.map((l) => [l.id, l.memberId]));
+  const name = (memberId?: string) => s.members.find((m) => m.id === memberId)?.name ?? "?";
+
+  const prevDriverOf = new Map<string, string>();
+  const prevPaxOf = new Map<string, string[]>();
+  if (prev) {
+    for (const r of prev.rides) {
+      prevPaxOf.set(r.driverLegId, [...r.passengerLegIds].sort());
+      for (const p of r.passengerLegIds) prevDriverOf.set(p, r.driverLegId);
+    }
+  }
+
+  const out: Notification[] = [];
+  const now = new Date().toISOString();
+  let seq = 0;
+  const push = (memberId: string, title: string, body: string) =>
+    out.push({ id: `n-${Date.now()}-${seq++}`, memberId, title, body, read: false, at: now });
+
+  for (const r of next.rides) {
+    const dMemberId = legMember.get(r.driverLegId);
+    for (const pLeg of r.passengerLegIds) {
+      const pMemberId = legMember.get(pLeg);
+      if (!pMemberId || !dMemberId) continue;
+      const pickup = r.stops.find((st) => st.kind === "pickup" && st.passengerLegId === pLeg);
+      const vars = {
+        name: name(dMemberId),
+        time: pickup ? minutesToHHMM(pickup.etaMin) : minutesToHHMM(r.departureMin),
+        place: mpName(pickup?.meetingPointId)
+      };
+      const was = prevDriverOf.get(pLeg);
+      if (!was) push(pMemberId, T("notif.assignedTitle"), T("notif.assignedBody", vars));
+      else if (was !== r.driverLegId) push(pMemberId, T("notif.changedTitle"), T("notif.changedBody", vars));
+    }
+    if (dMemberId && r.passengerLegIds.length) {
+      const nowPax = [...r.passengerLegIds].sort().join(",");
+      const before = (prevPaxOf.get(r.driverLegId) ?? []).join(",");
+      if (nowPax !== before) {
+        push(
+          dMemberId,
+          T("notif.driverTitle"),
+          T("notif.driverBody", { n: r.passengerLegIds.length, time: minutesToHHMM(r.departureMin) })
+        );
+      }
+    }
+  }
+  for (const u of next.unassigned) {
+    const pMemberId = legMember.get(u.passengerLegId);
+    if (!pMemberId) continue;
+    const wasAssigned = prevDriverOf.has(u.passengerLegId);
+    if (wasAssigned || !prev) {
+      push(
+        pMemberId,
+        T("notif.unassignedTitle"),
+        T("notif.unassignedBody", { reason: T(`reason.${u.reason}` as TKey) })
+      );
+    }
+  }
+  return out;
+}
+
+/* ---------- flujo público: leg por defecto para un admitido ---------- */
+export function defaultPassengerLeg(s: AppState, eventId: string, memberId: string): Leg | null {
+  const ev = s.events.find((e) => e.id === eventId);
+  const m = s.members.find((x) => x.id === memberId);
+  if (!ev || !m) return null;
+  const d = new Date(ev.dateISO);
+  const evMin = d.getHours() * 60 + d.getMinutes();
+  // Id estable: si ya había un leg, se conserva (los assignments referencian por id).
+  const existing = s.legs.find((l) => l.memberId === memberId && l.eventId === eventId);
+  return {
+    id: existing?.id ?? `leg-${memberId}-${eventId}`,
+    memberId,
+    eventId,
+    role: "passenger",
+    origin: m.home,
+    // Ventana amplia alrededor de la hora del evento: en viajes interurbanos esa
+    // hora suele ser la SALIDA del conductor, y la recogida puede caer después.
+    // El aceptado la ajusta luego desde "Mi viaje".
+    window: { start: Math.max(0, evMin - 90), end: Math.min(1439, evMin + 90) },
+    maxWalkMin: 10,
+    needs: []
+  };
+}
+
+/* ---------- contexto ---------- */
+interface Store {
+  state: AppState;
+  dispatch: React.Dispatch<Action>;
+  runMatch: (eventId: string, opts?: { warmStart?: boolean; legsOverride?: Leg[] }) => Promise<void>;
+  manualMove: (
+    eventId: string,
+    passengerLegId: string,
+    targetDriverLegId: string | null
+  ) => Promise<string[]>;
+  cancelDriver: (eventId: string, driverLegId: string) => Promise<void>;
+  /** Pide lugar en un evento público (demo: el organizador responde solo). */
+  requestJoin: (eventId: string) => void;
+  /** Acepta/rechaza una solicitud de tu evento; al aceptar suma el leg y recalcula si hacía falta. */
+  decideRequest: (requestId: string, approve: boolean) => Promise<void>;
+  /** Reseña de 1–5 estrellas de meId hacia otro miembro. */
+  rateMember: (toMemberId: string, stars: number, comment?: string) => void;
+  resetDemo: () => void;
+  computing: boolean;
+}
+
+const Ctx = createContext<Store | null>(null);
+
+export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const [state, dispatch] = useReducer(reducer, null as unknown as AppState, () => {
+    const loaded = loadState<AppState>();
+    return loaded && loaded.version === 2 ? loaded : buildSeed();
+  });
+  const [computing, setComputing] = useState(false);
+  const provider = useMemo(() => new MockRoutingProvider(), []);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  // persistencia debounced
+  useEffect(() => {
+    const h = setTimeout(() => saveState(state), 250);
+    return () => clearTimeout(h);
+  }, [state]);
+
+  // tema (system|dark|light) → atributo data-theme
+  useEffect(() => {
+    const el = document.documentElement;
+    const apply = () => {
+      const pref = state.settings.theme;
+      const dark =
+        pref === "dark" ||
+        (pref === "system" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+      el.setAttribute("data-theme", dark ? "dark" : "light");
+    };
+    apply();
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    mq?.addEventListener?.("change", apply);
+    return () => mq?.removeEventListener?.("change", apply);
+  }, [state.settings.theme]);
+
+  const runMatch = useCallback(
+    async (eventId: string, opts?: { warmStart?: boolean; legsOverride?: Leg[] }) => {
+      const s = stateRef.current;
+      const input = buildMatchInput(s, eventId, opts?.legsOverride);
+      if (!input) return;
+      setComputing(true);
+      try {
+        const prev = s.assignments[eventId]?.result ?? null;
+        if (opts?.warmStart && prev) {
+          input.options = { ...input.options, warmStart: prev };
+        }
+        const result = await solveMatching(input, provider);
+        const violations = await validateMatch(input, result, provider);
+        dispatch({
+          type: "setAssignment",
+          eventId,
+          assignment: { result, computedAt: new Date().toISOString(), violations }
+        });
+        // Con legsOverride, los avisos deben mirar los legs efectivos del cálculo.
+        const sForNotifs = opts?.legsOverride ? { ...s, legs: opts.legsOverride } : s;
+        const notifs = diffNotifs(sForNotifs, eventId, prev, result);
+        if (notifs.length) {
+          dispatch({ type: "addNotifs", notifs });
+          const mine = notifs.find((n) => n.memberId === s.meId);
+          if (mine && s.settings.notifPermission) systemNotify(mine.title, mine.body);
+        }
+      } finally {
+        setComputing(false);
+      }
+    },
+    [provider]
+  );
+
+  const manualMove = useCallback(
+    async (eventId: string, passengerLegId: string, targetDriverLegId: string | null) => {
+      const s = stateRef.current;
+      const input = buildMatchInput(s, eventId);
+      const current = s.assignments[eventId];
+      if (!input || !current) return [];
+      setComputing(true);
+      try {
+        const { result, violations } = await applyManualMove(
+          input,
+          current.result,
+          passengerLegId,
+          targetDriverLegId,
+          provider
+        );
+        dispatch({
+          type: "setAssignment",
+          eventId,
+          assignment: { result, computedAt: new Date().toISOString(), violations }
+        });
+        const notifs = diffNotifs(s, eventId, current.result, result);
+        if (notifs.length) dispatch({ type: "addNotifs", notifs });
+        return violations.map((v) => v.detail);
+      } finally {
+        setComputing(false);
+      }
+    },
+    [provider]
+  );
+
+  const cancelDriver = useCallback(
+    async (eventId: string, driverLegId: string) => {
+      const s = stateRef.current;
+      const leg = s.legs.find((l) => l.id === driverLegId);
+      if (!leg) return;
+      const legsAfter = s.legs.filter((l) => l.id !== driverLegId);
+      dispatch({ type: "removeLeg", memberId: leg.memberId, eventId });
+      await runMatch(eventId, { warmStart: true, legsOverride: legsAfter });
+    },
+    [runMatch]
+  );
+
+  /* ---- flujo público (tipo BlaBlaCar) ---- */
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Demo local sin backend: el "organizador" de un evento ajeno contesta solo.
+  const scheduleSimulatedReply = useCallback((requestId: string, delayMs: number) => {
+    const h = setTimeout(() => {
+      const s = stateRef.current;
+      const req = s.joinRequests.find((r) => r.id === requestId);
+      if (!req || req.status !== "pending") return;
+      const ev = s.events.find((e) => e.id === req.eventId);
+      if (!ev) return;
+      const T = (k: TKey, vars?: Record<string, string | number>) =>
+        translate(s.settings.lang, k, vars);
+      dispatch({
+        type: "decideJoinRequest",
+        requestId,
+        status: "approved",
+        decidedAt: new Date().toISOString()
+      });
+      const leg = defaultPassengerLeg(s, req.eventId, req.memberId);
+      if (leg) dispatch({ type: "setLeg", leg });
+      const notif: Notification = {
+        id: `n-${Date.now()}-sim`,
+        memberId: req.memberId,
+        title: T("requests.acceptedNotifTitle"),
+        body: T("requests.acceptedNotifBody", { title: ev.title }),
+        read: false,
+        at: new Date().toISOString()
+      };
+      dispatch({ type: "addNotifs", notifs: [notif] });
+      if (req.memberId === s.meId && s.settings.notifPermission) systemNotify(notif.title, notif.body);
+      // El organizador simulado también "calcula": así el aceptado ve su viaje en Resultados.
+      if (leg) {
+        const rest = s.legs.filter(
+          (l) => !(l.memberId === leg.memberId && l.eventId === leg.eventId)
+        );
+        void runMatch(req.eventId, {
+          warmStart: !!s.assignments[req.eventId],
+          legsOverride: [...rest, leg]
+        });
+      }
+    }, delayMs);
+    timersRef.current.push(h);
+  }, [runMatch]);
+
+  const requestJoin = useCallback(
+    (eventId: string) => {
+      const s = stateRef.current;
+      const last = [...s.joinRequests]
+        .filter((r) => r.eventId === eventId && r.memberId === s.meId)
+        .sort((a, b) => b.at.localeCompare(a.at))[0];
+      if (last && last.status !== "rejected") return;
+      const request: JoinRequest = {
+        id: `jr-${Date.now().toString(36)}`,
+        eventId,
+        memberId: s.meId,
+        role: "passenger",
+        status: "pending",
+        at: new Date().toISOString()
+      };
+      dispatch({ type: "addJoinRequest", request });
+      scheduleSimulatedReply(request.id, 4000);
+    },
+    [scheduleSimulatedReply]
+  );
+
+  // Solicitudes mías que quedaron pendientes de otra sesión: el organizador
+  // "contesta" al volver a abrir la app.
+  useEffect(() => {
+    const s = stateRef.current;
+    for (const r of s.joinRequests) {
+      if (r.memberId === s.meId && r.status === "pending") {
+        const ev = s.events.find((e) => e.id === r.eventId);
+        if (ev && ev.createdBy !== s.meId) scheduleSimulatedReply(r.id, 4000);
+      }
+    }
+    const timers = timersRef.current;
+    return () => {
+      timers.forEach(clearTimeout);
+      timersRef.current = [];
+    };
+  }, [scheduleSimulatedReply]);
+
+  const decideRequest = useCallback(
+    async (requestId: string, approve: boolean) => {
+      const s = stateRef.current;
+      const req = s.joinRequests.find((r) => r.id === requestId);
+      if (!req || req.status !== "pending") return;
+      const ev = s.events.find((e) => e.id === req.eventId);
+      if (!ev) return;
+      const T = (k: TKey, vars?: Record<string, string | number>) =>
+        translate(s.settings.lang, k, vars);
+      dispatch({
+        type: "decideJoinRequest",
+        requestId,
+        status: approve ? "approved" : "rejected",
+        decidedAt: new Date().toISOString()
+      });
+      dispatch({
+        type: "addNotifs",
+        notifs: [
+          {
+            id: `n-${Date.now()}-dec`,
+            memberId: req.memberId,
+            title: approve ? T("requests.acceptedNotifTitle") : T("requests.rejectedNotifTitle"),
+            body: approve
+              ? T("requests.acceptedNotifBody", { title: ev.title })
+              : T("requests.rejectedNotifBody", { title: ev.title }),
+            read: false,
+            at: new Date().toISOString()
+          }
+        ]
+      });
+      if (!approve) return;
+      const leg = defaultPassengerLeg(s, req.eventId, req.memberId);
+      if (!leg) return;
+      dispatch({ type: "setLeg", leg });
+      if (s.assignments[req.eventId]) {
+        const rest = s.legs.filter(
+          (l) => !(l.memberId === leg.memberId && l.eventId === leg.eventId)
+        );
+        await runMatch(req.eventId, { warmStart: true, legsOverride: [...rest, leg] });
+      }
+    },
+    [runMatch]
+  );
+
+  const rateMember = useCallback((toMemberId: string, stars: number, comment?: string) => {
+    const s = stateRef.current;
+    const review: Review = {
+      id: `rv-${Date.now().toString(36)}`,
+      fromMemberId: s.meId,
+      toMemberId,
+      stars: Math.min(5, Math.max(1, Math.round(stars))),
+      comment: comment?.trim() || undefined,
+      at: new Date().toISOString()
+    };
+    dispatch({ type: "addReview", review });
+  }, []);
+
+  const resetDemo = useCallback(() => {
+    clearState();
+    dispatch({ type: "reset" });
+  }, []);
+
+  const value: Store = {
+    state,
+    dispatch,
+    runMatch,
+    manualMove,
+    cancelDriver,
+    requestJoin,
+    decideRequest,
+    rateMember,
+    resetDemo,
+    computing
+  };
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+export function useStore(): Store {
+  const v = useContext(Ctx);
+  if (!v) throw new Error("useStore fuera de StoreProvider");
+  return v;
+}
+
+/** Traductor atado al idioma actual. */
+export function useT() {
+  const { state } = useStore();
+  const lang: Lang = state.settings.lang;
+  return useCallback(
+    (key: TKey, vars?: Record<string, string | number>) => translate(lang, key, vars),
+    [lang]
+  );
+}
