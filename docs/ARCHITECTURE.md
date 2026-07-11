@@ -1,4 +1,4 @@
-# Arquitectura de Caravana
+# Arquitectura de Convoyar
 
 > Para la guía operativa (comandos, invariantes, trampas) ver [../AGENTS.md](../AGENTS.md).
 > Este documento explica el **diseño**: por qué las piezas son como son y cómo se hablan.
@@ -67,7 +67,7 @@ producto "si no hay match, se dice claramente por qué" está cableada en el tip
 - **Una sola fuente de verdad** (`AppState`) en un `useReducer`; las pantallas no
   tienen estado de dominio propio, solo estado de UI efímero (sheets abiertos, forms).
 - **Persistencia**: debounce de 250 ms a localStorage con fallback en memoria
-  (iframes/incógnito). Clave versionada `caravana:v2`; el hydrate exige
+  (iframes/incógnito). Clave versionada `convoyar:v2`; el hydrate exige
   `version === 2` y si no, re-seedea. Versionar clave + campo juntos hace la
   migración trivial mientras no haya datos reales de usuarios.
 - **`stateRef`**: los callbacks del store leen `stateRef.current` para no capturar
@@ -124,7 +124,7 @@ hoy es `metricsExport` (export CSV/JSON en Admin) para que el rail se pueda prob
 - **Web/PWA**: `dist/` estático con manifest + service worker (cache de shell y de
   tiles, límite 250) → instalable, tolera mala señal.
 - **Un archivo**: `dist-single/index.html` (~400 KB) vía vite-plugin-singlefile.
-- **Stores**: Capacitor ya configurado (`ar.caravana.app`); `npx cap add android|ios`
+- **Stores**: Capacitor ya configurado (`app.convoyar`); `npx cap add android|ios`
   sobre `dist/`. Push nativo: enganchar `@capacitor/push-notifications` donde hoy
   está `services/notify.ts`.
 

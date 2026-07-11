@@ -1,7 +1,7 @@
 {
-  "name": "Caravana",
-  "short_name": "Caravana",
-  "description": "Quién lleva a quién, resuelto. Logística colaborativa para organizaciones.",
+  "name": "Convoyar",
+  "short_name": "Convoyar",
+  "description": "Armamos tu convoy: quién lleva a quién, resuelto.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#14181D",

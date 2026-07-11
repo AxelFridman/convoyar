@@ -41,7 +41,7 @@ test("recorrido visual completo", async ({ page }) => {
   await page.getByText("Asado del sábado").click();
   await shoot(page, "05-mi-viaje");
   await page.getByRole("tab", { name: "Admin" }).click();
-  await page.getByRole("button", { name: "Calcular asignación" }).click();
+  await page.getByRole("button", { name: "Armar convoys" }).click();
   await page.locator(".ride").first().waitFor();
   await shoot(page, "06-admin-calculado");
 

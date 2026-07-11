@@ -1,8 +1,12 @@
-# AGENTS.md — Guía para agentes de IA que trabajen en Caravana
+# AGENTS.md — Guía para agentes de IA que trabajen en Convoyar
 
 > Leé esto entero antes de tocar código. Son 5 minutos y te ahorra romper invariantes
-> que los tests no siempre atrapan. Documentos hermanos: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+> que los tests no siempre atrapan. Documentos hermanos: [docs/TODO.md](docs/TODO.md)
+> (**estado vivo del trabajo — empezá por ahí para retomar**), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 > (diseño en profundidad) y [docs/ROADMAP.md](docs/ROADMAP.md) (qué falta y cómo encararlo).
+>
+> Metodología de trabajo: una branch `feat/*` por bloque de trabajo → PR → merge.
+> Toda feature a medias queda anotada en docs/TODO.md antes de cerrar la sesión.
 
 ## Qué es esto
 
@@ -12,7 +16,7 @@ y además hay un **modo público tipo BlaBlaCar**: viajes descubribles donde la 
 lugar y el organizador acepta/rechaza mirando reputación, historial y antigüedad.
 
 Stack: React 18 + TypeScript + Vite + Leaflet/OSM. **Cero APIs pagas** (requisito duro).
-Sin backend: estado en localStorage (`caravana:v2`), un solo dispositivo, `meId` fijo (`m0`).
+Sin backend: estado en localStorage (`convoyar:v2`), un solo dispositivo, `meId` fijo (`m0`).
 Eso es deliberado (MVP local-first); el camino a multi-dispositivo está en el roadmap.
 
 ## Comandos
@@ -78,7 +82,7 @@ e2e/            Playwright: flujos reales + screenshots.spec (capturas a docs/sc
 - Modo público: `JoinRequest` (pending/approved/rejected) + `Review` (1–5★) +
   `TripRecord` (historial) + `Member.joinedISO` (antigüedad).
 - `Assignment` = resultado del motor por evento (`state.assignments[eventId]`).
-- **Migración**: `AppState.version === 2` y clave `caravana:v2`. Si cambiás el modelo,
+- **Migración**: `AppState.version === 2` y clave `convoyar:v2`. Si cambiás el modelo,
   subí la versión y la clave (el estado viejo se descarta y se re-seedea: aceptable
   mientras sea demo local; cuando haya backend, escribir migración real).
 

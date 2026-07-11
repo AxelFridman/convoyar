@@ -1,8 +1,8 @@
-# Caravana 🚗
+# Convoyar 🚗
 
 **Logística colaborativa para organizaciones**: coordina quién lleva a quién en asados, oficinas, comunidades y eventos de 10 a 90+ personas. Matching óptimo con restricciones reales, mapas OpenStreetMap y cero APIs pagas. Y además, **viajes públicos tipo BlaBlaCar**: salidas abiertas donde la gente pide lugar y el organizador acepta o rechaza mirando reputación ★, historial y antigüedad.
 
-Demo de fábrica incluida: *La Banda del Asado* (26 personas, 8 autos, 5 puntos de encuentro en CABA) con el "Asado del sábado" listo para calcular, más la *Comunidad Caravana* con viajes públicos a Mar del Plata y La Plata, y 3 solicitudes esperando tu decisión en la "Escapada al Delta".
+Demo de fábrica incluida: *La Banda del Asado* (26 personas, 8 autos, 5 puntos de encuentro en CABA) con el "Asado del sábado" listo para calcular, más la *Comunidad Convoyar* con viajes públicos a Mar del Plata y La Plata, y 3 solicitudes esperando tu decisión en la "Escapada al Delta".
 
 | Inicio | Explorar | Solicitudes | Resultados |
 |---|---|---|---|
@@ -52,7 +52,7 @@ npm run preview       # sirve dist/ localmente
 | Modo público: solicitudes, aceptar/rechazar, reputación, historial | **Real** (lógica y UI completas). Lo único simulado es el *otro* humano: como no hay backend, el organizador de un evento ajeno "responde" solo a los ~4 s (`scheduleSimulatedReply` en `store.tsx`, primero en morir cuando haya backend). |
 | Ruteo | **Mock por defecto** (`MockRoutingProvider`: haversine ×1.3 a 26 km/h). Adaptador **OSRM real ya escrito** (`OsrmRoutingProvider`), swap de 1 línea (ver abajo). |
 | Mapas | **Real**: Leaflet + tiles de OpenStreetMap (atribución incluida, obligatoria). |
-| Persistencia | localStorage (clave `caravana:v2`) con fallback en memoria. Un dispositivo. |
+| Persistencia | localStorage (clave `convoyar:v2`) con fallback en memoria. Un dispositivo. |
 | Multi-dispositivo / auth / push | **Stubs.** El código de compartir org usa un `joinCode` local; las "notificaciones" son in-app + Notification API del navegador. Camino sugerido: Supabase (Postgres + Realtime + Auth) manteniendo el motor tal cual, o cualquier backend que hable el contrato `MatchInput → MatchResult`. Ver [docs/ROADMAP.md](docs/ROADMAP.md). |
 | Monetización | **Cableada y apagada** (ver abajo). |
 
@@ -107,7 +107,7 @@ Geocoding futuro (buscar direcciones por texto): [Nominatim](https://nominatim.o
 
 **Un solo archivo:** `npm run build:single` genera `dist-single/index.html` autocontenido (~380 KB). Sirve para mandar por mail/Drive o demos. Solo necesita internet para los tiles del mapa.
 
-**Android / iOS (Capacitor):** el proyecto ya trae `capacitor.config.json` (`ar.caravana.app`).
+**Android / iOS (Capacitor):** el proyecto ya trae `capacitor.config.json` (`app.convoyar`).
 
 ```bash
 npm run build

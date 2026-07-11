@@ -1,6 +1,6 @@
 {
-  "appId": "ar.caravana.app",
-  "appName": "Caravana",
+  "appId": "app.convoyar",
+  "appName": "Convoyar",
   "webDir": "dist",
   "server": { "androidScheme": "https" }
 }
