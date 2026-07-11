@@ -22,7 +22,7 @@ const wrap = (el: React.ReactElement) => renderToString(<StoreProvider>{el}</Sto
 
 describe("smoke render", () => {
   it("App completa", () => {
-    expect(renderToString(<App />)).toContain("Caravana");
+    expect(renderToString(<App />)).toContain("Convoyar");
   });
   it("Home", () => {
     expect(wrap(<Home onOpenEvent={() => {}} />).length).toBeGreaterThan(100);

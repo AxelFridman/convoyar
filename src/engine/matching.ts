@@ -1,5 +1,5 @@
 /**
- * Caravana — Solver de matching (CVRPTW liviano).
+ * Convoyar — Solver de matching (CVRPTW liviano).
  *
  * Estrategia (spec §5):
  *  1. Una sola matriz de tiempos/distancias por evento (mock u OSRM Table).

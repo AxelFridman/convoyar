@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * Flujos principales de Caravana. Cada test abre un contexto limpio
+ * Flujos principales de Convoyar. Cada test abre un contexto limpio
  * (localStorage vacío → carga la demo de fábrica determinística).
  */
 
@@ -35,20 +35,20 @@ test.describe("Matching (Admin)", () => {
     await page.goto("/");
     await page.getByText("Asado del sábado").click();
     await page.getByRole("tab", { name: "Admin" }).click();
-    await page.getByRole("button", { name: "Calcular asignación" }).click();
+    await page.getByRole("button", { name: "Armar convoys" }).click();
     await expect(page.getByText("asignados")).toBeVisible();
     await expect(page.getByText("autos en uso")).toBeVisible();
     // aparecen viajes armados con paradas
     await expect(page.locator(".ride").first()).toBeVisible();
     // y el botón pasa a recalcular
-    await expect(page.getByRole("button", { name: "Recalcular" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Rearmar convoys" })).toBeVisible();
   });
 
   test("mover un pasajero a mano avisa si rompe una regla", async ({ page }) => {
     await page.goto("/");
     await page.getByText("Asado del sábado").click();
     await page.getByRole("tab", { name: "Admin" }).click();
-    await page.getByRole("button", { name: "Calcular asignación" }).click();
+    await page.getByRole("button", { name: "Armar convoys" }).click();
     await expect(page.locator(".ride").first()).toBeVisible();
     await page.locator(".ride .stopAct button").first().click();
     await expect(page.getByText(/Mover a/)).toBeVisible();
@@ -63,12 +63,12 @@ test.describe("Resultados", () => {
     await page.goto("/");
     await page.getByText("Asado del sábado").click();
     await page.getByRole("tab", { name: "Admin" }).click();
-    await page.getByRole("button", { name: "Calcular asignación" }).click();
+    await page.getByRole("button", { name: "Armar convoys" }).click();
     await expect(page.locator(".ride").first()).toBeVisible();
     await page.getByRole("tab", { name: "Resultados" }).click();
     // "Vos" viaja como pasajero: o hay tarjeta "Tu viaje" o quedaste sin lugar con motivo
     await expect(
-      page.getByRole("heading", { name: "Tu viaje" }).or(page.getByText("no conseguimos lugar")).first()
+      page.getByRole("heading", { name: "Tu convoy" }).or(page.getByText("no conseguimos lugar")).first()
     ).toBeVisible();
     // mi parada está resaltada dentro de la hoja de ruta
     await expect(page.locator(".stop-mine").first()).toBeVisible();
@@ -91,7 +91,7 @@ test.describe("Explorar (modo público, tipo BlaBlaCar)", () => {
     await page.goto("/");
     await page.getByRole("tab", { name: "Explorar" }).click();
     await page.getByRole("button", { name: /Valen R\./ }).first().click();
-    await expect(page.getByText("En Caravana")).toBeVisible();
+    await expect(page.getByText("En Convoyar")).toBeVisible();
     await expect(page.getByText(/\d+ viajes/)).toBeVisible();
     await expect(page.getByText("Reseñas")).toBeVisible();
     await expect(page.getByText("Súper puntual y el auto impecable.")).toBeVisible();
@@ -122,7 +122,7 @@ test.describe("Solicitudes (lado organizador)", () => {
     // Abril tiene 4.8★ y buen historial → ver perfil y aceptar
     const abril = page.locator(".requestCard", { hasText: "Abril M." });
     await expect(abril.locator(".stars")).toBeVisible();
-    await expect(abril.getByText("En Caravana")).toBeVisible();
+    await expect(abril.getByText("En Convoyar")).toBeVisible();
     await abril.getByRole("button", { name: "Ver perfil" }).click();
     await expect(page.getByText("Llegó antes que yo al punto de encuentro.")).toBeVisible();
     await page.locator(".sheetBack").click({ position: { x: 10, y: 10 } });
@@ -135,7 +135,7 @@ test.describe("Solicitudes (lado organizador)", () => {
     await expect(page.getByText("Solicitudes (1)")).toBeVisible();
 
     // Abril ya participa: al calcular, entra al matching
-    await page.getByRole("button", { name: "Calcular asignación" }).click();
+    await page.getByRole("button", { name: "Armar convoys" }).click();
     await expect(page.getByText("asignados")).toBeVisible();
   });
 });

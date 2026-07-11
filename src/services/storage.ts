@@ -2,12 +2,12 @@
  * Persistencia segura: localStorage cuando está disponible (web self-hosted,
  * PWA, Capacitor) con fallback en memoria (iframes restringidos, incógnito).
  */
-const KEY = "caravana:v2";
+const KEY = "convoyar:v2";
 let memory: string | null = null;
 
 function canUseLocalStorage(): boolean {
   try {
-    const k = "__caravana_test__";
+    const k = "__convoyar_test__";
     window.localStorage.setItem(k, "1");
     window.localStorage.removeItem(k);
     return true;

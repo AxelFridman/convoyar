@@ -4,7 +4,7 @@ import type { Feature } from "./engine/types";
 /**
  * Demo determinística de fábrica.
  * - "La Banda del Asado": org privada de 26 personas con el evento "Asado del sábado".
- * - "Comunidad Caravana": espacio público tipo BlaBlaCar con viajes abiertos,
+ * - "Comunidad Convoyar": espacio público tipo BlaBlaCar con viajes abiertos,
  *   solicitudes de lugar, calificaciones e historial por miembro.
  * Solo las fechas son relativas a hoy (próximo sábado/domingo); el resto es fijo.
  */
@@ -357,8 +357,8 @@ export function buildSeed(): AppState {
       },
       {
         id: "orgPub",
-        name: "Comunidad Caravana",
-        joinCode: "CARAVANA-PUB",
+        name: "Comunidad Convoyar",
+        joinCode: "CONVOYAR-PUB",
         memberIds: COMMUNITY.map((_, i) => `c${i}`),
         adminIds: [],
         meetingPoints: [],

@@ -1,5 +1,5 @@
 /**
- * Caravana — Motor de matching
+ * Convoyar — Motor de matching
  * Tipos de dominio. Este módulo NO conoce React, ni almacenamiento, ni UI.
  * Contrato: (conductores + pasajeros + proveedor de ruteo) → (viajes + no asignados).
  */

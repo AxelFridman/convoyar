@@ -46,7 +46,7 @@ export default function Home({ onOpenEvent }: { onOpenEvent: (eventId: string) =
     <div className="screen">
       <header className="topbar">
         <div>
-          <div className="eyebrow">Caravana</div>
+          <div className="eyebrow">Convoyar</div>
           <h1>{org.name}</h1>
           <div className="sub">
             {org.memberIds.length} {T("home.members", { n: "" }).trim()}

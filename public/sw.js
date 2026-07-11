@@ -1,6 +1,6 @@
-/* Caravana service worker — cache básico de shell + tiles OSM (soporte offline simple). */
-const SHELL = "caravana-shell-v1";
-const TILES = "caravana-tiles-v1";
+/* Convoyar service worker — cache básico de shell + tiles OSM (soporte offline simple). */
+const SHELL = "convoyar-shell-v1";
+const TILES = "convoyar-tiles-v1";
 const TILE_LIMIT = 250;
 
 self.addEventListener("install", (e) => {

@@ -2,8 +2,8 @@
 export type Lang = "es" | "en";
 
 const es = {
-  "app.name": "Caravana",
-  "app.tagline": "Quién lleva a quién, resuelto.",
+  "app.name": "Convoyar",
+  "app.tagline": "Armamos tu convoy.",
 
   "nav.home": "Inicio",
   "nav.explore": "Explorar",
@@ -49,8 +49,8 @@ const es = {
   "home.editTrip": "Editar mi viaje",
   "home.seeResults": "Ver resultados",
   "home.counts": "{d} al volante · {p} piden lugar",
-  "home.computed": "Asignación lista",
-  "home.notComputed": "Sin calcular",
+  "home.computed": "Convoys armados",
+  "home.notComputed": "Sin armar",
   "home.destination": "Destino",
 
   "trip.roleQ": "¿Cómo vas?",
@@ -94,15 +94,15 @@ const es = {
   "results.walkMin": "{n} min a pie",
   "results.unassignedTitle": "Esta vez no conseguimos lugar",
   "results.unassignedTip": "El admin puede sumar conductores, aflojar desvíos o moverte a mano.",
-  "results.allRides": "Todos los autos",
+  "results.allRides": "Los convoys",
   "results.departure": "Salida",
   "results.detour": "+{n} min de desvío",
   "results.start": "Sale de su casa",
   "results.end": "Llegada",
   "results.manualBadge": "Ajustado a mano",
   "results.notInEvent": "No estás anotado en esta salida.",
-  "results.yourRide": "Tu viaje",
-  "results.noRides": "Ningún auto todavía.",
+  "results.yourRide": "Tu convoy",
+  "results.noRides": "Ningún convoy todavía.",
   "results.freeSeats": "{n} asientos libres",
   "results.freeSeats_one": "{n} asiento libre",
   "results.stats.assigned": "asignados",
@@ -118,9 +118,9 @@ const es = {
   "reason.caminata": "Ningún punto a distancia de caminata",
   "reason.manual": "Movido a mano por el admin",
 
-  "admin.compute": "Calcular asignación",
-  "admin.recompute": "Recalcular",
-  "admin.computing": "Calculando…",
+  "admin.compute": "Armar convoys",
+  "admin.recompute": "Rearmar convoys",
+  "admin.computing": "Armando…",
   "admin.lastComputed": "Último cálculo: {time}",
   "admin.needLegs": "Todavía no hay viajes cargados para esta salida.",
   "admin.move": "Mover",
@@ -175,7 +175,7 @@ const es = {
   "notif.changedBody": "Ahora te lleva {name}. Recogida {time} · {place}.",
   "notif.unassignedTitle": "Quedaste sin lugar",
   "notif.unassignedBody": "Motivo: {reason}. El admin puede ajustarlo.",
-  "notif.driverTitle": "Tu auto quedó armado",
+  "notif.driverTitle": "Tu convoy quedó armado",
   "notif.driverBody": "Llevás a {n} — salís {time}.",
 
   "visibility.public": "Pública",
@@ -212,7 +212,7 @@ const es = {
   "requests.rejectedNotifBody": "El organizador de {title} no te sumó esta vez.",
   "requests.acceptedInfo": "Se suma al cálculo como pasajero.",
 
-  "profile.memberSince": "En Caravana {since}",
+  "profile.memberSince": "En Convoyar {since}",
   "profile.noRating": "Sin calificaciones aún",
   "profile.reviewCount": "{n} reseñas",
   "profile.reviewCount_one": "{n} reseña",
@@ -252,8 +252,8 @@ const es = {
 export type TKey = keyof typeof es;
 
 const en: Record<TKey, string> = {
-  "app.name": "Caravana",
-  "app.tagline": "Who drives whom, solved.",
+  "app.name": "Convoyar",
+  "app.tagline": "Your convoy, sorted.",
 
   "nav.home": "Home",
   "nav.explore": "Explore",
@@ -299,8 +299,8 @@ const en: Record<TKey, string> = {
   "home.editTrip": "Edit my trip",
   "home.seeResults": "See results",
   "home.counts": "{d} driving · {p} need a seat",
-  "home.computed": "Assignment ready",
-  "home.notComputed": "Not computed",
+  "home.computed": "Convoys ready",
+  "home.notComputed": "Not built yet",
   "home.destination": "Destination",
 
   "trip.roleQ": "How are you going?",
@@ -344,15 +344,15 @@ const en: Record<TKey, string> = {
   "results.walkMin": "{n} min walk",
   "results.unassignedTitle": "No seat this time",
   "results.unassignedTip": "The admin can add drivers, loosen detours or move you manually.",
-  "results.allRides": "All cars",
+  "results.allRides": "The convoys",
   "results.departure": "Departure",
   "results.detour": "+{n} min detour",
   "results.start": "Leaves home",
   "results.end": "Arrival",
   "results.manualBadge": "Manually adjusted",
   "results.notInEvent": "You're not part of this event.",
-  "results.yourRide": "Your ride",
-  "results.noRides": "No cars yet.",
+  "results.yourRide": "Your convoy",
+  "results.noRides": "No convoys yet.",
   "results.freeSeats": "{n} free seats",
   "results.freeSeats_one": "{n} free seat",
   "results.stats.assigned": "assigned",
@@ -368,9 +368,9 @@ const en: Record<TKey, string> = {
   "reason.caminata": "No point within walking range",
   "reason.manual": "Moved manually by the admin",
 
-  "admin.compute": "Compute assignment",
-  "admin.recompute": "Recompute",
-  "admin.computing": "Computing…",
+  "admin.compute": "Build convoys",
+  "admin.recompute": "Rebuild convoys",
+  "admin.computing": "Building…",
   "admin.lastComputed": "Last run: {time}",
   "admin.needLegs": "No trips loaded for this event yet.",
   "admin.move": "Move",
@@ -425,7 +425,7 @@ const en: Record<TKey, string> = {
   "notif.changedBody": "Now {name} picks you up. Pickup {time} · {place}.",
   "notif.unassignedTitle": "No seat for now",
   "notif.unassignedBody": "Reason: {reason}. The admin can adjust it.",
-  "notif.driverTitle": "Your car is set",
+  "notif.driverTitle": "Your convoy is set",
   "notif.driverBody": "You take {n} — leaving {time}.",
 
   "visibility.public": "Public",
@@ -462,7 +462,7 @@ const en: Record<TKey, string> = {
   "requests.rejectedNotifBody": "The organizer of {title} didn't add you this time.",
   "requests.acceptedInfo": "They join the matching as a passenger.",
 
-  "profile.memberSince": "On Caravana {since}",
+  "profile.memberSince": "On Convoyar {since}",
   "profile.noRating": "No ratings yet",
   "profile.reviewCount": "{n} reviews",
   "profile.reviewCount_one": "{n} review",

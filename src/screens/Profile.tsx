@@ -39,7 +39,7 @@ export default function Profile() {
     <div className="screen">
       <header className="topbar">
         <div>
-          <div className="eyebrow">Caravana</div>
+          <div className="eyebrow">Convoyar</div>
           <h1>{T("nav.profile")}</h1>
         </div>
       </header>

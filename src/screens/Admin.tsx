@@ -55,7 +55,7 @@ export default function Admin({ eventId }: { eventId: string | null }) {
     if (!assignment) return;
     const { result } = assignment;
     if (kind === "json") {
-      downloadJSON(`caravana-${ev.title}.json`, { event: ev, ...result });
+      downloadJSON(`convoyar-${ev.title}.json`, { event: ev, ...result });
     } else {
       const rows: (string | number)[][] = [["conductor", "salida", "parada", "hora", "pasajero", "caminata_min"]];
       for (const r of result.rides) {
@@ -71,7 +71,7 @@ export default function Admin({ eventId }: { eventId: string | null }) {
           ]);
         }
       }
-      downloadCSV(`caravana-${ev.title}.csv`, rows);
+      downloadCSV(`convoyar-${ev.title}.csv`, rows);
     }
   };
 
