@@ -178,6 +178,8 @@ export interface Settings {
   notifPrefs: NotifPrefs;
   /** Formato de hora. Opcional (default 24h) → no requiere bump de versión. */
   hour12?: boolean;
+  /** Precio del litro de nafta para el aporte sugerido (informativo). 0/undefined = ocultar. */
+  fuelPricePerL?: number;
 }
 
 export interface AppState {

@@ -185,6 +185,24 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         />
       </div>
 
+      {/* Aporte de nafta sugerido (informativo, PR-C2) */}
+      <div className="field">
+        <span>{T("fare.title")}</span>
+        <p className="sub">{T("fare.settingHint")}</p>
+        <label className="field row spread">
+          <span>{T("fare.pricePerL")}</span>
+          <input
+            className="num fuelInput"
+            inputMode="numeric"
+            value={state.settings.fuelPricePerL ?? 0}
+            onChange={(e) => {
+              const n = Number(e.target.value.replace(/\D/g, ""));
+              dispatch({ type: "setSettings", patch: { fuelPricePerL: Number.isFinite(n) ? n : 0 } });
+            }}
+          />
+        </label>
+      </div>
+
       {/* Plan */}
       <div className="field">
         <span>{T("profile.plan")}</span>

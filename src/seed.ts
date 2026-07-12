@@ -438,7 +438,8 @@ export function buildSeed(): AppState {
       plan: "pro",
       notifPermission: false,
       onboarded: true,
-      notifPrefs: { assignments: true, requests: true, chat: true, email: false }
+      notifPrefs: { assignments: true, requests: true, chat: true, email: false },
+      fuelPricePerL: 1000
     },
     activeOrgId: "org1",
   };
