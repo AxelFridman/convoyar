@@ -283,6 +283,35 @@ test.describe("Onboarding", () => {
   });
 });
 
+test.describe("Garage y vehículo por viaje", () => {
+  test("editar el garage: agregar y renombrar un vehículo", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("tab", { name: "Perfil" }).click();
+    await expect(page.getByText("Mi garage")).toBeVisible();
+    // el seed trae 2 vehículos para "Vos"
+    await expect(page.locator(".vehCard")).toHaveCount(2);
+    await page.getByRole("button", { name: "Agregar vehículo" }).click();
+    await expect(page.locator(".vehCard")).toHaveCount(3);
+    // el 3ero recién agregado: ponerle alias
+    await page.locator(".vehCard .vehAlias").last().fill("la Kangoo");
+    await expect(page.locator('.vehAlias[value="la Kangoo"]')).toBeVisible();
+  });
+
+  test("elegir con qué vehículo del garage llevo en una salida", async ({ page }) => {
+    await page.goto("/");
+    await page.getByText("Escapada al Delta").click(); // ev2, m0 es organizador y participa
+    await page.getByRole("tab", { name: "Mi viaje" }).click();
+    await page.getByRole("tab", { name: "Llevo gente" }).click();
+    await expect(page.getByText("¿Con qué vehículo llevás?")).toBeVisible();
+    // hay un selector con las 2 opciones del garage
+    await expect(page.locator(".vehOpt")).toHaveCount(2);
+    await page.locator(".vehOpt", { hasText: "la moto" }).click();
+    await expect(page.locator(".vehOpt-on")).toContainText("la moto");
+    await page.getByRole("button", { name: "Guardar" }).click();
+    await expect(page.getByText("Listo, quedaste anotado.")).toBeVisible();
+  });
+});
+
 test.describe("Mi viaje", () => {
   test("anotarse como pasajero con preferencias", async ({ page }) => {
     await page.goto("/");

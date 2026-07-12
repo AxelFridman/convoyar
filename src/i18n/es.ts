@@ -62,6 +62,7 @@ export const es = {
   "trip.from": "Desde",
   "trip.to": "Hasta",
   "trip.vehicle": "Tu vehículo",
+  "trip.whichVehicle": "¿Con qué vehículo llevás?",
   "trip.editGarageHint": "Editás tus vehículos en Perfil › Mi garage.",
   "common.seatsN": "{n} asientos",
   "common.seatsN_one": "{n} asiento",

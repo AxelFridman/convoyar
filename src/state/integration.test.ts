@@ -46,4 +46,24 @@ describe("integración seed → store → motor", () => {
       }
     }
   });
+
+  it("PR-A2: el vehículo elegido en el leg define la capacidad que ve el motor", async () => {
+    const s = buildSeed();
+    const me = s.members.find((m) => m.id === "m0")!;
+    const [auto, moto] = me.vehicles; // 3 y 2 asientos según el seed
+    expect(auto.capacity).not.toBe(moto.capacity);
+    // m0 como conductor del asado, una vez con el auto y otra con la moto.
+    const legBase = { id: "leg-m0-ev1", memberId: "m0", eventId: "ev1", role: "driver" as const, window: { start: 690, end: 760 } };
+    const withAuto = buildMatchInput(s, "ev1", [
+      ...s.legs.filter((l) => l.memberId !== "m0"),
+      { ...legBase, vehicleId: auto.id }
+    ])!;
+    const withMoto = buildMatchInput(s, "ev1", [
+      ...s.legs.filter((l) => l.memberId !== "m0"),
+      { ...legBase, vehicleId: moto.id }
+    ])!;
+    const capOf = (input: typeof withAuto) => input.drivers.find((d) => d.memberId === "m0")!.capacity;
+    expect(capOf(withAuto)).toBe(auto.capacity);
+    expect(capOf(withMoto)).toBe(moto.capacity);
+  });
 });

@@ -845,6 +845,34 @@ button:focus-visible {
   outline: none;
   border-bottom-color: var(--accent);
 }
+/* selector de vehículo por viaje (Mi viaje, garage con 2+) */
+.vehPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vehOpt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.16s ease, background 0.16s ease;
+}
+.vehOpt:active { transform: scale(0.98); }
+.vehOpt-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+.vehOptName { font-weight: 700; }
+.vehOptFeat { font-size: 12px; color: var(--muted); }
+
 /* línea read-only de vehículo en Mi viaje */
 .vehLine {
   display: flex;
