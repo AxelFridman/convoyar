@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import { useStore, useT } from "../state/store";
 import { LANGS, type TKey, type Lang } from "../i18n";
-import { Segmented } from "../components/UI";
+import { Chip, Segmented, TimeInput } from "../components/UI";
 import { PLANS, purchase, type PlanId } from "../services/billing";
 import { requestNotifPermission } from "../services/notify";
 import { auth, isValidEmail } from "../services/auth";
 import { storageMode } from "../services/storage";
 import { IconChevronLeft } from "../components/Icons";
-import type { NotifPrefs } from "../state/model";
+import type { Feature } from "../engine/types";
+import type { NotifPrefs, TripDefaults } from "../state/model";
+
+const FEATURES: Feature[] = ["wheelchair", "pets", "big_trunk", "bikes", "child_seat"];
 
 /**
  * Ajustes — toda la configuración avanzada, fuera de Perfil (PR-B1).
@@ -30,6 +33,12 @@ export default function Settings({ onBack }: { onBack: () => void }) {
   const [authMsg, setAuthMsg] = useState("");
   const alreadyVerified = !!me.emailVerified && me.email === email.trim().toLowerCase();
   const [purchaseMsg, setPurchaseMsg] = useState("");
+
+  // --- preferencias de viaje por defecto (PR-B2): precargan viajes nuevos ---
+  const d = me.defaults ?? {};
+  const setDefaults = (patch: Partial<TripDefaults>) =>
+    dispatch({ type: "updateMember", member: { ...me, defaults: { ...d, ...patch } } });
+  const win = d.window ?? { start: 690, end: 760 };
 
   const startVerify = async () => {
     if (!isValidEmail(email)) {
@@ -197,6 +206,57 @@ export default function Settings({ onBack }: { onBack: () => void }) {
           ))}
         </div>
         {purchaseMsg && <p className="sub">{purchaseMsg}</p>}
+      </div>
+
+      {/* Preferencias de viaje por defecto — precargan cada salida nueva */}
+      <h2 className="eyebrow">{T("defaults.title")}</h2>
+      <p className="sub">{T("defaults.hint")}</p>
+      <div className="field row spread">
+        <span>{T("defaults.role")}</span>
+        <Segmented<"driver" | "passenger" | "ask">
+          value={d.role ?? "ask"}
+          onChange={(r) => setDefaults({ role: r === "ask" ? undefined : r })}
+          options={[
+            { value: "driver", label: T("trip.role.driver") },
+            { value: "passenger", label: T("trip.role.passenger") },
+            { value: "ask", label: T("defaults.ask") },
+          ]}
+        />
+      </div>
+      <div className="field">
+        <span>{T("trip.window")}</span>
+        <div className="row gap winRow">
+          <label className="winLbl">
+            {T("trip.from")}
+            <TimeInput minutes={win.start} onChange={(m) => setDefaults({ window: { start: Math.min(m, win.end - 5), end: win.end } })} />
+          </label>
+          <label className="winLbl">
+            {T("trip.to")}
+            <TimeInput minutes={win.end} onChange={(m) => setDefaults({ window: { start: win.start, end: Math.max(m, win.start + 5) } })} />
+          </label>
+        </div>
+      </div>
+      <div className="field">
+        <span>{T("trip.needs")}</span>
+        <div className="chips">
+          {FEATURES.map((f) => {
+            const on = (d.needs ?? []).includes(f);
+            return (
+              <Chip
+                key={f}
+                active={on}
+                onClick={() =>
+                  setDefaults({ needs: on ? (d.needs ?? []).filter((x) => x !== f) : [...(d.needs ?? []), f] })
+                }
+              >
+                {T(`feature.${f}` as TKey)}
+              </Chip>
+            );
+          })}
+          <Chip active={!!d.smokeFree} onClick={() => setDefaults({ smokeFree: !d.smokeFree })}>
+            {T("trip.prefSmokeFree")}
+          </Chip>
+        </div>
       </div>
 
       {/* Datos y ayuda */}

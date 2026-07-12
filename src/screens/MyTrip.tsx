@@ -20,29 +20,31 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
   const existing = state.legs.find((l) => l.eventId === eventId && l.memberId === state.meId);
   // Un leg "skip" guarda window {0,0} como centinela: no hidratar el form con eso.
   const activeLeg = existing && existing.role !== "skip" ? existing : undefined;
+  // Precedencia de los valores del form: leg existente → defaults del perfil → fallback.
+  const d = me.defaults ?? {};
 
-  const [role, setRole] = useState<Role | null>(existing?.role ?? null);
+  const [role, setRole] = useState<Role | null>(existing?.role ?? d.role ?? null);
   const [origin, setOrigin] = useState<LatLng>(activeLeg?.origin ?? me.home);
-  const [detour, setDetour] = useState(activeLeg?.maxDetourMin ?? 20);
-  const [walk, setWalk] = useState(activeLeg?.maxWalkMin ?? 10);
-  const [needs, setNeeds] = useState<Feature[]>(activeLeg?.needs ?? []);
-  const [winStart, setWinStart] = useState(activeLeg?.window.start ?? 690);
-  const [winEnd, setWinEnd] = useState(activeLeg?.window.end ?? 760);
-  const [prefSmoke, setPrefSmoke] = useState(!!activeLeg?.soft?.smokeFree);
+  const [detour, setDetour] = useState(activeLeg?.maxDetourMin ?? d.maxDetourMin ?? 20);
+  const [walk, setWalk] = useState(activeLeg?.maxWalkMin ?? d.maxWalkMin ?? 10);
+  const [needs, setNeeds] = useState<Feature[]>(activeLeg?.needs ?? d.needs ?? []);
+  const [winStart, setWinStart] = useState(activeLeg?.window.start ?? d.window?.start ?? 690);
+  const [winEnd, setWinEnd] = useState(activeLeg?.window.end ?? d.window?.end ?? 760);
+  const [prefSmoke, setPrefSmoke] = useState(activeLeg ? !!activeLeg.soft?.smokeFree : !!d.smokeFree);
   const [prefSub, setPrefSub] = useState(!!activeLeg?.soft?.subgroup);
   // Qué vehículo del garage ofrezco en ESTA salida (PR-A2). Fallback: el primero.
   const [vehId, setVehId] = useState<string | undefined>(activeLeg?.vehicleId ?? primaryVehicle(me)?.id);
   const [savedFlash, setSavedFlash] = useState(false);
 
-  // resync al cambiar de evento
+  // resync al cambiar de evento (misma precedencia que arriba)
   useEffect(() => {
-    setRole(existing?.role ?? null);
-    setDetour(activeLeg?.maxDetourMin ?? 20);
-    setWalk(activeLeg?.maxWalkMin ?? 10);
-    setNeeds(activeLeg?.needs ?? []);
-    setWinStart(activeLeg?.window.start ?? 690);
-    setWinEnd(activeLeg?.window.end ?? 760);
-    setPrefSmoke(!!activeLeg?.soft?.smokeFree);
+    setRole(existing?.role ?? d.role ?? null);
+    setDetour(activeLeg?.maxDetourMin ?? d.maxDetourMin ?? 20);
+    setWalk(activeLeg?.maxWalkMin ?? d.maxWalkMin ?? 10);
+    setNeeds(activeLeg?.needs ?? d.needs ?? []);
+    setWinStart(activeLeg?.window.start ?? d.window?.start ?? 690);
+    setWinEnd(activeLeg?.window.end ?? d.window?.end ?? 760);
+    setPrefSmoke(activeLeg ? !!activeLeg.soft?.smokeFree : !!d.smokeFree);
     setPrefSub(!!activeLeg?.soft?.subgroup);
     setOrigin(activeLeg?.origin ?? me.home);
     setVehId(activeLeg?.vehicleId ?? primaryVehicle(me)?.id);
