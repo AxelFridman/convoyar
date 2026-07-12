@@ -4,11 +4,17 @@
 
 Demo de fábrica incluida: *La Banda del Asado* (26 personas, 8 autos, 5 puntos de encuentro en CABA) con el "Asado del sábado" listo para calcular, más la *Comunidad Convoyar* con viajes públicos a Mar del Plata y La Plata, y 3 solicitudes esperando tu decisión en la "Escapada al Delta".
 
-| Inicio | Explorar | Solicitudes | Resultados |
+| Inicio | Explorar | Onboarding | Mi viaje |
 |---|---|---|---|
-| ![Inicio](docs/screenshots/01-home.png) | ![Explorar](docs/screenshots/02-explore.png) | ![Solicitudes](docs/screenshots/04-solicitudes.png) | ![Resultados](docs/screenshots/07-resultados.png) |
+| ![Inicio](docs/screenshots/01-home.png) | ![Explorar](docs/screenshots/02-explore.png) | ![Onboarding](docs/screenshots/12-onboarding-bienvenida.png) | ![Mi viaje](docs/screenshots/05b-ventana-horaria.png) |
 
-> 🤖 **¿Sos un agente de IA?** Empezá por [AGENTS.md](AGENTS.md). Diseño en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), pendientes en [docs/ROADMAP.md](docs/ROADMAP.md).
+| Solicitudes | Resultados + confetti | Chat del convoy | Perfil |
+|---|---|---|---|
+| ![Solicitudes](docs/screenshots/04-solicitudes.png) | ![Resultados](docs/screenshots/07-resultados.png) | ![Chat](docs/screenshots/15-chat.png) | ![Perfil](docs/screenshots/08-perfil.png) |
+
+> 🤖 **¿Sos un agente de IA?** Empezá por [AGENTS.md](AGENTS.md). Diseño en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), estado vivo en [docs/TODO.md](docs/TODO.md), qué falta para escalar en [docs/GROWTH.md](docs/GROWTH.md).
+>
+> 🚀 **¿Querés lanzarlo de verdad?** (multi-dispositivo, login real, Play Store, App Store): guía paso a paso en [docs/lanzamiento/](docs/lanzamiento/). Base de datos en [server/](server/).
 
 ---
 
@@ -17,13 +23,13 @@ Demo de fábrica incluida: *La Banda del Asado* (26 personas, 8 autos, 5 puntos 
 ```bash
 npm install
 npm run dev        # abre http://localhost:5173
-npm test           # 39 tests (motor + integración + modo público + smoke)
+npm test           # 69 tests (motor + integración + modo público + i18n + auth + smoke)
 ```
 
 Otros comandos:
 
 ```bash
-npm run test:e2e      # 13 flujos E2E con Playwright (levanta su server en :5199)
+npm run test:e2e      # 19 flujos E2E con Playwright (levanta su server en :5199)
 npm run typecheck     # tsc --noEmit
 npm run build         # → dist/         (deploy web / PWA / Capacitor)
 npm run build:single  # → dist-single/  (UN solo index.html autocontenido)
@@ -34,15 +40,18 @@ npm run preview       # sirve dist/ localmente
 
 ## Qué hace
 
+- **Onboarding guiado**: wizard de bienvenida (idioma → nombre → email → tu casa → ¿auto? → notificaciones) para que un usuario nuevo entienda todo en un minuto.
 - **Roles por evento**: cada miembro elige conductor / pasajero / no voy, con ventana horaria.
 - **Restricciones duras** (nunca se violan): capacidad del auto, desvío máximo del conductor, radio de caminata del pasajero, ventanas horarias, necesidades (♿ silla de ruedas, 🐕 mascotas, 👶 sillita).
+- **Configurable en el espacio Y el tiempo**: el **radio de caminata** se dibuja en vivo como un círculo en el mapa; la **ventana horaria** como un timeline con la hora del evento marcada. Ambos se mueven con sliders.
 - **Preferencias blandas** (solo desempatan, jamás descartan): mismo subgrupo, auto libre de humo.
 - **Puntos de encuentro**: si al pasajero le conviene caminar a una parada conocida (estación, plaza), el motor lo propone con minutos de caminata.
-- **Salidas públicas o privadas (tipo BlaBlaCar)**: un evento privado es solo de la org; uno público aparece en **Explorar** para toda la comunidad. Pedís lugar con un tap; el organizador ve tu **puntuación ★, cuántos viajes hiciste, hace cuánto te uniste, tus reseñas y tu mensaje**, y te acepta o rechaza. Al aceptarte, entrás al cálculo de asignación automáticamente.
-- **Reputación**: reseñas de 1–5 estrellas con comentario tras cada viaje, historial por miembro, perfil público con antigüedad.
-- **Admin**: calcular/recalcular, mover pasajeros a mano (con aviso claro si eso rompe una restricción), aceptar/rechazar solicitudes, simular que un conductor canceló (recálculo incremental con `warmStart`, mueve lo mínimo), métricas (asignados, autos, desvío promedio, CO₂ estimado) y export CSV/JSON.
-- **Notificaciones**: diff entre cálculos → "te asignamos con X", "tu viaje cambió", "quedaste sin lugar (motivo)", "¡te aceptaron!".
-- **UI mobile-first**: modo oscuro/claro, español/inglés, sliders y steppers, tarjeta "hoja de ruta" con paradas y patente.
+- **Salidas públicas o privadas (tipo BlaBlaCar)**: un evento privado es solo de la org; uno público aparece en **Explorar** (con filtros por fecha: hoy / este finde / próximos 7 días) para toda la comunidad. Pedís lugar con un tap; el organizador ve tu **puntuación ★, cuántos viajes hiciste, hace cuánto te uniste, tus reseñas y tu mensaje**, y te acepta o rechaza. Al aceptarte, entrás al cálculo automáticamente.
+- **Reputación**: reseñas de 1–5 estrellas con comentario, historial por miembro, perfil público con antigüedad.
+- **Cuenta y comunicaciones**: verificación de email por código, **chat por convoy** entre participantes, y preferencias de aviso por tipo (asignaciones / solicitudes / chat / email).
+- **Admin**: armar/rearmar convoys, mover pasajeros a mano (con aviso si rompe una restricción), aceptar/rechazar solicitudes, cancelar conductor (recálculo incremental con `warmStart`), métricas (asignados, autos, desvío, CO₂) y export CSV/JSON.
+- **Celebraciones tipo Duolingo**: confetti al conseguir convoy y al armarlos, micro-interacciones, empty states ilustrados.
+- **6 idiomas** (🇦🇷 es · 🇺🇸 en · 🇧🇷 pt · 🇩🇪 de · 🇮🇹 it · 🇫🇷 fr), modo oscuro/claro, mobile-first.
 
 ## Qué es real y qué es mock
 
@@ -52,8 +61,10 @@ npm run preview       # sirve dist/ localmente
 | Modo público: solicitudes, aceptar/rechazar, reputación, historial | **Real** (lógica y UI completas). Lo único simulado es el *otro* humano: como no hay backend, el organizador de un evento ajeno "responde" solo a los ~4 s (`scheduleSimulatedReply` en `store.tsx`, primero en morir cuando haya backend). |
 | Ruteo | **Mock por defecto** (`MockRoutingProvider`: haversine ×1.3 a 26 km/h). Adaptador **OSRM real ya escrito** (`OsrmRoutingProvider`), swap de 1 línea (ver abajo). |
 | Mapas | **Real**: Leaflet + tiles de OpenStreetMap (atribución incluida, obligatoria). |
-| Persistencia | localStorage (clave `convoyar:v2`) con fallback en memoria. Un dispositivo. |
-| Multi-dispositivo / auth / push | **Stubs.** El código de compartir org usa un `joinCode` local; las "notificaciones" son in-app + Notification API del navegador. Camino sugerido: Supabase (Postgres + Realtime + Auth) manteniendo el motor tal cual, o cualquier backend que hable el contrato `MatchInput → MatchResult`. Ver [docs/ROADMAP.md](docs/ROADMAP.md). |
+| Chat del convoy | **Real** (UI + estado). La respuesta del otro participante es simulada (demo sin backend), igual que el organizador ajeno. |
+| Verificación de email | **Simulada** (`services/auth.ts`: código de 6 dígitos que la demo muestra en pantalla). Contrato `AuthProvider` listo para Supabase Auth / propio. |
+| Persistencia | localStorage (clave `convoyar:v3`) con fallback en memoria. Un dispositivo. |
+| Multi-dispositivo / auth / push | **Stubs, pero con el camino listo.** Schema Postgres + RLS ya escritos en [server/](server/); guía de conexión en [docs/lanzamiento/](docs/lanzamiento/). El motor se muda respetando el contrato `MatchInput → MatchResult`. |
 | Monetización | **Cableada y apagada** (ver abajo). |
 
 ## Arquitectura
@@ -132,11 +143,11 @@ Nada de esto afecta la funcionalidad actual: hoy es 100 % gratis y sin anuncios.
 
 ## Roadmap
 
-1. **MVP local (esto)** ✅ — motor + UI completa + modo público tipo BlaBlaCar + demo, un dispositivo, ruteo mock con adaptador OSRM listo.
-2. **Sync real** — backend liviano (Supabase sugerido): orgs compartidas por código, auth, realtime, push, solicitudes entre personas reales. El motor se muda tal cual (o corre en el server).
-3. **Escala** — OSRM propio, geocoding Nominatim, optimizador con más metaheurística (el módulo ya está aislado para eso), métricas históricas.
+1. **MVP local (esto)** ✅ — motor + UI completa + modo público tipo BlaBlaCar + onboarding + 6 idiomas + chat + verificación de email (simulada) + deleite visual. Un dispositivo, ruteo mock con adaptador OSRM listo.
+2. **Sync real** — Supabase (schema ya escrito en [server/](server/)): orgs compartidas, auth, realtime, push, solicitudes entre personas reales. El motor se muda tal cual. Guía en [docs/lanzamiento/](docs/lanzamiento/).
+3. **Escala** — OSRM propio, geocoding Nominatim, métricas históricas, confianza (verificación de identidad, reportes).
 
-Detalle paso a paso en [docs/ROADMAP.md](docs/ROADMAP.md).
+Detalle técnico en [docs/ROADMAP.md](docs/ROADMAP.md) · qué falta para "nivel Silicon Valley" en [docs/GROWTH.md](docs/GROWTH.md) · cómo lanzar en [docs/lanzamiento/](docs/lanzamiento/).
 
 ## Decisiones que tomé distinto al spec (y por qué)
 
