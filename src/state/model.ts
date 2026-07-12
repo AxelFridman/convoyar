@@ -125,6 +125,24 @@ export interface Notification {
   at: string;
 }
 
+/** Mensaje del chat de un convoy/salida (comunicación entre participantes). */
+export interface ChatMessage {
+  id: string;
+  eventId: string;
+  fromMemberId: string;
+  body: string;
+  at: string;
+}
+
+/** Qué avisos quiere recibir el usuario, por tipo. El canal (push/in-app) lo
+ *  decide `notifPermission`; esto decide el contenido. */
+export interface NotifPrefs {
+  assignments: boolean; // te asignaron / cambió tu viaje
+  requests: boolean;    // alguien pidió lugar en tu salida
+  chat: boolean;        // mensajes nuevos en un convoy
+  email: boolean;       // además, resumen por email (simulado)
+}
+
 export interface Settings {
   lang: Lang;
   theme: "system" | "dark" | "light";
@@ -132,10 +150,11 @@ export interface Settings {
   notifPermission: boolean;
   /** false hasta que el usuario completa el wizard de bienvenida. */
   onboarded: boolean;
+  notifPrefs: NotifPrefs;
 }
 
 export interface AppState {
-  version: 2;
+  version: 3;
   meId: string;
   orgs: Org[];
   members: Member[];
@@ -146,6 +165,7 @@ export interface AppState {
   joinRequests: JoinRequest[];
   reviews: Review[];
   tripHistory: TripRecord[];
+  messages: ChatMessage[];
   settings: Settings;
   activeOrgId: string;
 }

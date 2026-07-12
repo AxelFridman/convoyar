@@ -4,6 +4,9 @@ import { type TKey } from "../i18n";
 import { RideCard } from "../components/RideCard";
 import MapPicker, { type MapMarker } from "../components/MapPicker";
 import { Confetti } from "../components/Celebration";
+import { Chat } from "../components/Chat";
+import { Sheet } from "../components/UI";
+import { isParticipant } from "../state/reputation";
 import { IconWarn, IconCheck } from "../components/Icons";
 
 /** Celebraciones ya mostradas (por cálculo + usuario), para no repetir al volver a la pestaña. */
@@ -13,8 +16,23 @@ export default function Results({ eventId }: { eventId: string | null }) {
   const { state } = useStore();
   const T = useT();
   const [party, setParty] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const ev = state.events.find((e) => e.id === eventId);
   if (!ev) return <div className="screen"><p className="sub center">{T("trip.noEvent")}</p></div>;
+
+  const canChat = isParticipant(state, ev.id, state.meId);
+  const chatCount = state.messages.filter((m) => m.eventId === ev.id).length;
+  const chatButton = canChat && (
+    <button type="button" className="btn btn-ghost btn-block chatOpenBtn" onClick={() => setChatOpen(true)}>
+      💬 {T("chat.open")}
+      {chatCount > 0 && <span className="pill num">{chatCount}</span>}
+    </button>
+  );
+  const chatSheet = (
+    <Sheet open={chatOpen} onClose={() => setChatOpen(false)} title={T("chat.title")}>
+      <Chat eventId={ev.id} />
+    </Sheet>
+  );
 
   const assignment = state.assignments[ev.id];
   const myLeg = state.legs.find((l) => l.eventId === ev.id && l.memberId === state.meId);
@@ -23,10 +41,12 @@ export default function Results({ eventId }: { eventId: string | null }) {
     return (
       <div className="screen">
         <Header title={T("nav.results")} sub={ev.title} />
+        {chatButton}
         <div className="emptyState">
           <div className="emptyArt" aria-hidden="true">🗺️</div>
           <p className="sub center">{T("results.empty") + " " + T("results.emptyAdmin")}</p>
         </div>
+        {chatSheet}
       </div>
     );
   }
@@ -67,6 +87,8 @@ export default function Results({ eventId }: { eventId: string | null }) {
         </div>
       )}
 
+      {chatButton}
+
       {meUnassigned && (
         <div className="alert">
           <IconWarn size={20} />
@@ -96,6 +118,8 @@ export default function Results({ eventId }: { eventId: string | null }) {
         .map((r) => (
           <RideCard key={r.driverLegId} ride={r} event={ev} state={state} />
         ))}
+
+      {chatSheet}
     </div>
   );
 }

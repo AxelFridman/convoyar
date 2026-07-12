@@ -11,6 +11,7 @@ import React, {
 import type {
   AppState,
   Assignment,
+  ChatMessage,
   EventDoc,
   JoinRequest,
   Leg,
@@ -26,6 +27,7 @@ import { solveMatching, validateMatch, applyManualMove } from "../engine/matchin
 import type { DriverLeg, MatchInput, MatchResult, PassengerLeg } from "../engine/types";
 import { minutesToHHMM } from "../engine/geo";
 import { systemNotify } from "../services/notify";
+import { participantsOf } from "./reputation";
 import { translate, type Lang, type TKey } from "../i18n";
 
 type Action =
@@ -40,6 +42,7 @@ type Action =
   | { type: "addJoinRequest"; request: JoinRequest }
   | { type: "decideJoinRequest"; requestId: string; status: "approved" | "rejected"; decidedAt: string }
   | { type: "addReview"; review: Review }
+  | { type: "addMessage"; message: ChatMessage }
   | { type: "setSettings"; patch: Partial<Settings> }
   | { type: "setActiveOrg"; orgId: string }
   | { type: "reset" };
@@ -86,6 +89,8 @@ function reducer(s: AppState, a: Action): AppState {
       );
       return { ...s, reviews: [...rest, a.review] };
     }
+    case "addMessage":
+      return { ...s, messages: [...s.messages, a.message].slice(-500) };
     case "setSettings":
       return { ...s, settings: { ...s.settings, ...a.patch } };
     case "setActiveOrg":
@@ -258,6 +263,8 @@ interface Store {
   decideRequest: (requestId: string, approve: boolean) => Promise<void>;
   /** Reseña de 1–5 estrellas de meId hacia otro miembro. */
   rateMember: (toMemberId: string, stars: number, comment?: string) => void;
+  /** Publica un mensaje en el chat de un convoy (demo: alguien responde solo). */
+  sendMessage: (eventId: string, body: string) => void;
   resetDemo: () => void;
   computing: boolean;
 }
@@ -267,7 +274,7 @@ const Ctx = createContext<Store | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, null as unknown as AppState, () => {
     const loaded = loadState<AppState>();
-    return loaded && loaded.version === 2 ? loaded : buildSeed();
+    return loaded && loaded.version === 3 ? loaded : buildSeed();
   });
   const [computing, setComputing] = useState(false);
   const provider = useMemo(() => new MockRoutingProvider(), []);
@@ -320,7 +327,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (notifs.length) {
           dispatch({ type: "addNotifs", notifs });
           const mine = notifs.find((n) => n.memberId === s.meId);
-          if (mine && s.settings.notifPermission) systemNotify(mine.title, mine.body);
+          if (mine && s.settings.notifPermission && s.settings.notifPrefs.assignments)
+            systemNotify(mine.title, mine.body);
         }
       } finally {
         setComputing(false);
@@ -401,7 +409,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         at: new Date().toISOString()
       };
       dispatch({ type: "addNotifs", notifs: [notif] });
-      if (req.memberId === s.meId && s.settings.notifPermission) systemNotify(notif.title, notif.body);
+      if (req.memberId === s.meId && s.settings.notifPermission && s.settings.notifPrefs.assignments)
+        systemNotify(notif.title, notif.body);
       // El organizador simulado también "calcula": así el aceptado ve su viaje en Resultados.
       if (leg) {
         const rest = s.legs.filter(
@@ -511,6 +520,42 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "addReview", review });
   }, []);
 
+  const sendMessage = useCallback((eventId: string, body: string) => {
+    const s = stateRef.current;
+    const text = body.trim();
+    if (!text) return;
+    const now = Date.now();
+    dispatch({
+      type: "addMessage",
+      message: { id: `msg-${now.toString(36)}`, eventId, fromMemberId: s.meId, body: text, at: new Date().toISOString() }
+    });
+    // Demo sin backend: otro participante del convoy contesta algo simple.
+    const others = participantsOf(s, eventId).filter((id) => id !== s.meId);
+    if (others.length === 0) return;
+    const replier = others[text.length % others.length]; // determinístico por el texto
+    const T = (k: TKey, vars?: Record<string, string | number>) => translate(s.settings.lang, k, vars);
+    const canned: TKey[] = ["chat.canned1", "chat.canned2", "chat.canned3", "chat.canned4"];
+    const pick = canned[text.length % canned.length];
+    const h = setTimeout(() => {
+      const s2 = stateRef.current;
+      dispatch({
+        type: "addMessage",
+        message: {
+          id: `msg-${Date.now().toString(36)}-r`,
+          eventId,
+          fromMemberId: replier,
+          body: T(pick),
+          at: new Date().toISOString()
+        }
+      });
+      if (s2.settings.notifPermission && s2.settings.notifPrefs.chat) {
+        const name = s2.members.find((m) => m.id === replier)?.name ?? "?";
+        systemNotify(T("chat.newFrom", { name }), T(pick));
+      }
+    }, 2600);
+    timersRef.current.push(h);
+  }, []);
+
   const resetDemo = useCallback(() => {
     clearState();
     dispatch({ type: "reset" });
@@ -525,6 +570,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     requestJoin,
     decideRequest,
     rateMember,
+    sendMessage,
     resetDemo,
     computing
   };

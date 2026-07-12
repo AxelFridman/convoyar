@@ -41,10 +41,15 @@
       pasos como array {id, body, canNext} (agregar/quitar = trivial). Flag
       `settings.onboarded` (seed=true; se rejuega desde Perfil "Ver la introducción").
       App muestra el wizard a pantalla completa si `!onboarded`. 26 claves ob.* × 6 idiomas.
-- [ ] **PR5 `feat/account-comms`** — email + verificación (código simulado localmente,
-      interfaz `services/auth.ts` lista para backend real), chat por convoy
-      (mensajes entre participantes de una salida, respuestas simuladas de la demo),
-      preferencias de notificación por canal.
+- [x] **PR5 `feat/account-comms`** — cuentas, comunicaciones y preferencias. ✅
+      Verificación de email con código (`services/auth.ts`: `AuthProvider` +
+      `LocalAuthProvider` simulado, contrato listo para Supabase/Auth0/propio; el
+      código se muestra en la demo, en prod nunca vuelve al cliente). Chat por convoy
+      (`components/Chat.tsx`, mensajes entre participantes con respuesta simulada;
+      `participantsOf` en reputation.ts). Preferencias de aviso por tipo (toggles):
+      asignaciones/solicitudes/chat/email; `diffNotifs` y el chat respetan `notifPrefs`.
+      Modelo v3 (`messages`, `NotifPrefs`, `Member.email/emailVerified`); clave
+      `convoyar:v3`. 30 claves i18n × 6 idiomas. auth.test.ts + participantsOf test.
 - [ ] **PR6 `feat/temporal-search`** — claridad temporal: filtros en Explorar
       (fecha desde/hasta, chips "hoy / este finde / próxima semana"), franja horaria
       preferida como filtro, visual timeline de tu ventana en Mi viaje.

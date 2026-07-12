@@ -10,6 +10,7 @@ import {
   isParticipant,
   memberSince,
   myRequestFor,
+  participantsOf,
   pendingRequestsFor,
   ratingOf,
   tripCountOf
@@ -77,6 +78,14 @@ describe("solicitudes y permisos", () => {
     expect(myRequestFor(s, tigre.id, "m0")).toBeUndefined();
   });
 
+  it("participantsOf incluye miembros de la org, aprobados y quien tiene leg", () => {
+    const p = participantsOf(s, "ev1");
+    expect(p).toContain("m0"); // miembro de la org
+    expect(p.length).toBe(new Set(p).size); // sin duplicados
+    const tigre = participantsOf(s, "ev2");
+    expect(tigre).toContain("c6"); // Delfi, aprobada aunque no es de la org
+  });
+
   it("solo organizador o admin de la org administran", () => {
     expect(canAdminEvent(s, tigre.id, "m0")).toBe(true); // creador y admin
     expect(canAdminEvent(s, tigre.id, "c1")).toBe(false);
@@ -89,11 +98,14 @@ describe("solicitudes y permisos", () => {
 describe("consistencia del seed v2", () => {
   const s = buildSeed();
 
-  it("versión 2 con las colecciones nuevas", () => {
-    expect(s.version).toBe(2);
+  it("versión 3 con las colecciones nuevas", () => {
+    expect(s.version).toBe(3);
     expect(s.reviews.length).toBeGreaterThan(15);
     expect(s.tripHistory.length).toBeGreaterThan(30);
     expect(s.joinRequests.length).toBe(4);
+    expect(s.messages.length).toBeGreaterThan(0);
+    expect(s.settings.notifPrefs).toBeDefined();
+    expect(s.settings.onboarded).toBe(true);
   });
 
   it("todos los eventos tienen visibilidad y organizador válidos", () => {

@@ -6,8 +6,10 @@ import { Avatar, MemberProfile, Stars } from "../components/People";
 import { memberSince, ratingOf, tripsOf } from "../state/reputation";
 import { PLANS, purchase, type PlanId } from "../services/billing";
 import { requestNotifPermission } from "../services/notify";
+import { auth, isValidEmail } from "../services/auth";
 import { storageMode } from "../services/storage";
 import type { Feature } from "../engine/types";
+import type { NotifPrefs } from "../state/model";
 
 const FEATURES: Feature[] = ["wheelchair", "pets", "big_trunk", "bikes", "child_seat"];
 
@@ -20,6 +22,38 @@ export default function Profile() {
   const [rateId, setRateId] = useState<string | null>(null);
   const rating = ratingOf(state, me.id);
   const myTrips = tripsOf(state, me.id);
+
+  // --- verificación de email (simulada, ver services/auth.ts) ---
+  const [email, setEmail] = useState(me.email ?? "");
+  const [codeStage, setCodeStage] = useState(false);
+  const [code, setCode] = useState("");
+  const [authMsg, setAuthMsg] = useState("");
+  const prefs = state.settings.notifPrefs;
+  const setPref = (k: keyof NotifPrefs, v: boolean) =>
+    dispatch({ type: "setSettings", patch: { notifPrefs: { ...prefs, [k]: v } } });
+
+  const startVerify = async () => {
+    if (!isValidEmail(email)) {
+      setAuthMsg(T("account.invalidEmail"));
+      return;
+    }
+    dispatch({ type: "updateMember", member: { ...me, email: email.trim(), emailVerified: false } });
+    const r = await auth.sendCode(email);
+    if (r.ok) {
+      setCodeStage(true);
+      setAuthMsg(T("account.codeSent", { code: r.demoCode ?? "······" }));
+    }
+  };
+  const confirmCode = async () => {
+    if (await auth.verifyCode(email, code)) {
+      dispatch({ type: "updateMember", member: { ...me, email: email.trim(), emailVerified: true } });
+      setCodeStage(false);
+      setCode("");
+      setAuthMsg(T("account.verifyOk"));
+    } else {
+      setAuthMsg(T("account.verifyFail"));
+    }
+  };
 
   const setVehicle = (v: NonNullable<typeof me.vehicle> | null) =>
     dispatch({ type: "updateMember", member: { ...me, vehicle: v } });
@@ -142,6 +176,62 @@ export default function Profile() {
         )}
       </div>
 
+      <h2 className="eyebrow">{T("account.title")}</h2>
+      <div className="field">
+        <span>
+          {T("account.email")}{" "}
+          {me.email && (
+            <span className={`pill ${me.emailVerified ? "pill-ok" : "pill-warn"}`}>
+              {me.emailVerified ? `✓ ${T("account.verified")}` : T("account.unverified")}
+            </span>
+          )}
+        </span>
+        <input
+          type="email"
+          inputMode="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setCodeStage(false);
+            setAuthMsg("");
+          }}
+          placeholder="vos@email.com"
+        />
+        {!codeStage ? (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            disabled={!email.trim() || (me.email === email.trim() && me.emailVerified)}
+            onClick={startVerify}
+          >
+            {me.emailVerified && me.email === email.trim() ? `✓ ${T("account.verified")}` : T("account.sendCode")}
+          </button>
+        ) : (
+          <div className="row gap">
+            <input
+              className="num codeInput"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder={T("account.codePlaceholder")}
+              maxLength={6}
+              inputMode="numeric"
+            />
+            <button type="button" className="btn btn-primary btn-sm" disabled={code.length < 6} onClick={confirmCode}>
+              {T("account.confirm")}
+            </button>
+          </div>
+        )}
+        {authMsg && <p className="sub">{authMsg}</p>}
+      </div>
+
+      <div className="field">
+        <span>{T("prefs.title")}</span>
+        <PrefRow label={T("prefs.assignments")} on={prefs.assignments} onToggle={(v) => setPref("assignments", v)} />
+        <PrefRow label={T("prefs.requests")} on={prefs.requests} onToggle={(v) => setPref("requests", v)} />
+        <PrefRow label={T("prefs.chat")} on={prefs.chat} onToggle={(v) => setPref("chat", v)} />
+        <PrefRow label={T("prefs.email")} on={prefs.email} onToggle={(v) => setPref("email", v)} />
+      </div>
+
       <h2 className="eyebrow">{T("profile.settings")}</h2>
 
       <div className="field">
@@ -238,6 +328,25 @@ export default function Profile() {
         <br />
         <span className="num">v1.0</span>
       </p>
+    </div>
+  );
+}
+
+/** Fila con toggle tipo switch para una preferencia de aviso. */
+function PrefRow({ label, on, onToggle }: { label: string; on: boolean; onToggle: (v: boolean) => void }) {
+  return (
+    <div className="prefRow">
+      <span>{label}</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label={label}
+        className={`toggle ${on ? "toggle-on" : ""}`}
+        onClick={() => onToggle(!on)}
+      >
+        <span className="toggleKnob" />
+      </button>
     </div>
   );
 }

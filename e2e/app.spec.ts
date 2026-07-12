@@ -179,6 +179,46 @@ test.describe("Perfil", () => {
   });
 });
 
+test.describe("Cuenta y comunicaciones (PR5)", () => {
+  test("chat del convoy: envío un mensaje y me responden", async ({ page }) => {
+    await page.goto("/");
+    await page.getByText("Asado del sábado").click();
+    await page.getByRole("tab", { name: "Resultados" }).click();
+    await page.getByRole("button", { name: /Abrir chat/ }).click();
+    // el seed trae mensajes
+    await expect(page.getByText("¿Alguien lleva algo para tomar?")).toBeVisible();
+    await page.getByPlaceholder("Escribí un mensaje…").fill("Yo salgo 12 en punto");
+    await page.getByRole("button", { name: "Enviar" }).click();
+    await expect(page.getByText("Yo salgo 12 en punto")).toBeVisible();
+    // respuesta simulada (~2.6s)
+    await expect(page.locator(".chatMsg").last()).toBeVisible({ timeout: 8000 });
+  });
+
+  test("verificación de email con código (demo)", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("tab", { name: "Perfil" }).click();
+    const emailInput = page.getByPlaceholder("vos@email.com");
+    await emailInput.fill("probador@mail.com");
+    await page.getByRole("button", { name: "Enviarme el código" }).click();
+    // la demo muestra el código en el mensaje "Te enviamos un código (demo: 123456)."
+    const msg = await page.getByText(/demo:/).textContent();
+    const code = (msg ?? "").match(/\d{6}/)?.[0] ?? "";
+    expect(code).toHaveLength(6);
+    await page.getByPlaceholder("Código de 6 dígitos").fill(code);
+    await page.getByRole("button", { name: "Confirmar" }).click();
+    await expect(page.getByText("¡Email verificado! ✅")).toBeVisible();
+  });
+
+  test("preferencias de notificación: los toggles cambian", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("tab", { name: "Perfil" }).click();
+    const chatToggle = page.locator(".prefRow", { hasText: "Mensajes del chat" }).getByRole("switch");
+    await expect(chatToggle).toHaveAttribute("aria-checked", "true");
+    await chatToggle.click();
+    await expect(chatToggle).toHaveAttribute("aria-checked", "false");
+  });
+});
+
 test.describe("Onboarding", () => {
   test("wizard completo desde el replay en Perfil", async ({ page }) => {
     await page.goto("/");

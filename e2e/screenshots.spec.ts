@@ -63,9 +63,20 @@ test("recorrido visual completo", async ({ page }) => {
   await page.getByRole("tab", { name: "Explorar" }).click();
   await shoot(page, "11-explore-claro");
 
-  // onboarding (modo oscuro, algunos pasos)
+  // chat del convoy (modo oscuro) — antes del onboarding, que deja la sesión sin onboardear
   await page.getByRole("tab", { name: "Perfil" }).click();
   await page.getByRole("tab", { name: "Oscuro" }).click();
+  await page.getByRole("tab", { name: "Inicio" }).click();
+  await page.getByText("Asado del sábado").click();
+  await page.getByRole("tab", { name: "Resultados" }).click();
+  await page.getByRole("button", { name: /Abrir chat/ }).click();
+  await page.getByPlaceholder("Escribí un mensaje…").fill("Salgo 12 en punto, ¿los paso a buscar?");
+  await page.waitForTimeout(300);
+  await shoot(page, "15-chat");
+  await page.locator(".sheetBack").click({ position: { x: 10, y: 10 } });
+
+  // onboarding (modo oscuro, algunos pasos) — al final: deja onboarded=false
+  await page.getByRole("tab", { name: "Perfil" }).click();
   await page.getByRole("button", { name: "Ver la introducción otra vez" }).click();
   await shoot(page, "12-onboarding-bienvenida");
   await page.getByRole("button", { name: "Empezar" }).click();
