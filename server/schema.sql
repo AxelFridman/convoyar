@@ -12,7 +12,7 @@ create table if not exists public.members (
   auth_user_id   uuid unique references auth.users(id) on delete set null,
   name           text not null,
   subgroup       text,
-  vehicle        jsonb,                 -- {capacity,features[],smokeFree,plate} | null
+  vehicles       jsonb not null default '[]', -- Vehicle[]: [{id,alias?,capacity,features[],smokeFree,plate?}]
   joined_at      timestamptz not null default now(),
   bio            text,
   email          text,
@@ -82,6 +82,7 @@ create table if not exists public.legs (
   window_end     int  not null,
   origin_lat     double precision,       -- si falta, se usa el home
   origin_lng     double precision,
+  vehicle_id     text,                   -- conductor: qué vehículo del garage usa (id dentro de members.vehicles)
   max_detour_min int,                    -- conductor
   max_walk_min   int,                    -- pasajero
   needs          jsonb,                  -- Feature[]

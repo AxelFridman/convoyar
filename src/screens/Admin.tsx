@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useStore, useT } from "../state/store";
 import { type TKey } from "../i18n";
-import { RideCard, legMember } from "../components/RideCard";
+import { RideCard, legMember, legVehicleOf } from "../components/RideCard";
 import { Sheet } from "../components/UI";
 import { Avatar, MemberProfile, Stars } from "../components/People";
 import {
@@ -221,7 +221,7 @@ export default function Admin({ eventId }: { eventId: string | null }) {
               )
               .map((d) => {
                 const ride = assignment.result.rides.find((r) => r.driverLegId === d.id);
-                const cap = legMember(state, d.id)?.vehicle?.capacity ?? 0;
+                const cap = legVehicleOf(state, d.id)?.capacity ?? 0;
                 const used = ride?.passengerLegIds.length ?? 0;
                 const isCurrent = !!ride?.passengerLegIds.includes(moving);
                 return (

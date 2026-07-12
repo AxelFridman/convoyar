@@ -110,14 +110,24 @@ describe("solicitudes y permisos", () => {
 describe("consistencia del seed v2", () => {
   const s = buildSeed();
 
-  it("versión 3 con las colecciones nuevas", () => {
-    expect(s.version).toBe(3);
+  it("versión 4 con las colecciones nuevas", () => {
+    expect(s.version).toBe(4);
     expect(s.reviews.length).toBeGreaterThan(15);
     expect(s.tripHistory.length).toBeGreaterThan(30);
     expect(s.joinRequests.length).toBe(4);
     expect(s.messages.length).toBeGreaterThan(0);
     expect(s.settings.notifPrefs).toBeDefined();
     expect(s.settings.onboarded).toBe(true);
+  });
+
+  it("garage: vehículos con id único y 'Vos' tiene 2 (auto + moto)", () => {
+    const ids = s.members.flatMap((m) => m.vehicles.map((v) => v.id));
+    expect(ids.length).toBe(new Set(ids).size); // ids únicos globalmente
+    const me = s.members.find((m) => m.id === "m0")!;
+    expect(me.vehicles.length).toBe(2);
+    expect(me.vehicles.every((v) => v.capacity >= 1 && Array.isArray(v.features))).toBe(true);
+    // el seed deja alias en algunos para lucir el garage
+    expect(me.vehicles.some((v) => v.alias)).toBe(true);
   });
 
   it("todos los eventos tienen visibilidad y organizador válidos", () => {

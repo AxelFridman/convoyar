@@ -3,11 +3,19 @@ import type { Ride, RideStop } from "../engine/types";
 import { minutesToHHMM } from "../engine/geo";
 import type { AppState, EventDoc } from "../state/model";
 import { useT } from "../state/store";
+import { legVehicle } from "../state/vehicles";
 import { IconWalk } from "./Icons";
 
 export function legMember(s: AppState, legId: string) {
   const leg = s.legs.find((l) => l.id === legId);
   return leg ? s.members.find((m) => m.id === leg.memberId) : undefined;
+}
+
+/** Vehículo efectivo de un leg de conductor (el elegido, o el primero del garage). */
+export function legVehicleOf(s: AppState, legId: string) {
+  const leg = s.legs.find((l) => l.id === legId);
+  const m = leg ? s.members.find((x) => x.id === leg.memberId) : undefined;
+  return m ? legVehicle(m, leg?.vehicleId) : null;
 }
 
 function stopLabel(s: AppState, ev: EventDoc, st: RideStop, isFirst: boolean, isLast: boolean, dep: string, end: string): string {
@@ -40,8 +48,9 @@ export function RideCard({
 }) {
   const T = useT();
   const driver = legMember(state, ride.driverLegId);
-  const plate = driver?.vehicle?.plate;
-  const free = (driver?.vehicle?.capacity ?? 0) - ride.passengerLegIds.length;
+  const veh = legVehicleOf(state, ride.driverLegId);
+  const plate = veh?.plate;
+  const free = (veh?.capacity ?? 0) - ride.passengerLegIds.length;
 
   return (
     <div className={`ride ${ride.manual ? "ride-manual" : ""}`}>
@@ -49,6 +58,7 @@ export function RideCard({
         <div>
           <div className="rideDriver">
             {driver?.name ?? "?"}
+            {veh?.alias && <span className="vehTag">· {veh.alias}</span>}
             {ride.manual && <span className="manualTag">{T("results.manualBadge")}</span>}
           </div>
           <div className="rideMeta num">

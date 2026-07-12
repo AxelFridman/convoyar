@@ -6,6 +6,7 @@ import MapPicker from "../components/MapPicker";
 import { TimeWindowBar } from "../components/TimeWindowBar";
 import { walkRadiusMeters, minutesToHHMM } from "../engine/geo";
 import { isParticipant } from "../state/reputation";
+import { hasVehicle, primaryVehicle, vehicleLabel } from "../state/vehicles";
 import type { Feature, LatLng } from "../engine/types";
 import type { Role } from "../state/model";
 
@@ -74,7 +75,7 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
     );
   }
 
-  const canDrive = !!me.vehicle;
+  const canDrive = hasVehicle(me);
   const save = () => {
     if (!role) return;
     // Conservar el id del leg: los assignments referencian legs por id.
@@ -153,40 +154,28 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
 
           {role === "driver" && (
             <>
-              <div className="field row spread">
-                <span>{T("trip.capacity")}</span>
-                <Stepper value={me.vehicle?.capacity ?? 3} min={1} max={8} onChange={(v) => me.vehicle && dispatch({ type: "updateMember", member: { ...me, vehicle: { ...me.vehicle, capacity: v } } })} />
+              <div className="field">
+                <span>{T("trip.vehicle")}</span>
+                {(() => {
+                  const veh = primaryVehicle(me);
+                  if (!veh) return <p className="sub">{T("profile.noVehicle")}</p>;
+                  return (
+                    <div className="card vehLine">
+                      <span className="vehLineName">{vehicleLabel(veh, T("garage.autoN", { n: veh.capacity }))}</span>
+                      <span className="sub num">{T("common.seatsN", { n: veh.capacity })}</span>
+                      {veh.features.map((f) => (
+                        <span key={f} className="pill">{T(`feature.${f}` as TKey)}</span>
+                      ))}
+                    </div>
+                  );
+                })()}
+                <p className="sub mapHint">{T("trip.editGarageHint")}</p>
               </div>
               <div className="field">
                 <span>
                   {T("trip.maxDetour")} · <b className="num">{detour} {T("common.min")}</b>
                 </span>
                 <Slider value={detour} min={5} max={60} step={5} onChange={setDetour} format={(v) => `${v}′`} />
-              </div>
-              <div className="field">
-                <span>{T("trip.features")}</span>
-                <div className="chips">
-                  {FEATURES.map((f) => (
-                    <Chip
-                      key={f}
-                      active={me.vehicle?.features.includes(f)}
-                      onClick={() => {
-                        if (!me.vehicle) return;
-                        const has = me.vehicle.features.includes(f);
-                        const features = has ? me.vehicle.features.filter((x) => x !== f) : [...me.vehicle.features, f];
-                        dispatch({ type: "updateMember", member: { ...me, vehicle: { ...me.vehicle, features } } });
-                      }}
-                    >
-                      {T(`feature.${f}` as TKey)}
-                    </Chip>
-                  ))}
-                  <Chip
-                    active={me.vehicle?.smokeFree}
-                    onClick={() => me.vehicle && dispatch({ type: "updateMember", member: { ...me, vehicle: { ...me.vehicle, smokeFree: !me.vehicle.smokeFree } } })}
-                  >
-                    {T("trip.smokeFree")}
-                  </Chip>
-                </div>
               </div>
             </>
           )}
