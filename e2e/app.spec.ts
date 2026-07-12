@@ -287,6 +287,25 @@ test.describe("Onboarding", () => {
   });
 });
 
+test.describe("Preferencias por defecto (PR-B2)", () => {
+  test("el rol preferido precarga una salida nueva", async ({ page }) => {
+    await page.goto("/");
+    // setear "suelo ir de pasajero" en Ajustes
+    await page.getByRole("tab", { name: "Perfil" }).click();
+    await page.getByRole("button", { name: "Ajustes" }).first().click();
+    await page.locator(".field", { hasText: "Suelo ir" }).getByRole("tab", { name: "Necesito lugar" }).click();
+    await page.getByRole("button", { name: "Volver" }).click();
+    // crear una salida nueva y ver que el rol viene preseleccionado
+    await page.getByRole("tab", { name: "Inicio" }).click();
+    await page.getByRole("button", { name: "Nueva salida" }).click();
+    await page.getByPlaceholder("Asado, oficina, cumple…").fill("Prueba defaults");
+    await page.locator(".leaflet-container").last().click({ position: { x: 150, y: 100 } });
+    await page.getByRole("button", { name: "Crear salida" }).click();
+    // ya en Mi viaje del evento nuevo: el rol "Necesito lugar" está activo
+    await expect(page.getByRole("tab", { name: "Necesito lugar" })).toHaveAttribute("aria-selected", "true");
+  });
+});
+
 test.describe("Garage y vehículo por viaje", () => {
   test("editar el garage: agregar y renombrar un vehículo", async ({ page }) => {
     await page.goto("/");

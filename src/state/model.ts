@@ -13,6 +13,22 @@ export interface Vehicle {
   plate?: string;
 }
 
+/** Preferencias por defecto que precargan un viaje nuevo (PR-B2). Todo opcional. */
+export interface TripDefaults {
+  /** Rol que se sugiere al abrir una salida nueva. */
+  role?: "driver" | "passenger";
+  /** Ventana horaria habitual (min desde 00:00). */
+  window?: TimeWindow;
+  /** Caminata máxima habitual (pasajero). */
+  maxWalkMin?: number;
+  /** Desvío máximo habitual (conductor). */
+  maxDetourMin?: number;
+  /** Necesidades que suelo tener (silla de ruedas, mascota, etc.). */
+  needs?: Feature[];
+  /** Prefiero auto libre de humo. */
+  smokeFree?: boolean;
+}
+
 export interface Member {
   id: string;
   name: string;
@@ -20,6 +36,8 @@ export interface Member {
   home: LatLng;
   /** Garage: 0..n vehículos. Una persona puede tener auto y moto y elegir por viaje. */
   vehicles: Vehicle[];
+  /** Preferencias que precargan viajes nuevos (opcional). */
+  defaults?: TripDefaults;
   /** Cuándo se unió a la plataforma (para "miembro desde hace X"). */
   joinedISO: string;
   bio?: string;
