@@ -252,6 +252,13 @@ export const es = {
   "profile.rateDone": "¡Gracias! Reseña guardada.",
   "profile.with": "con {name}",
   "profile.replayOnboarding": "Ver la introducción otra vez",
+  "settings.title": "Ajustes",
+  "settings.appearance": "Apariencia e idioma",
+  "settings.data": "Datos y ayuda",
+  "settings.hourFormat": "Formato de hora",
+  "settings.hour24": "24 h",
+  "settings.hour12": "12 h",
+  "common.back": "Volver",
 
   "chat.title": "Chat del convoy",
   "chat.placeholder": "Escribí un mensaje…",

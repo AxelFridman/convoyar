@@ -38,6 +38,34 @@
 | Id de app (stores) | `app.convoyar` |
 | Clave localStorage | `convoyar:v2` |
 
+## Tanda "más lindo / más features / más config" (sesión 2026-07-12, parte 2)
+
+> Trabajo SOLO frontend local-first, en paralelo a la conexión de Supabase (otra persona).
+> Nunca toqué `services/auth.ts` como selector de provider, `.env`, ni `docs/lanzamiento/`.
+> Directiva transversal: **core simple y siempre visible; lo avanzado en sub-pantallas/tabs.**
+
+- [x] **PR-A1 `feat/garage`** (PR#10) — múltiples vehículos por persona. `Member.vehicle` →
+      `Member.vehicles: Vehicle[]` (con `id` + `alias`). Sección "Mi garage" en Perfil.
+      `state/vehicles.ts` (helpers puros). **Modelo v4** (clave `convoyar:v4`). ⚠️ ver delta SQL arriba.
+- [x] **PR-A2 `feat/vehicle-per-trip`** (PR#11) — elegir qué vehículo del garage llevás por
+      salida (`Leg.vehicleId`, selector en Mi viaje; el motor toma la capacidad del elegido).
+- [x] **PR-B1 `feat/settings-tab`** — pantalla **Ajustes** separada (cuenta, prefs, idioma,
+      tema, **formato de hora 12h/24h nuevo**, plan, intro, reset). Perfil queda con lo core
+      (identidad + reputación + historial + garage). `Settings.hour12?` opcional (sin bump).
+- [ ] **PR-A3** multi-auto por salida (2 choferes en una familia) — evaluar impacto en motor. Pendiente.
+- [ ] **PR-B2** defaults personales que precargan legs nuevos (ventana/origen/rol/necesidades).
+- [ ] **PR-B3** "borrar mi cuenta" (limpia estado local + hook para backend).
+- [ ] **PR-C1** viajes recurrentes · **PR-C2** aporte de nafta sugerido · **PR-C3** estados del convoy.
+- [ ] **PR-D1/D2** modo público mejor (mapa en Explorar, favoritos).
+- [ ] **PR-E1** logros/insignias + barra completar perfil.
+- [ ] **PR-F1/F2/F3** belleza (ruta real en mapa, rediseño tarjeta, tipografía).
+- [ ] **PR-G1/G2** accesibilidad AA · idiomas extra.
+
+**Deferidos con razón:**
+- **Unidades km/mi** (era parte de PR-B1): no hay superficie de km visible al usuario hoy
+  (distancias se muestran como CO₂ en kg y desvíos/caminata en minutos). Agregar el toggle
+  sería un control muerto. Reactivar cuando haya distancias en km en la UI.
+
 ## Plan de PRs (sesión 2026-07-11)
 
 - [x] **PR1 `feat/brand-convoyar`** — rebrand completo: manifest, capacitor, index.html,

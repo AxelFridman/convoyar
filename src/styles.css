@@ -845,6 +845,32 @@ button:focus-visible {
   outline: none;
   border-bottom-color: var(--accent);
 }
+/* puerta a Ajustes desde Perfil (fila con chevron) */
+.settingsEntry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 15px 16px;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.16s ease;
+}
+.settingsEntry:active { transform: scale(0.98); }
+.settingsEntry span { flex: 1; text-align: left; }
+.settingsEntry svg:first-child { color: var(--accent); }
+.settingsEntry svg:last-child { color: var(--muted); }
+.backBtn {
+  width: 40px;
+  height: 40px;
+}
+
 /* selector de vehículo por viaje (Mi viaje, garage con 2+) */
 .vehPicker {
   display: flex;

@@ -12,6 +12,7 @@ export function Chat({ eventId }: { eventId: string }) {
   const T = useT();
   const [draft, setDraft] = useState("");
   const lang = state.settings.lang;
+  const hour12 = !!state.settings.hour12;
 
   const msgs = state.messages
     .filter((m) => m.eventId === eventId)
@@ -37,7 +38,7 @@ export function Chat({ eventId }: { eventId: string }) {
                 {!mine && <div className="chatFrom">{nameOf(m.fromMemberId)}</div>}
                 <div className="chatBubble">{m.body}</div>
                 <div className="chatTime num">
-                  {new Date(m.at).toLocaleTimeString(localeOf(lang), { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(m.at).toLocaleTimeString(localeOf(lang), { hour: "2-digit", minute: "2-digit", hour12 })}
                 </div>
               </div>
             </div>

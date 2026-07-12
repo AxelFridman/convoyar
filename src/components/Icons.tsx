@@ -181,3 +181,15 @@ export const IconLock = (p: P) => (
     <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" />
   </S>
 );
+
+export const IconChevronLeft = (p: P) => (
+  <S {...p}>
+    <path d="M15 6l-6 6 6 6" />
+  </S>
+);
+
+export const IconChevronRight = (p: P) => (
+  <S {...p}>
+    <path d="M9 6l6 6-6 6" />
+  </S>
+);

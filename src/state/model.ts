@@ -158,6 +158,8 @@ export interface Settings {
   /** false hasta que el usuario completa el wizard de bienvenida. */
   onboarded: boolean;
   notifPrefs: NotifPrefs;
+  /** Formato de hora. Opcional (default 24h) → no requiere bump de versión. */
+  hour12?: boolean;
 }
 
 export interface AppState {

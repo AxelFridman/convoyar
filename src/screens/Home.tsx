@@ -22,6 +22,7 @@ import { localeOf } from "../i18n";
 export default function Home({ onOpenEvent }: { onOpenEvent: (eventId: string) => void }) {
   const { state, dispatch } = useStore();
   const lang = state.settings.lang;
+  const hour12 = !!state.settings.hour12;
   const T = useT();
   const [notifOpen, setNotifOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -98,7 +99,7 @@ export default function Home({ onOpenEvent }: { onOpenEvent: (eventId: string) =
               <div className="eventTitle">{ev.title}</div>
               <div className="sub">
                 <IconPin size={14} /> {ev.destinationName ?? "—"} ·{" "}
-                <span className="num">{d.toLocaleTimeString(localeOf(lang), { hour: "2-digit", minute: "2-digit", hour12: false })}</span>
+                <span className="num">{d.toLocaleTimeString(localeOf(lang), { hour: "2-digit", minute: "2-digit", hour12 })}</span>
               </div>
               <div className="eventChips">
                 <span className={`pill ${ev.visibility === "public" ? "pill-public" : ""}`}>

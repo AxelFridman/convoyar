@@ -44,6 +44,7 @@ export default function Explore({
   const { state, requestJoin } = useStore();
   const T = useT();
   const lang = state.settings.lang;
+  const hour12 = !!state.settings.hour12;
   const [profileId, setProfileId] = useState<string | null>(null);
   const [range, setRange] = useState<DateRange>("all");
   // `now` estable por render de pantalla (evita recomputar el rango en cada tecla).
@@ -130,7 +131,7 @@ export default function Explore({
                     {d.toLocaleTimeString(localeOf(lang), {
                       hour: "2-digit",
                       minute: "2-digit",
-                      hour12: false
+                      hour12
                     })}
                   </span>
                 </div>

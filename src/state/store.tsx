@@ -595,3 +595,15 @@ export function useT() {
     [lang]
   );
 }
+
+/** Formateador de hora (min desde 00:00) que respeta el formato 12h/24h del usuario. */
+export function useHhmm() {
+  const { state } = useStore();
+  const hour12 = !!state.settings.hour12;
+  return useCallback((min: number) => minutesToHHMM(min, hour12), [hour12]);
+}
+
+/** ¿El usuario usa reloj de 12h? Para `toLocaleTimeString` (hour12). */
+export function useHour12(): boolean {
+  return !!useStore().state.settings.hour12;
+}
