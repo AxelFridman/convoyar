@@ -50,9 +50,11 @@
       asignaciones/solicitudes/chat/email; `diffNotifs` y el chat respetan `notifPrefs`.
       Modelo v3 (`messages`, `NotifPrefs`, `Member.email/emailVerified`); clave
       `convoyar:v3`. 30 claves i18n × 6 idiomas. auth.test.ts + participantsOf test.
-- [ ] **PR6 `feat/temporal-search`** — claridad temporal: filtros en Explorar
-      (fecha desde/hasta, chips "hoy / este finde / próxima semana"), franja horaria
-      preferida como filtro, visual timeline de tu ventana en Mi viaje.
+- [x] **PR6 `feat/temporal-search`** — claridad temporal (el análogo temporal del ✅
+      radio de caminata). `components/TimeWindowBar.tsx`: timeline de tu ventana
+      horaria en Mi viaje (franja naranja + ticks + pin 📍 del evento, en vivo).
+      Chips de fecha en Explorar (Todas / Hoy / Este finde / Próx. 7 días) con
+      `inRange()` puro. Claves `search.*` + `trip.windowHint` × 6 idiomas.
 - [ ] **PR7 `feat/server-skeleton`** — paquete `server/` separado (Node + Fastify +
       Postgres): schema SQL completo, API REST que replica el contrato del motor,
       docker-compose, `docs/DATABASE.md` (schema + cómo desplegar en la nube).

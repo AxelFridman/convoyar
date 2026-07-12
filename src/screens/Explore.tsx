@@ -1,10 +1,34 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useStore, useT } from "../state/store";
 import { isParticipant, myRequestFor, pendingRequestsFor } from "../state/reputation";
 import { MemberProfile, PersonLine } from "../components/People";
 import { Sheet } from "../components/UI";
 import { IconCar, IconCheck, IconGlobe, IconPin, IconUsers } from "../components/Icons";
-import { localeOf } from "../i18n";
+import { localeOf, type TKey } from "../i18n";
+
+type DateRange = "all" | "today" | "weekend" | "week";
+
+/** ¿La fecha del evento cae dentro del rango elegido? (relativo a `now`). */
+function inRange(dateISO: string, range: DateRange, now: Date): boolean {
+  if (range === "all") return true;
+  const d = new Date(dateISO);
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+  const today = startOfDay(now);
+  const ev = startOfDay(d);
+  const dayMs = 86400000;
+  const diffDays = Math.round((ev.getTime() - today.getTime()) / dayMs);
+  if (range === "today") return diffDays === 0;
+  if (range === "week") return diffDays >= 0 && diffDays <= 7;
+  if (range === "weekend") {
+    // Próximo sábado y domingo (o el finde en curso).
+    const dow = now.getDay(); // 0 dom … 6 sáb
+    const toSat = (6 - dow + 7) % 7;
+    const sat = startOfDay(new Date(today.getTime() + toSat * dayMs));
+    const sun = startOfDay(new Date(sat.getTime() + dayMs));
+    return ev.getTime() === sat.getTime() || ev.getTime() === sun.getTime();
+  }
+  return true;
+}
 
 /**
  * Explorar: viajes públicos de toda la comunidad (flujo tipo BlaBlaCar).
@@ -20,10 +44,21 @@ export default function Explore({
   const T = useT();
   const lang = state.settings.lang;
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [range, setRange] = useState<DateRange>("all");
+  // `now` estable por render de pantalla (evita recomputar el rango en cada tecla).
+  const now = useMemo(() => new Date(), []);
 
-  const events = state.events
+  const allPublic = state.events
     .filter((e) => e.visibility === "public")
     .sort((a, b) => a.dateISO.localeCompare(b.dateISO));
+  const events = allPublic.filter((e) => inRange(e.dateISO, range, now));
+
+  const RANGES: { id: DateRange; key: TKey }[] = [
+    { id: "all", key: "search.all" },
+    { id: "today", key: "search.today" },
+    { id: "weekend", key: "search.weekend" },
+    { id: "week", key: "search.week" }
+  ];
 
   return (
     <div className="screen">
@@ -35,7 +70,26 @@ export default function Explore({
         </div>
       </header>
 
-      {events.length === 0 && (
+      <div className="dateChips" role="tablist" aria-label={T("search.title")}>
+        {RANGES.map((r) => (
+          <button
+            key={r.id}
+            type="button"
+            role="tab"
+            aria-selected={range === r.id}
+            className={`dateChip ${range === r.id ? "dateChip-on" : ""}`}
+            onClick={() => setRange(r.id)}
+          >
+            {T(r.key)}
+          </button>
+        ))}
+      </div>
+
+      {allPublic.length > 0 && events.length === 0 && (
+        <p className="sub center">{T("search.noneInRange")}</p>
+      )}
+
+      {allPublic.length === 0 && (
         <div className="emptyState">
           <div className="emptyArt" aria-hidden="true">🧭</div>
           <p className="sub center">{T("explore.empty")}</p>

@@ -11,8 +11,13 @@ playwright-report/
 blob-report/
 
 # entorno / editor
+# .env con secretos reales NUNCA se commitea. .env.single (solo VITE_SINGLE=1)
+# es la única excepción trackeada: es un flag de build, no lleva secretos.
+.env
 .env.local
 .env.*.local
+!.env.single
+server/.env
 .DS_Store
 Thumbs.db
 *.log

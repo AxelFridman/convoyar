@@ -179,6 +179,32 @@ test.describe("Perfil", () => {
   });
 });
 
+test.describe("Búsqueda temporal (PR6)", () => {
+  test("filtros de fecha en Explorar", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("tab", { name: "Explorar" }).click();
+    // "Todas" activo por defecto, se ven salidas
+    await expect(page.getByText("Finde en Mar del Plata")).toBeVisible();
+    // filtrar por "Hoy" — probablemente no haya nada hoy → mensaje de vacío
+    await page.getByRole("tab", { name: "Hoy" }).click();
+    await expect(
+      page.getByText("Finde en Mar del Plata").or(page.getByText("No hay salidas públicas en ese rango"))
+    ).toBeVisible();
+    // volver a Todas
+    await page.getByRole("tab", { name: "Todas" }).click();
+    await expect(page.getByText("Recital en La Plata")).toBeVisible();
+  });
+
+  test("timeline de ventana horaria en Mi viaje", async ({ page }) => {
+    await page.goto("/");
+    await page.getByText("Asado del sábado").click();
+    await page.getByRole("tab", { name: "Necesito lugar" }).click();
+    // el timeline de la ventana aparece con el pin del evento
+    await expect(page.locator(".twWindow")).toBeVisible();
+    await expect(page.locator(".twEvent")).toBeVisible();
+  });
+});
+
 test.describe("Cuenta y comunicaciones (PR5)", () => {
   test("chat del convoy: envío un mensaje y me responden", async ({ page }) => {
     await page.goto("/");
