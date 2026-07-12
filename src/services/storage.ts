@@ -2,7 +2,7 @@
  * Persistencia segura: localStorage cuando está disponible (web self-hosted,
  * PWA, Capacitor) con fallback en memoria (iframes restringidos, incógnito).
  */
-const KEY = "convoyar:v3";
+const KEY = "convoyar:v4";
 let memory: string | null = null;
 
 function canUseLocalStorage(): boolean {

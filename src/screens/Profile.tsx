@@ -8,8 +8,9 @@ import { PLANS, purchase, type PlanId } from "../services/billing";
 import { requestNotifPermission } from "../services/notify";
 import { auth, isValidEmail } from "../services/auth";
 import { storageMode } from "../services/storage";
+import { blankVehicle, newVehicleId } from "../state/vehicles";
 import type { Feature } from "../engine/types";
-import type { NotifPrefs } from "../state/model";
+import type { NotifPrefs, Vehicle } from "../state/model";
 
 const FEATURES: Feature[] = ["wheelchair", "pets", "big_trunk", "bikes", "child_seat"];
 
@@ -60,18 +61,23 @@ export default function Profile() {
     }
   };
 
-  const setVehicle = (v: NonNullable<typeof me.vehicle> | null) =>
-    dispatch({ type: "updateMember", member: { ...me, vehicle: v } });
-
-  const removeVehicle = () => {
-    // Sin vehículo no se puede manejar: bajamos también los legs de conductor
-    // para que los contadores y el matching no queden apuntando a un auto fantasma.
-    const driverLegs = state.legs.filter((l) => l.memberId === me.id && l.role === "driver");
-    if (driverLegs.length > 0) {
-      if (!confirm(T("profile.removeVehicleConfirm", { n: driverLegs.length }))) return;
-      for (const l of driverLegs) dispatch({ type: "removeLeg", memberId: me.id, eventId: l.eventId });
+  const setVehicles = (vehicles: typeof me.vehicles) =>
+    dispatch({ type: "updateMember", member: { ...me, vehicles } });
+  const updateVehicle = (v: Vehicle) =>
+    setVehicles(me.vehicles.map((x) => (x.id === v.id ? v : x)));
+  const addVehicle = () => setVehicles([...me.vehicles, blankVehicle(newVehicleId())]);
+  const removeVehicle = (id: string) => {
+    const rest = me.vehicles.filter((x) => x.id !== id);
+    // Quitar el ÚLTIMO vehículo deja a la persona sin poder manejar: bajamos sus
+    // legs de conductor para que los contadores y el matching no queden colgados.
+    if (rest.length === 0) {
+      const driverLegs = state.legs.filter((l) => l.memberId === me.id && l.role === "driver");
+      if (driverLegs.length > 0) {
+        if (!confirm(T("profile.removeVehicleConfirm", { n: driverLegs.length }))) return;
+        for (const l of driverLegs) dispatch({ type: "removeLeg", memberId: me.id, eventId: l.eventId });
+      }
     }
-    setVehicle(null);
+    setVehicles(rest);
   };
 
   return (
@@ -136,49 +142,20 @@ export default function Profile() {
       </Sheet>
 
       <div className="field">
-        <span>{T("profile.vehicle")}</span>
-        {!me.vehicle ? (
-          <button type="button" className="btn btn-ghost" onClick={() => setVehicle({ capacity: 3, features: [], smokeFree: true })}>
-            + {T("profile.vehicle")}
-          </button>
-        ) : (
-          <div className="card vehCard">
-            <div className="row spread">
-              <span>{T("trip.capacity")}</span>
-              <Stepper value={me.vehicle.capacity} min={1} max={8} onChange={(v) => setVehicle({ ...me.vehicle!, capacity: v })} />
-            </div>
-            <label className="field">
-              <span>{T("profile.plate")}</span>
-              <input
-                className="num"
-                value={me.vehicle.plate ?? ""}
-                onChange={(e) => setVehicle({ ...me.vehicle!, plate: e.target.value.toUpperCase() || undefined })}
-                placeholder="AB 123 CD"
-                maxLength={9}
-              />
-            </label>
-            <div className="chips">
-              {FEATURES.map((f) => (
-                <Chip
-                  key={f}
-                  active={me.vehicle!.features.includes(f)}
-                  onClick={() => {
-                    const has = me.vehicle!.features.includes(f);
-                    setVehicle({ ...me.vehicle!, features: has ? me.vehicle!.features.filter((x) => x !== f) : [...me.vehicle!.features, f] });
-                  }}
-                >
-                  {T(`feature.${f}` as TKey)}
-                </Chip>
-              ))}
-              <Chip active={me.vehicle.smokeFree} onClick={() => setVehicle({ ...me.vehicle!, smokeFree: !me.vehicle!.smokeFree })}>
-                {T("trip.smokeFree")}
-              </Chip>
-            </div>
-            <button type="button" className="btn btn-ghost btn-xs danger" onClick={removeVehicle} aria-label={T("profile.removeVehicle")}>
-              ×
-            </button>
-          </div>
-        )}
+        <span>{T("garage.title")}</span>
+        {me.vehicles.length === 0 && <p className="sub">{T("garage.empty")}</p>}
+        {me.vehicles.map((v) => (
+          <VehicleCard
+            key={v.id}
+            vehicle={v}
+            index={me.vehicles.indexOf(v)}
+            onChange={updateVehicle}
+            onRemove={() => removeVehicle(v.id)}
+          />
+        ))}
+        <button type="button" className="btn btn-ghost" onClick={addVehicle}>
+          + {T("garage.add")}
+        </button>
       </div>
 
       <h2 className="eyebrow">{T("account.title")}</h2>
@@ -333,6 +310,71 @@ export default function Profile() {
         <br />
         <span className="num">v1.0</span>
       </p>
+    </div>
+  );
+}
+
+/** Tarjeta editable de un vehículo del garage: alias, capacidad, patente, features. */
+function VehicleCard({
+  vehicle,
+  index,
+  onChange,
+  onRemove,
+}: {
+  vehicle: Vehicle;
+  index: number;
+  onChange: (v: Vehicle) => void;
+  onRemove: () => void;
+}) {
+  const T = useT();
+  return (
+    <div className="card vehCard">
+      <div className="row spread vehCardHead">
+        <input
+          className="vehAlias"
+          value={vehicle.alias ?? ""}
+          onChange={(e) => onChange({ ...vehicle, alias: e.target.value || undefined })}
+          placeholder={T("garage.aliasPlaceholder", { n: index + 1 })}
+          aria-label={T("garage.alias")}
+        />
+        <button type="button" className="btn btn-ghost btn-xs danger" onClick={onRemove} aria-label={T("profile.removeVehicle")}>
+          ×
+        </button>
+      </div>
+      <div className="row spread">
+        <span>{T("trip.capacity")}</span>
+        <Stepper value={vehicle.capacity} min={1} max={8} onChange={(v) => onChange({ ...vehicle, capacity: v })} />
+      </div>
+      <label className="field">
+        <span>{T("profile.plate")}</span>
+        <input
+          className="num"
+          value={vehicle.plate ?? ""}
+          onChange={(e) => onChange({ ...vehicle, plate: e.target.value.toUpperCase() || undefined })}
+          placeholder="AB 123 CD"
+          maxLength={9}
+        />
+      </label>
+      <div className="chips">
+        {FEATURES.map((f) => (
+          <Chip
+            key={f}
+            active={vehicle.features.includes(f)}
+            onClick={() => {
+              const has = vehicle.features.includes(f);
+              onChange({
+                ...vehicle,
+                features: has ? vehicle.features.filter((x) => x !== f) : [...vehicle.features, f],
+              });
+            }}
+          >
+            {T(`feature.${f}` as TKey)}
+          </Chip>
+        ))}
+        <Chip active={vehicle.smokeFree} onClick={() => onChange({ ...vehicle, smokeFree: !vehicle.smokeFree })}>
+          {T("trip.smokeFree")}
+        </Chip>
+      </div>
     </div>
   );
 }

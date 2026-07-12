@@ -28,6 +28,7 @@ import type { DriverLeg, MatchInput, MatchResult, PassengerLeg } from "../engine
 import { minutesToHHMM } from "../engine/geo";
 import { systemNotify } from "../services/notify";
 import { participantsOf } from "./reputation";
+import { legVehicle } from "./vehicles";
 import { translate, type Lang, type TKey } from "../i18n";
 
 type Action =
@@ -115,18 +116,20 @@ export function buildMatchInput(s: AppState, eventId: string, legsOverride?: Leg
     const m = byId.get(leg.memberId);
     if (!m) continue;
     const origin = leg.origin ?? m.home;
-    if (leg.role === "driver" && m.vehicle) {
+    // El vehículo del viaje: el elegido en el leg (PR-A2) o el primero del garage.
+    const veh = leg.role === "driver" ? legVehicle(m, leg.vehicleId) : null;
+    if (leg.role === "driver" && veh) {
       drivers.push({
         id: leg.id,
         memberId: m.id,
-        vehicleId: m.id,
+        vehicleId: veh.id,
         origin,
         destination: ev.destination,
         window: leg.window,
-        capacity: m.vehicle.capacity,
+        capacity: veh.capacity,
         maxDetourMin: leg.maxDetourMin ?? 20,
-        features: m.vehicle.features,
-        prefs: { subgroup: m.subgroup, smokeFree: m.vehicle.smokeFree }
+        features: veh.features,
+        prefs: { subgroup: m.subgroup, smokeFree: veh.smokeFree }
       });
     } else if (leg.role === "passenger") {
       passengers.push({
@@ -274,7 +277,7 @@ const Ctx = createContext<Store | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, null as unknown as AppState, () => {
     const loaded = loadState<AppState>();
-    return loaded && loaded.version === 3 ? loaded : buildSeed();
+    return loaded && loaded.version === 4 ? loaded : buildSeed();
   });
   const [computing, setComputing] = useState(false);
   const provider = useMemo(() => new MockRoutingProvider(), []);

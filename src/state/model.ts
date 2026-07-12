@@ -3,6 +3,10 @@ import type { Lang } from "../i18n";
 import type { PlanId } from "../services/billing";
 
 export interface Vehicle {
+  /** Id estable dentro del garage del miembro (para elegirlo por viaje). */
+  id: string;
+  /** Alias amistoso: "el Gol", "la camioneta". Opcional; hay fallback legible. */
+  alias?: string;
   capacity: number;
   features: Feature[];
   smokeFree: boolean;
@@ -14,7 +18,8 @@ export interface Member {
   name: string;
   subgroup?: string;
   home: LatLng;
-  vehicle: Vehicle | null;
+  /** Garage: 0..n vehículos. Una persona puede tener auto y moto y elegir por viaje. */
+  vehicles: Vehicle[];
   /** Cuándo se unió a la plataforma (para "miembro desde hace X"). */
   joinedISO: string;
   bio?: string;
@@ -103,6 +108,8 @@ export interface Leg {
   /** Punto de salida para ESTA salida; si falta, se usa member.home. */
   origin?: LatLng;
   // driver
+  /** Qué vehículo del garage se ofrece en ESTA salida (PR-A2). Si falta, el primero. */
+  vehicleId?: string;
   maxDetourMin?: number;
   // passenger
   maxWalkMin?: number;
@@ -154,7 +161,7 @@ export interface Settings {
 }
 
 export interface AppState {
-  version: 3;
+  version: 4;
   meId: string;
   orgs: Org[];
   members: Member[];

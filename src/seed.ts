@@ -88,7 +88,7 @@ export function buildSeed(): AppState {
       name,
       subgroup,
       home: { lat: lat + dy, lng: lng + dx },
-      vehicle: null,
+      vehicles: [],
       // Antigüedades deterministas, siempre ANTERIORES a la actividad seedada
       // (el historial más viejo llega a ~320 días): entre ~1 y ~3 años.
       joinedISO: daysAgoISO(360 + ((i * 97) % 740), now),
@@ -102,7 +102,7 @@ export function buildSeed(): AppState {
       id: `c${i}`,
       name,
       home: { lat: lat + dy, lng: lng + dx },
-      vehicle: null,
+      vehicles: [],
       bio: bio || undefined,
       // Joaquín (c2) es nuevo a propósito: perfil sin historia para la demo.
       // El resto se unió antes de su actividad más vieja (~320 días).
@@ -110,20 +110,28 @@ export function buildSeed(): AppState {
     });
   });
 
-  // Vehículos
-  const veh = (id: string, capacity: number, features: Feature[], smokeFree: boolean, plate: string) => {
+  // Garage: cada vehículo con id determinístico (`veh-<miembro>-<n>`) y alias.
+  const veh = (
+    id: string,
+    capacity: number,
+    features: Feature[],
+    smokeFree: boolean,
+    plate: string,
+    alias?: string
+  ) => {
     const m = members.find((x) => x.id === id)!;
-    m.vehicle = { capacity, features, smokeFree, plate };
+    m.vehicles.push({ id: `veh-${id}-${m.vehicles.length}`, alias, capacity, features, smokeFree, plate });
   };
-  veh("m0", 3, [], true, "AA 111 BC"); // Vos — al asado vas de pasajero, pero organizás la escapada a Tigre
-  veh("m2", 4, [], true, "AB 123 CD"); // Diego
+  veh("m0", 3, [], true, "AA 111 BC", "el Gol"); // Vos — auto…
+  veh("m0", 2, ["big_trunk"], true, "AA 222 XY", "la moto"); // …y una moto: garage con 2, ideal para elegir por viaje
+  veh("m2", 4, [], true, "AB 123 CD", "el familiar"); // Diego
   veh("m4", 3, ["big_trunk"], true, "AC 456 EF"); // Tomás
-  veh("m8", 4, ["wheelchair"], true, "AD 789 GH"); // Martín — adaptado
+  veh("m8", 4, ["wheelchair"], true, "AD 789 GH", "la trafic adaptada"); // Martín — adaptado
   veh("m10", 2, ["pets"], false, "AE 234 IJ"); // Fede — fumador con perro
   veh("m15", 4, ["child_seat"], true, "AF 567 KL"); // Lautaro
   veh("m17", 3, [], true, "AG 890 MN"); // Bruno
   veh("m21", 4, ["bikes", "big_trunk"], false, "AH 345 OP"); // Gastón
-  veh("c0", 3, ["big_trunk"], true, "AI 678 QR"); // Valen — costera
+  veh("c0", 3, ["big_trunk"], true, "AI 678 QR", "la costera"); // Valen
   veh("c4", 4, [], true, "AJ 901 ST"); // Paula — Rosario
   veh("c6", 3, [], true, "AK 234 UV"); // Delfi — La Plata
   veh("c7", 4, ["bikes", "big_trunk"], true, "AL 567 WX"); // Marcos
@@ -338,7 +346,7 @@ export function buildSeed(): AppState {
   // Joaquín (c2): sin historial ni reseñas — es nuevo (se unió hace 12 días)
 
   return {
-    version: 3,
+    version: 4,
     meId: "m0",
     orgs: [
       {

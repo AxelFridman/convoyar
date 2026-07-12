@@ -5,6 +5,7 @@ import { Stepper } from "../components/UI";
 import { Confetti } from "../components/Celebration";
 import MapPicker from "../components/MapPicker";
 import { requestNotifPermission } from "../services/notify";
+import { hasVehicle, primaryVehicle, blankVehicle, newVehicleId } from "../state/vehicles";
 import { IconCar, IconCheck, IconBell, IconPin, IconUser } from "../components/Icons";
 import type { LatLng } from "../engine/types";
 
@@ -29,8 +30,8 @@ export default function Onboarding() {
   const [email, setEmail] = useState(me.email ?? "");
   const [lang, setLang] = useState<Lang>(state.settings.lang);
   const [home, setHome] = useState<LatLng>(me.home);
-  const [hasCar, setHasCar] = useState<boolean | null>(me.vehicle ? true : null);
-  const [capacity, setCapacity] = useState(me.vehicle?.capacity ?? 3);
+  const [hasCar, setHasCar] = useState<boolean | null>(hasVehicle(me) ? true : null);
+  const [capacity, setCapacity] = useState(primaryVehicle(me)?.capacity ?? 3);
   const [notifOn, setNotifOn] = useState(state.settings.notifPermission);
   const [done, setDone] = useState(false);
 
@@ -48,9 +49,13 @@ export default function Onboarding() {
         name: name.trim() || me.name,
         email: email.trim() || undefined,
         home,
-        vehicle: hasCar
-          ? me.vehicle ?? { capacity, features: [], smokeFree: true }
-          : null
+        // Garage: si ya tiene vehículos, respetarlos; si dijo que tiene auto y el
+        // garage está vacío, crear el primero; si dijo que no, garage vacío.
+        vehicles: hasCar
+          ? me.vehicles.length > 0
+            ? me.vehicles
+            : [blankVehicle(newVehicleId(), capacity)]
+          : []
       }
     });
     // Confetti primero; a los ~1.4s marcamos onboarded y App muestra la app.

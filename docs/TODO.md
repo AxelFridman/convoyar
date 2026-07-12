@@ -5,6 +5,27 @@
 > Regla: si una feature no está terminada, TIENE que figurar acá antes de cerrar la sesión.
 > Metodología: una branch `feat/*` por bloque → PR → merge a `main`. Rollback = revertir el PR.
 
+## ⚠️ CAMBIOS DE MODELO — para quien conecta el backend (Supabase) en paralelo
+
+> Cada vez que el modelo (`src/state/model.ts`) cambia, la clave de localStorage sube de
+> versión y el schema de la DB debe re-migrar. `server/schema.sql` ya está actualizado; acá
+> queda el delta explícito para aplicar en Supabase. (No toqué `docs/lanzamiento/01` para no
+> pisar tu edición — aplicá esto ahí cuando puedas.)
+
+- **v3 → v4 (PR-A1, garage — sesión 2026-07-12):** `members.vehicle jsonb` (uno) pasó a
+  `members.vehicles jsonb default '[]'` (**Vehicle[]**; cada uno con `id`, `alias?`,
+  `capacity`, `features[]`, `smokeFree`, `plate?`). Además `legs` suma `vehicle_id text`
+  (qué vehículo del garage se ofrece por viaje; null = el primero). Migración Postgres:
+  ```sql
+  alter table public.members add column vehicles jsonb not null default '[]';
+  update public.members set vehicles =
+    case when vehicle is null then '[]'::jsonb
+         else jsonb_build_array(vehicle || jsonb_build_object('id','veh-'||id||'-0')) end;
+  alter table public.members drop column vehicle;
+  alter table public.legs add column vehicle_id text;
+  ```
+  Clave localStorage: `convoyar:v3` → `convoyar:v4`. El cliente re-seedea si la versión no coincide.
+
 ## Convenciones de marca (decididas en PR1)
 
 | Concepto | Nombre en producto |

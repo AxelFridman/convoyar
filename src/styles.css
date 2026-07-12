@@ -819,11 +819,47 @@ button:focus-visible {
   flex-direction: column;
   gap: 12px;
   position: relative;
+  margin-bottom: 10px;
 }
 .vehCard > .danger {
   position: absolute;
   top: 8px;
   right: 8px;
+}
+.vehCardHead {
+  align-items: center;
+  gap: 8px;
+}
+.vehAlias {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  border-bottom: 1.5px solid var(--line);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 4px 2px;
+}
+.vehAlias:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+/* línea read-only de vehículo en Mi viaje */
+.vehLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+}
+.vehLineName {
+  font-weight: 700;
+}
+.vehTag {
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 6px;
 }
 .about {
   display: block;
