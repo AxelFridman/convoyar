@@ -1346,6 +1346,94 @@ button:focus-visible {
   to { background-position: -200% 0; }
 }
 
+/* ---- búsqueda temporal (PR6) ---- */
+.dateChips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.dateChips::-webkit-scrollbar { display: none; }
+.dateChip {
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 8px 16px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+.dateChip:active { transform: scale(0.95); }
+.dateChip-on {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
+}
+
+/* timeline de la ventana horaria */
+.twBar {
+  padding: 22px 6px 6px;
+}
+.twTrack {
+  position: relative;
+  height: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+}
+.twTick {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 6px;
+  background: var(--line);
+  transform: translate(-50%, -50%);
+}
+.twTickLbl {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.twWindow {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
+  border: 1.5px solid var(--accent);
+  border-radius: 99px;
+  min-width: 8px;
+  transition: left 0.2s ease, width 0.2s ease;
+}
+.twEdge {
+  position: absolute;
+  top: -19px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.twEdge-start { left: 0; transform: translateX(-50%); }
+.twEdge-end { right: 0; transform: translateX(50%); }
+.twEvent {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: left 0.2s ease;
+}
+.twEventPin {
+  font-size: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+}
+
 /* ---- chat del convoy (PR5) ---- */
 .chatOpenBtn {
   display: flex;

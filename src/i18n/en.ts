@@ -77,6 +77,7 @@ export const en: Record<TKey, string> = {
   "trip.participants": "Already in",
   "trip.adminNudge": "The admin computes the assignment from the Admin tab.",
   "trip.window": "When can you leave?",
+  "trip.windowHint": "Your departure window. The event is at {time}: the wider it is, the easier to join a convoy.",
   "trip.notGoingBody": "You're not going. Pick another option above if you change your mind.",
   "trip.prefs": "Preferences",
   "trip.noEvent": "Create an event from Home to add your trip.",
@@ -202,6 +203,13 @@ export const en: Record<TKey, string> = {
   "explore.demoNote": "Local demo: the organizer replies by itself in a few seconds.",
   "explore.mineBadge": "Yours",
   "explore.manage": "Manage requests & assignment",
+
+  "search.title": "When?",
+  "search.all": "All",
+  "search.today": "Today",
+  "search.weekend": "This weekend",
+  "search.week": "Next 7 days",
+  "search.noneInRange": "No public rides in that date range.",
 
   "requests.title": "Requests",
   "requests.none": "No pending requests.",

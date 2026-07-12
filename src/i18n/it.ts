@@ -77,6 +77,7 @@ export const it: Record<TKey, string> = {
   "trip.participants": "Già iscritti",
   "trip.adminNudge": "L'admin calcola l'assegnazione dalla scheda Admin.",
   "trip.window": "Quando puoi partire?",
+  "trip.windowHint": "La tua finestra di partenza. L'evento è alle {time}: più è ampia, più è facile entrare in un convoy.",
   "trip.notGoingBody": "Non vieni a questa uscita. Se cambi idea, scegli un'altra opzione qui sopra.",
   "trip.prefs": "Preferenze",
   "trip.noEvent": "Crea un'uscita da Home per caricare il tuo viaggio.",
@@ -202,6 +203,13 @@ export const it: Record<TKey, string> = {
   "explore.demoNote": "Demo locale: l'organizzatore risponde da solo in pochi secondi.",
   "explore.mineBadge": "Tua",
   "explore.manage": "Gestisci richieste e assegnazione",
+
+  "search.title": "Quando?",
+  "search.all": "Tutte",
+  "search.today": "Oggi",
+  "search.weekend": "Questo weekend",
+  "search.week": "Pross. 7 giorni",
+  "search.noneInRange": "Nessuna uscita pubblica in quell'intervallo di date.",
 
   "requests.title": "Richieste",
   "requests.none": "Nessuna richiesta in sospeso.",

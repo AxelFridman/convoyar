@@ -3,7 +3,8 @@ import { useStore, useT } from "../state/store";
 import { type TKey } from "../i18n";
 import { Segmented, Slider, Stepper, Chip, TimeInput } from "../components/UI";
 import MapPicker from "../components/MapPicker";
-import { walkRadiusMeters } from "../engine/geo";
+import { TimeWindowBar } from "../components/TimeWindowBar";
+import { walkRadiusMeters, minutesToHHMM } from "../engine/geo";
 import { isParticipant } from "../state/reputation";
 import type { Feature, LatLng } from "../engine/types";
 import type { Role } from "../state/model";
@@ -53,6 +54,10 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
   }, [state.legs, eventId]);
 
   if (!ev) return <div className="screen"><p className="sub center">{T("trip.noEvent")}</p></div>;
+
+  // Hora del evento en minutos desde 00:00 (para el timeline de la ventana).
+  const evDate = new Date(ev.dateISO);
+  const eventMin = evDate.getHours() * 60 + evDate.getMinutes();
 
   // A un evento público ajeno se entra pidiendo lugar desde Explorar, no editando el viaje.
   if (!isParticipant(state, ev.id, state.meId)) {
@@ -223,13 +228,15 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
             <div className="row gap winRow">
               <label className="winLbl">
                 {T("trip.from")}
-                <TimeInput minutes={winStart} onChange={setWinStart} />
+                <TimeInput minutes={winStart} onChange={(m) => setWinStart(Math.min(m, winEnd - 5))} />
               </label>
               <label className="winLbl">
                 {T("trip.to")}
                 <TimeInput minutes={winEnd} onChange={(m) => setWinEnd(Math.max(m, winStart + 5))} />
               </label>
             </div>
+            <TimeWindowBar start={winStart} end={winEnd} eventMin={eventMin} labelEvent={ev.title} />
+            <p className="sub mapHint">{T("trip.windowHint", { time: minutesToHHMM(eventMin) })}</p>
           </div>
         </>
       )}

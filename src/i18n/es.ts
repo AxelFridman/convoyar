@@ -77,6 +77,7 @@ export const es = {
   "trip.participants": "Ya se anotaron",
   "trip.adminNudge": "El admin calcula la asignación desde la pestaña Admin.",
   "trip.window": "¿Cuándo podés salir?",
+  "trip.windowHint": "Tu franja para salir. El evento es {time}: cuanto más amplia, más fácil entrar a un convoy.",
   "trip.notGoingBody": "No vas a esta salida. Si cambiás de idea, elegí otra opción arriba.",
   "trip.prefs": "Preferencias",
   "trip.noEvent": "Creá una salida desde Inicio para cargar tu viaje.",
@@ -202,6 +203,13 @@ export const es = {
   "explore.demoNote": "Demo local: el organizador responde solo en unos segundos.",
   "explore.mineBadge": "Tuya",
   "explore.manage": "Administrar solicitudes y asignación",
+
+  "search.title": "¿Cuándo?",
+  "search.all": "Todas",
+  "search.today": "Hoy",
+  "search.weekend": "Este finde",
+  "search.week": "Próx. 7 días",
+  "search.noneInRange": "No hay salidas públicas en ese rango de fechas.",
 
   "requests.title": "Solicitudes",
   "requests.none": "Sin solicitudes pendientes.",
