@@ -68,11 +68,16 @@ export default function Results({ eventId }: { eventId: string | null }) {
     if (!party) setParty(true);
   }
 
+  // Marcadores numerados: las paradas intermedias muestran su orden (1, 2, 3…)
+  // para conectar visualmente el mapa con la hoja de ruta de abajo.
+  let stopNo = 0;
   const routeMarkers: MapMarker[] | undefined = myRide
-    ? myRide.stops.map((s, i) => ({
-        loc: s.point,
-        kind: i === 0 ? ("origin" as const) : i === myRide.stops.length - 1 ? ("destination" as const) : ("stop" as const),
-      }))
+    ? myRide.stops.map((s, i) => {
+        const isFirst = i === 0;
+        const isLast = i === myRide.stops.length - 1;
+        const kind = isFirst ? ("origin" as const) : isLast ? ("destination" as const) : ("stop" as const);
+        return { loc: s.point, kind, label: kind === "stop" ? String(++stopNo) : undefined };
+      })
     : undefined;
 
   return (
