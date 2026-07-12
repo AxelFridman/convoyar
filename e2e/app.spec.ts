@@ -179,6 +179,44 @@ test.describe("Perfil", () => {
   });
 });
 
+test.describe("Onboarding", () => {
+  test("wizard completo desde el replay en Perfil", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("tab", { name: "Perfil" }).click();
+    await page.getByRole("button", { name: "Ver la introducción otra vez" }).click();
+
+    // 1 bienvenida
+    await expect(page.getByText("¡Bienvenido a Convoyar!")).toBeVisible();
+    await page.getByRole("button", { name: "Empezar" }).click();
+    // 2 idioma (sigue en español)
+    await expect(page.getByText("¿En qué idioma seguimos?")).toBeVisible();
+    await page.getByRole("button", { name: /Español/ }).click();
+    await page.getByRole("button", { name: "Siguiente" }).click();
+    // 3 nombre (Next deshabilitado hasta escribir)
+    await expect(page.getByText("¿Cómo te llamás?")).toBeVisible();
+    await page.getByPlaceholder("Tu nombre").fill("Probador");
+    await page.getByRole("button", { name: "Siguiente" }).click();
+    // 4 email — inválido bloquea, vacío o válido avanza
+    await page.getByPlaceholder("vos@email.com").fill("no-es-mail");
+    await expect(page.getByText("no parece válido")).toBeVisible();
+    await page.getByPlaceholder("vos@email.com").fill("probador@mail.com");
+    await page.getByRole("button", { name: "Siguiente" }).click();
+    // 5 casa en el mapa
+    await expect(page.getByText("¿Desde dónde salís?")).toBeVisible();
+    await page.getByRole("button", { name: "Siguiente" }).click();
+    // 6 auto
+    await expect(page.getByText("¿Tenés auto?")).toBeVisible();
+    await page.getByRole("button", { name: "No, necesito lugar" }).click();
+    await page.getByRole("button", { name: "Siguiente" }).click();
+    // 7 notificaciones → finish
+    await expect(page.getByText("Enterate al toque")).toBeVisible();
+    await page.getByRole("button", { name: "¡Listo, a convoyar!" }).click();
+    // vuelve a la app con el nombre guardado
+    await page.getByRole("tab", { name: "Perfil" }).click();
+    await expect(page.locator('input[value="Probador"]')).toBeVisible();
+  });
+});
+
 test.describe("Mi viaje", () => {
   test("anotarse como pasajero con preferencias", async ({ page }) => {
     await page.goto("/");

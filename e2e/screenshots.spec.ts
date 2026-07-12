@@ -62,4 +62,19 @@ test("recorrido visual completo", async ({ page }) => {
   await shoot(page, "10-home-claro");
   await page.getByRole("tab", { name: "Explorar" }).click();
   await shoot(page, "11-explore-claro");
+
+  // onboarding (modo oscuro, algunos pasos)
+  await page.getByRole("tab", { name: "Perfil" }).click();
+  await page.getByRole("tab", { name: "Oscuro" }).click();
+  await page.getByRole("button", { name: "Ver la introducción otra vez" }).click();
+  await shoot(page, "12-onboarding-bienvenida");
+  await page.getByRole("button", { name: "Empezar" }).click();
+  await page.getByRole("button", { name: "Siguiente" }).click(); // idioma → nombre
+  await page.getByPlaceholder("Tu nombre").fill("Alex");
+  await page.getByRole("button", { name: "Siguiente" }).click(); // nombre → email
+  await page.getByRole("button", { name: "Siguiente" }).click(); // email → casa
+  await page.locator(".leaflet-container").first().waitFor();
+  await shoot(page, "13-onboarding-casa");
+  await page.getByRole("button", { name: "Siguiente" }).click(); // casa → auto
+  await shoot(page, "14-onboarding-auto");
 });

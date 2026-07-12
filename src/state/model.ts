@@ -18,6 +18,9 @@ export interface Member {
   /** Cuándo se unió a la plataforma (para "miembro desde hace X"). */
   joinedISO: string;
   bio?: string;
+  /** Email de contacto/cuenta (opcional). La verificación real llega en PR5. */
+  email?: string;
+  emailVerified?: boolean;
 }
 
 /** Reseña post-viaje de un miembro a otro (1–5 estrellas). */
@@ -127,6 +130,8 @@ export interface Settings {
   theme: "system" | "dark" | "light";
   plan: PlanId;
   notifPermission: boolean;
+  /** false hasta que el usuario completa el wizard de bienvenida. */
+  onboarded: boolean;
 }
 
 export interface AppState {

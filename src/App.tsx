@@ -6,6 +6,7 @@ import MyTrip from "./screens/MyTrip";
 import Results from "./screens/Results";
 import Admin from "./screens/Admin";
 import Profile from "./screens/Profile";
+import Onboarding from "./screens/Onboarding";
 import { IconHome, IconCompass, IconCar, IconRoute, IconSettings, IconUser } from "./components/Icons";
 
 type Tab = "home" | "explore" | "trip" | "results" | "admin" | "profile";
@@ -20,6 +21,9 @@ function Shell() {
     setEventId(id);
     setTab(target);
   };
+
+  // Usuario nuevo: wizard de bienvenida a pantalla completa antes de la app.
+  if (!state.settings.onboarded) return <Onboarding />;
 
   return (
     <div className="app">

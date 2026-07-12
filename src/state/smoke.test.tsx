@@ -14,6 +14,7 @@ import MyTrip from "../screens/MyTrip";
 import Results from "../screens/Results";
 import Admin from "../screens/Admin";
 import Profile from "../screens/Profile";
+import Onboarding from "../screens/Onboarding";
 
 const seed = buildSeed();
 const evId = seed.events[0].id;
@@ -46,5 +47,8 @@ describe("smoke render", () => {
   });
   it("Profile", () => {
     expect(wrap(<Profile />).length).toBeGreaterThan(100);
+  });
+  it("Onboarding (bienvenida)", () => {
+    expect(wrap(<Onboarding />)).toContain("Convoyar");
   });
 });
