@@ -1,8 +1,7 @@
 import React from "react";
 import type { Ride, RideStop } from "../engine/types";
-import { minutesToHHMM } from "../engine/geo";
 import type { AppState, EventDoc } from "../state/model";
-import { useT } from "../state/store";
+import { useT, useHhmm } from "../state/store";
 import { legVehicle } from "../state/vehicles";
 import { IconWalk } from "./Icons";
 
@@ -47,6 +46,7 @@ export function RideCard({
   footer?: React.ReactNode;
 }) {
   const T = useT();
+  const hhmm = useHhmm();
   const driver = legMember(state, ride.driverLegId);
   const veh = legVehicleOf(state, ride.driverLegId);
   const plate = veh?.plate;
@@ -62,7 +62,7 @@ export function RideCard({
             {ride.manual && <span className="manualTag">{T("results.manualBadge")}</span>}
           </div>
           <div className="rideMeta num">
-            {minutesToHHMM(ride.departureMin)} · {T("results.detour", { n: Math.round(ride.detourMin) })} ·{" "}
+            {hhmm(ride.departureMin)} · {T("results.detour", { n: Math.round(ride.detourMin) })} ·{" "}
             {T("results.freeSeats", { n: free })}
           </div>
         </div>
@@ -84,7 +84,7 @@ export function RideCard({
           return (
             <li key={i} className={`stop ${mine ? "stop-mine" : ""}`}>
               <span className={`dot ${dotCls}`} />
-              <span className="stopTime num">{minutesToHHMM(st.etaMin)}</span>
+              <span className="stopTime num">{hhmm(st.etaMin)}</span>
               <span className="stopLabel">
                 {stopLabel(state, event, st, isFirst, isLast, T("results.departure"), T("results.end"))}
                 {mp && <span className="mpTag">{mp}</span>}

@@ -15,6 +15,7 @@ import Results from "../screens/Results";
 import Admin from "../screens/Admin";
 import Profile from "../screens/Profile";
 import Onboarding from "../screens/Onboarding";
+import Settings from "../screens/Settings";
 
 const seed = buildSeed();
 const evId = seed.events[0].id;
@@ -47,6 +48,9 @@ describe("smoke render", () => {
   });
   it("Profile", () => {
     expect(wrap(<Profile />).length).toBeGreaterThan(100);
+  });
+  it("Settings (ajustes)", () => {
+    expect(wrap(<Settings onBack={() => {}} />).length).toBeGreaterThan(100);
   });
   it("Onboarding (bienvenida)", () => {
     expect(wrap(<Onboarding />)).toContain("Convoyar");

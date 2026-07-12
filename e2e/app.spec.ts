@@ -158,6 +158,7 @@ test.describe("Perfil", () => {
   test("cambio de idioma (6 idiomas) y de tema", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("tab", { name: "Perfil" }).click();
+    await page.getByRole("button", { name: "Ajustes" }).first().click();
     // inglés
     await page.getByRole("button", { name: /English/ }).click();
     await expect(page.getByRole("tab", { name: "Explore" })).toBeVisible();
@@ -223,6 +224,7 @@ test.describe("Cuenta y comunicaciones (PR5)", () => {
   test("verificación de email con código (demo)", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("tab", { name: "Perfil" }).click();
+    await page.getByRole("button", { name: "Ajustes" }).first().click();
     const emailInput = page.getByPlaceholder("vos@email.com");
     await emailInput.fill("probador@mail.com");
     await page.getByRole("button", { name: "Enviarme el código" }).click();
@@ -238,6 +240,7 @@ test.describe("Cuenta y comunicaciones (PR5)", () => {
   test("preferencias de notificación: los toggles cambian", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("tab", { name: "Perfil" }).click();
+    await page.getByRole("button", { name: "Ajustes" }).first().click();
     const chatToggle = page.locator(".prefRow", { hasText: "Mensajes del chat" }).getByRole("switch");
     await expect(chatToggle).toHaveAttribute("aria-checked", "true");
     await chatToggle.click();
@@ -249,6 +252,7 @@ test.describe("Onboarding", () => {
   test("wizard completo desde el replay en Perfil", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("tab", { name: "Perfil" }).click();
+    await page.getByRole("button", { name: "Ajustes" }).first().click();
     await page.getByRole("button", { name: "Ver la introducción otra vez" }).click();
 
     // 1 bienvenida

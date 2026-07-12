@@ -37,11 +37,15 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
-export function minutesToHHMM(min: number): string {
+export function minutesToHHMM(min: number, hour12 = false): string {
   const m = Math.round(min);
-  const h = Math.floor(m / 60) % 24;
-  const mm = m % 60;
-  return `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+  const h24 = Math.floor(m / 60) % 24;
+  const mm = String(m % 60).padStart(2, "0");
+  if (!hour12) return `${String(h24).padStart(2, "0")}:${mm}`;
+  // 12h con am/pm (minúsculas, sin cero a la izquierda en la hora).
+  const ampm = h24 < 12 ? "am" : "pm";
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h12}:${mm} ${ampm}`;
 }
 
 export function clamp(v: number, lo: number, hi: number): number {

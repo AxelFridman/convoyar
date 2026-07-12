@@ -1,26 +1,30 @@
-import { test } from "@playwright/test";
+import { test, type Page } from "@playwright/test";
 
 /**
  * Captura de pantallas para revisión visual y README.
- * Correr a demanda: npx playwright test screenshots --grep-invert nada
  * Salida: docs/screenshots/*.png
  */
 const OUT = "docs/screenshots";
 
-async function shoot(page: import("@playwright/test").Page, name: string) {
+async function shoot(page: Page, name: string) {
   await page.waitForTimeout(450); // tiles y transiciones
   await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
+}
+
+/** El tema vive en Perfil › Ajustes (PR-B1). Este helper lo cambia y vuelve. */
+async function setTheme(page: Page, label: "Oscuro" | "Claro") {
+  await page.getByRole("tab", { name: "Perfil" }).click();
+  await page.getByRole("button", { name: "Ajustes" }).first().click();
+  await page.getByRole("tab", { name: label }).click();
+  await page.getByRole("button", { name: "Volver" }).click();
 }
 
 test("recorrido visual completo", async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto("/");
 
-  // tema oscuro explícito para las capturas principales
-  await page.getByRole("tab", { name: "Perfil" }).click();
-  await page.getByRole("tab", { name: "Oscuro" }).click();
+  await setTheme(page, "Oscuro");
   await page.getByRole("tab", { name: "Inicio" }).click();
-
   await shoot(page, "01-home");
 
   await page.getByRole("tab", { name: "Explorar" }).click();
@@ -56,17 +60,24 @@ test("recorrido visual completo", async ({ page }) => {
   await page.getByRole("tab", { name: "Perfil" }).click();
   await shoot(page, "08-perfil");
 
+  // garage (2 vehículos del seed)
+  await page.locator(".vehCard").first().scrollIntoViewIfNeeded();
+  await shoot(page, "16-garage");
+
+  // Ajustes en modo oscuro
+  await page.getByRole("button", { name: "Ajustes" }).first().click();
+  await shoot(page, "17-ajustes");
+  await page.getByRole("button", { name: "Volver" }).click();
+
   // modo claro
-  await page.getByRole("tab", { name: "Claro" }).click();
-  await shoot(page, "09-perfil-claro");
+  await setTheme(page, "Claro");
   await page.getByRole("tab", { name: "Inicio" }).click();
   await shoot(page, "10-home-claro");
   await page.getByRole("tab", { name: "Explorar" }).click();
   await shoot(page, "11-explore-claro");
 
-  // chat del convoy (modo oscuro) — antes del onboarding, que deja la sesión sin onboardear
-  await page.getByRole("tab", { name: "Perfil" }).click();
-  await page.getByRole("tab", { name: "Oscuro" }).click();
+  // chat del convoy — antes del onboarding, que deja la sesión sin onboardear
+  await setTheme(page, "Oscuro");
   await page.getByRole("tab", { name: "Inicio" }).click();
   await page.getByText("Asado del sábado").click();
   await page.getByRole("tab", { name: "Resultados" }).click();
@@ -76,8 +87,9 @@ test("recorrido visual completo", async ({ page }) => {
   await shoot(page, "15-chat");
   await page.locator(".sheetBack").click({ position: { x: 10, y: 10 } });
 
-  // onboarding (modo oscuro, algunos pasos) — al final: deja onboarded=false
+  // onboarding (algunos pasos) — al final: deja onboarded=false
   await page.getByRole("tab", { name: "Perfil" }).click();
+  await page.getByRole("button", { name: "Ajustes" }).first().click();
   await page.getByRole("button", { name: "Ver la introducción otra vez" }).click();
   await shoot(page, "12-onboarding-bienvenida");
   await page.getByRole("button", { name: "Empezar" }).click();

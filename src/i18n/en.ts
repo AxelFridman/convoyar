@@ -252,6 +252,13 @@ export const en: Record<TKey, string> = {
   "profile.rateDone": "Thanks! Review saved.",
   "profile.with": "with {name}",
   "profile.replayOnboarding": "Replay the intro",
+  "settings.title": "Settings",
+  "settings.appearance": "Appearance & language",
+  "settings.data": "Data & help",
+  "settings.hourFormat": "Time format",
+  "settings.hour24": "24 h",
+  "settings.hour12": "12 h",
+  "common.back": "Back",
 
   "chat.title": "Convoy chat",
   "chat.placeholder": "Write a message…",
