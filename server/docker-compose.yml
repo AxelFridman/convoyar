@@ -1,0 +1,21 @@
+# Postgres local para desarrollar el backend de Convoyar sin tocar la nube.
+#   docker compose -f server/docker-compose.yml up -d
+#   psql "postgres://convoyar:convoyar@localhost:5432/convoyar" -f server/schema.sql
+# Datos de ejemplo, no producción. Cambiá la contraseña para cualquier uso real.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: convoyar-db
+    environment:
+      POSTGRES_USER: convoyar
+      POSTGRES_PASSWORD: convoyar
+      POSTGRES_DB: convoyar
+    ports:
+      - "5432:5432"
+    volumes:
+      - convoyar_pgdata:/var/lib/postgresql/data
+      # el schema se autocarga la primera vez que arranca el contenedor:
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+volumes:
+  convoyar_pgdata:

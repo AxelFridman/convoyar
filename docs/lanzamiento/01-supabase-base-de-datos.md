@@ -9,11 +9,11 @@
 **Antes de empezar leé:** [README de la carpeta](README.md) · Modelo de datos actual en
 [`src/state/model.ts`](../../src/state/model.ts) (de ahí sale el schema de abajo).
 
-| | |
-|---|---|
-| ⏱️ Tiempo | ~45 min |
-| 💰 Costo | USD 0 (Free tier) |
-| 🧑 / 🤖 | Casi todo **VOS** (dashboard + SQL). El código de conexión es el doc 03. |
+|             |                                                                                 |
+| ----------- | ------------------------------------------------------------------------------- |
+| ⏱️ Tiempo | ~45 min                                                                         |
+| 💰 Costo    | USD 0 (Free tier)                                                               |
+| 🧑 / 🤖     | Casi todo**VOS** (dashboard + SQL). El código de conexión es el doc 03. |
 
 ---
 
@@ -54,11 +54,11 @@ para arrancar.
 
 En el dashboard: **Project Settings → API**. Vas a ver:
 
-| Clave | Qué es | Dónde va | ⚠️ |
-|---|---|---|---|
-| **Project URL** | `https://xxxx.supabase.co` | En el front (`.env`) y en el hosting | Pública, no pasa nada |
-| **anon / public key** | Clave para el cliente (navegador/app) | En el front (`.env`) y en el hosting | Pública **a propósito**; la seguridad la da RLS (Paso 4), no esconder esta clave |
-| **service_role key** | Clave de superusuario, **saltea RLS** | SOLO en un server/Edge Function o scripts tuyos | ⚠️ **NUNCA** en el front, ni en git, ni en la app compilada. Si se filtra, cualquiera lee/borra todo |
+| Clave                       | Qué es                                    | Dónde va                                       | ⚠️                                                                                                        |
+| --------------------------- | ------------------------------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Project URL**       | `https://xxxx.supabase.co`               | En el front (`.env`) y en el hosting          | Pública, no pasa nada                                                                                      |
+| **anon / public key** | Clave para el cliente (navegador/app)      | En el front (`.env`) y en el hosting          | Pública**a propósito**; la seguridad la da RLS (Paso 4), no esconder esta clave                     |
+| **service_role key**  | Clave de superusuario,**saltea RLS** | SOLO en un server/Edge Function o scripts tuyos | ⚠️**NUNCA** en el front, ni en git, ni en la app compilada. Si se filtra, cualquiera lee/borra todo |
 
 **Copiá `Project URL` y `anon key`**; las usás en el doc 03. La `service_role` guardala
 aparte y no la toques todavía.
@@ -71,6 +71,7 @@ En el dashboard: **SQL Editor → New query**. Pegá **todo** el bloque de abajo
 Está derivado 1:1 de [`src/state/model.ts`](../../src/state/model.ts) (`AppState` v3).
 
 > **Decisiones de diseño del schema:**
+>
 > - Los `id` son `text` (no uuid) para que coincidan con los ids que ya usa la app (`m0`, etc.)
 >   y para no reescribir el modelo. En producción los generás con `crypto.randomUUID()` del lado del cliente.
 > - Los *value objects* anidados (`vehicle`, `needs`, `soft`, `meetingPoints`, el `MatchResult`)
@@ -446,11 +447,11 @@ No es bloqueante para la Fase 1, pero tenelo en el radar antes de abrir el modo 
 
 ## Escalar cuando crezcas 💰
 
-| Situación | Qué hacer |
-|---|---|
-| Se te acerca a 500 MB / 50k MAU / el proyecto se pausa | **Supabase Pro, USD 25/mes** (mismo proyecto, sin migrar) |
-| Necesitás correr matching de eventos gigantes seguido | Edge Function + posible server propio (el plan B de PR7) |
-| Querés salir de Supabase | `pg_dump` → tu propio Postgres (Neon, RDS, Fly). Es Postgres estándar, no hay lock-in de datos |
+| Situación                                             | Qué hacer                                                                                         |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Se te acerca a 500 MB / 50k MAU / el proyecto se pausa | **Supabase Pro, USD 25/mes** (mismo proyecto, sin migrar)                                    |
+| Necesitás correr matching de eventos gigantes seguido | Edge Function + posible server propio (el plan B de PR7)                                           |
+| Querés salir de Supabase                              | `pg_dump` → tu propio Postgres (Neon, RDS, Fly). Es Postgres estándar, no hay lock-in de datos |
 
 ---
 

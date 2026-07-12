@@ -55,10 +55,16 @@
       horaria en Mi viaje (franja naranja + ticks + pin 📍 del evento, en vivo).
       Chips de fecha en Explorar (Todas / Hoy / Este finde / Próx. 7 días) con
       `inRange()` puro. Claves `search.*` + `trip.windowHint` × 6 idiomas.
-- [ ] **PR7 `feat/server-skeleton`** — paquete `server/` separado (Node + Fastify +
-      Postgres): schema SQL completo, API REST que replica el contrato del motor,
-      docker-compose, `docs/DATABASE.md` (schema + cómo desplegar en la nube).
-      El cliente sigue local-first; el adaptador remoto queda documentado como pendiente.
+- [x] **PR7 `feat/server-skeleton`** — base de datos + backend documentado. ✅
+      `server/`: `schema.sql` (14 tablas, derivado 1:1 de model.ts v3), `rls.sql`
+      (25 policies + 3 helpers de seguridad), `seed.sql` (humo), `docker-compose.yml`
+      (Postgres local), `edge-functions/match/` (ejemplo: motor server-side para
+      privacidad del modo público), `README.md`. Además la guía completa de lanzamiento
+      **`docs/lanzamiento/`** (11 docs: Supabase/DB, auth, conectar la app, deploy web,
+      Play Store, App Store, push, monetización, OSRM, analytics) — la escribió un
+      subagente y quedó revisada. **Nota:** el schema no se validó contra un Postgres
+      vivo (Docker daemon estaba apagado); validación estructural OK (parens/$$ balanceados).
+      Correr `docker compose -f server/docker-compose.yml up` + `psql -f` para validar en vivo.
 - [ ] **PR8 `docs/growth`** — `docs/GROWTH.md`: análisis "nivel Silicon Valley" de qué
       falta (auth real, loops de crecimiento, push, analytics, moderación, seguridad,
       verificación de identidad, unit economics). Actualizar README/AGENTS/este TODO.
