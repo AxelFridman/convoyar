@@ -96,6 +96,24 @@ export function isParticipant(state: AppState, eventId: string, memberId: string
   );
 }
 
+/** Ids de los participantes de un evento: miembros de la org + solicitudes
+ *  aprobadas + cualquiera con un leg cargado (dedup). Base del chat del convoy. */
+export function participantsOf(
+  state: Pick<AppState, "orgs" | "events" | "joinRequests" | "legs">,
+  eventId: string
+): string[] {
+  const ev = state.events.find((e) => e.id === eventId);
+  if (!ev) return [];
+  const ids = new Set<string>();
+  const org = state.orgs.find((o) => o.id === ev.orgId);
+  org?.memberIds.forEach((id) => ids.add(id));
+  state.joinRequests
+    .filter((r) => r.eventId === eventId && r.status === "approved")
+    .forEach((r) => ids.add(r.memberId));
+  state.legs.filter((l) => l.eventId === eventId).forEach((l) => ids.add(l.memberId));
+  return [...ids];
+}
+
 /** Iniciales para el avatar ("Mariana K." → "MK"). */
 export function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

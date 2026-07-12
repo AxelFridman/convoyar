@@ -338,7 +338,7 @@ export function buildSeed(): AppState {
   // Joaquín (c2): sin historial ni reseñas — es nuevo (se unió hace 12 días)
 
   return {
-    version: 2,
+    version: 3,
     meId: "m0",
     orgs: [
       {
@@ -416,10 +416,22 @@ export function buildSeed(): AppState {
     joinRequests,
     reviews,
     tripHistory,
+    messages: [
+      { id: "cm1", eventId: "ev1", fromMemberId: "m2", body: "¿Alguien lleva algo para tomar?", at: daysAgoISO(0.4, now) },
+      { id: "cm2", eventId: "ev1", fromMemberId: "m0", body: "Yo llevo hielo y algo de picada 🧊", at: daysAgoISO(0.3, now) },
+      { id: "cm3", eventId: "ev1", fromMemberId: "m8", body: "Perfecto, paso a buscar a la abuela primero.", at: daysAgoISO(0.2, now) }
+    ],
     // La demo representa a un usuario ya establecido → onboarded. El wizard se
     // puede rejugar desde Perfil ("Ver introducción"); un usuario nuevo real
     // (sin estado guardado + backend) arrancaría con onboarded: false.
-    settings: { lang: "es", theme: "system", plan: "pro", notifPermission: false, onboarded: true },
+    settings: {
+      lang: "es",
+      theme: "system",
+      plan: "pro",
+      notifPermission: false,
+      onboarded: true,
+      notifPrefs: { assignments: true, requests: true, chat: true, email: false }
+    },
     activeOrgId: "org1",
   };
 }
