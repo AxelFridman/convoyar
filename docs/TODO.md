@@ -65,9 +65,12 @@
       subagente y quedó revisada. **Nota:** el schema no se validó contra un Postgres
       vivo (Docker daemon estaba apagado); validación estructural OK (parens/$$ balanceados).
       Correr `docker compose -f server/docker-compose.yml up` + `psql -f` para validar en vivo.
-- [ ] **PR8 `docs/growth`** — `docs/GROWTH.md`: análisis "nivel Silicon Valley" de qué
-      falta (auth real, loops de crecimiento, push, analytics, moderación, seguridad,
-      verificación de identidad, unit economics). Actualizar README/AGENTS/este TODO.
+- [x] **PR8 `docs/growth`** — `docs/GROWTH.md`: análisis "nivel Silicon Valley" ✅
+      priorizado P0→P3 (backend, auth, confianza/identidad, push, loops de crecimiento,
+      OSRM, geocoding, analytics, recurrentes, monetización, compliance, CI/CD…) + los
+      "próximos 5 movimientos". README actualizado con todas las features (6 idiomas,
+      onboarding, chat, verificación, búsqueda temporal, deleite) + tabla de screenshots
+      ampliada + links a GROWTH/lanzamiento/server. Test counts a 69 unit / 19 E2E.
 - [ ] **Cierre** — revisión adversarial por workflow de todo lo nuevo + fixes +
       screenshots finales + verificación completa (unit + e2e + builds).
 
