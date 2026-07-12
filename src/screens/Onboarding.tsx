@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useStore, useT } from "../state/store";
 import { LANGS, type Lang } from "../i18n";
 import { Stepper } from "../components/UI";
@@ -36,7 +36,11 @@ export default function Onboarding() {
 
   const emailOk = email.trim() === "" || EMAIL_RE.test(email.trim());
 
+  const finishTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (finishTimer.current) clearTimeout(finishTimer.current); }, []);
+
   const finish = () => {
+    if (done) return; // idempotente: doble-tap no agenda dos veces
     dispatch({
       type: "updateMember",
       member: {
@@ -50,8 +54,9 @@ export default function Onboarding() {
       }
     });
     // Confetti primero; a los ~1.4s marcamos onboarded y App muestra la app.
+    // `done` además bloquea la navegación (ver obNav) para no salir mid-confetti.
     setDone(true);
-    setTimeout(
+    finishTimer.current = setTimeout(
       () => dispatch({ type: "setSettings", patch: { lang, notifPermission: notifOn, onboarded: true } }),
       1400
     );
@@ -226,27 +231,30 @@ export default function Onboarding() {
         {cur.body}
       </div>
 
-      <div className="obNav">
-        {step > 0 && (
-          <button type="button" className="btn btn-ghost" onClick={() => setStep((s) => s - 1)}>
-            {T("ob.back")}
-          </button>
-        )}
-        {!isLast ? (
-          <button
-            type="button"
-            className="btn btn-primary obNext"
-            disabled={!cur.canNext}
-            onClick={() => setStep((s) => s + 1)}
-          >
-            {step === 0 ? T("ob.start") : T("ob.next")}
-          </button>
-        ) : (
-          <button type="button" className="btn btn-primary obNext" onClick={finish}>
-            {T("ob.finish")}
-          </button>
-        )}
-      </div>
+      {/* Una vez confirmado el fin (done), no se navega: evita salir mid-confetti. */}
+      {!done && (
+        <div className="obNav">
+          {step > 0 && (
+            <button type="button" className="btn btn-ghost" onClick={() => setStep((s) => s - 1)}>
+              {T("ob.back")}
+            </button>
+          )}
+          {!isLast ? (
+            <button
+              type="button"
+              className="btn btn-primary obNext"
+              disabled={!cur.canNext}
+              onClick={() => setStep((s) => s + 1)}
+            >
+              {step === 0 ? T("ob.start") : T("ob.next")}
+            </button>
+          ) : (
+            <button type="button" className="btn btn-primary obNext" onClick={finish}>
+              {T("ob.finish")}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

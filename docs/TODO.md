@@ -71,8 +71,16 @@
       "próximos 5 movimientos". README actualizado con todas las features (6 idiomas,
       onboarding, chat, verificación, búsqueda temporal, deleite) + tabla de screenshots
       ampliada + links a GROWTH/lanzamiento/server. Test counts a 69 unit / 19 E2E.
-- [ ] **Cierre** — revisión adversarial por workflow de todo lo nuevo + fixes +
-      screenshots finales + verificación completa (unit + e2e + builds).
+- [x] **Cierre** — revisión adversarial por workflow (10 agentes, 4 lentes) de PR3–PR7. ✅
+      5 hallazgos confirmados, todos arreglados en `fix/review-findings`:
+      1. `isParticipant`/`participantsOf` metían a TODA la org en eventos públicos
+         (chat expuesto + reply de quien no viaja) → ahora gate por `visibility`. **[media]**
+      2. Filtro "Finde" ocultaba el domingo cuando hoy es domingo → fix + 6 tests. **[media]**
+      3. Verificación de email case-sensitive (badge vs botón contradictorios) → normaliza a minúsculas. **[media]**
+      4. `startVerify` persistía el email sin confirmar y borraba el verificado previo → solo persiste en confirmCode. **[baja]**
+      5. Onboarding: navegación durante el confetti expulsaba mid-nav + timer sin limpiar → gate `!done` + ref/cleanup. **[baja]**
+      6. Placeholder de email hardcodeado en Perfil → `T("ob.emailPlaceholder")`. **[baja]**
+      Verificación final: 76 unit + 19 E2E + typecheck + build + build:single, todo verde.
 
 ## Pendientes conocidos (deuda consciente, NO bloqueante)
 
