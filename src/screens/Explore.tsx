@@ -4,6 +4,7 @@ import { isParticipant, myRequestFor, pendingRequestsFor } from "../state/reputa
 import { MemberProfile, PersonLine } from "../components/People";
 import { Sheet } from "../components/UI";
 import { IconCar, IconCheck, IconGlobe, IconPin, IconUsers } from "../components/Icons";
+import { localeOf } from "../i18n";
 
 /**
  * Explorar: viajes públicos de toda la comunidad (flujo tipo BlaBlaCar).
@@ -52,7 +53,7 @@ export default function Explore({
               <div className="eventDate num">
                 <span className="eventDay">{d.getDate()}</span>
                 <span className="eventMonth">
-                  {d.toLocaleDateString(lang === "es" ? "es-AR" : "en-US", { month: "short" })}
+                  {d.toLocaleDateString(localeOf(lang), { month: "short" })}
                 </span>
               </div>
               <div className="eventBody">
@@ -66,7 +67,7 @@ export default function Explore({
                 <div className="sub">
                   <IconPin size={14} /> {ev.originName ?? ev.destinationName ?? "—"} ·{" "}
                   <span className="num">
-                    {d.toLocaleTimeString(lang === "es" ? "es-AR" : "en-US", {
+                    {d.toLocaleTimeString(localeOf(lang), {
                       hour: "2-digit",
                       minute: "2-digit",
                       hour12: false

@@ -16,6 +16,7 @@ import MapPicker from "../components/MapPicker";
 import type { LatLng } from "../engine/types";
 import type { EventVisibility } from "../state/model";
 import { pendingRequestsFor } from "../state/reputation";
+import { localeOf } from "../i18n";
 
 
 export default function Home({ onOpenEvent }: { onOpenEvent: (eventId: string) => void }) {
@@ -91,13 +92,13 @@ export default function Home({ onOpenEvent }: { onOpenEvent: (eventId: string) =
           <button type="button" key={ev.id} className="card eventCard" onClick={() => onOpenEvent(ev.id)}>
             <div className="eventDate num">
               <span className="eventDay">{d.getDate()}</span>
-              <span className="eventMonth">{d.toLocaleDateString(lang === "es" ? "es-AR" : "en-US", { month: "short" })}</span>
+              <span className="eventMonth">{d.toLocaleDateString(localeOf(lang), { month: "short" })}</span>
             </div>
             <div className="eventBody">
               <div className="eventTitle">{ev.title}</div>
               <div className="sub">
                 <IconPin size={14} /> {ev.destinationName ?? "—"} ·{" "}
-                <span className="num">{d.toLocaleTimeString(lang === "es" ? "es-AR" : "en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}</span>
+                <span className="num">{d.toLocaleTimeString(localeOf(lang), { hour: "2-digit", minute: "2-digit", hour12: false })}</span>
               </div>
               <div className="eventChips">
                 <span className={`pill ${ev.visibility === "public" ? "pill-public" : ""}`}>

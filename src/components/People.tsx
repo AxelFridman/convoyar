@@ -10,6 +10,7 @@ import {
   tripsOf
 } from "../state/reputation";
 import { IconStar, IconCar, IconWalk } from "./Icons";
+import { localeOf } from "../i18n";
 
 /** Avatar con iniciales y color estable por id. */
 export function Avatar({ id, name, size = 40 }: { id: string; name: string; size?: number }) {
@@ -144,7 +145,7 @@ export function MemberProfile({ memberId, allowRate }: { memberId: string; allow
                 {r.comment && <div className="reviewComment">“{r.comment}”</div>}
                 <div className="sub">
                   {nameOf(r.fromMemberId)} ·{" "}
-                  <span className="num">{new Date(r.at).toLocaleDateString(lang === "es" ? "es-AR" : "en-US")}</span>
+                  <span className="num">{new Date(r.at).toLocaleDateString(localeOf(lang))}</span>
                 </div>
               </div>
             </div>
@@ -162,7 +163,7 @@ export function MemberProfile({ memberId, allowRate }: { memberId: string; allow
               </span>
               <span className="tripTitle">{t.title}</span>
               <span className="sub num">
-                {new Date(t.dateISO).toLocaleDateString(lang === "es" ? "es-AR" : "en-US", {
+                {new Date(t.dateISO).toLocaleDateString(localeOf(lang), {
                   day: "numeric",
                   month: "short"
                 })}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useStore, useT } from "../state/store";
-import { type TKey, type Lang } from "../i18n";
+import { localeOf, LANGS, type TKey, type Lang } from "../i18n";
 import { Chip, Segmented, Sheet, Stepper } from "../components/UI";
 import { Avatar, MemberProfile, Stars } from "../components/People";
 import { memberSince, ratingOf, tripsOf } from "../state/reputation";
@@ -81,7 +81,7 @@ export default function Profile() {
               {t.withName && <span className="sub"> {T("profile.with", { name: t.withName })}</span>}
             </span>
             <span className="sub num">
-              {new Date(t.dateISO).toLocaleDateString(lang === "es" ? "es-AR" : "en-US", { day: "numeric", month: "short" })}
+              {new Date(t.dateISO).toLocaleDateString(localeOf(lang), { day: "numeric", month: "short" })}
             </span>
             {t.withMemberId && (
               <button type="button" className="btn btn-ghost btn-xs" onClick={() => setRateId(t.withMemberId!)}>
@@ -144,16 +144,22 @@ export default function Profile() {
 
       <h2 className="eyebrow">{T("profile.settings")}</h2>
 
-      <div className="field row spread">
+      <div className="field">
         <span>{T("profile.lang")}</span>
-        <Segmented<Lang>
-          value={lang}
-          onChange={(l) => dispatch({ type: "setSettings", patch: { lang: l } })}
-          options={[
-            { value: "es", label: "ES" },
-            { value: "en", label: "EN" },
-          ]}
-        />
+        <div className="langGrid">
+          {LANGS.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              className={`langCard ${lang === l.id ? "langCard-on" : ""}`}
+              onClick={() => dispatch({ type: "setSettings", patch: { lang: l.id } })}
+              aria-pressed={lang === l.id}
+            >
+              <span className="langFlag" aria-hidden="true">{l.flag}</span>
+              <span>{l.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="field row spread">
