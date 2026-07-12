@@ -62,6 +62,7 @@ export const en: Record<TKey, string> = {
   "trip.from": "From",
   "trip.to": "To",
   "trip.vehicle": "Your vehicle",
+  "trip.whichVehicle": "Which vehicle are you driving?",
   "trip.editGarageHint": "Edit your vehicles in Profile › My garage.",
   "common.seatsN": "{n} seats",
   "common.seatsN_one": "{n} seat",

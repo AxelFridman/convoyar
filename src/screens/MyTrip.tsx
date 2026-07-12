@@ -6,7 +6,7 @@ import MapPicker from "../components/MapPicker";
 import { TimeWindowBar } from "../components/TimeWindowBar";
 import { walkRadiusMeters, minutesToHHMM } from "../engine/geo";
 import { isParticipant } from "../state/reputation";
-import { hasVehicle, primaryVehicle, vehicleLabel } from "../state/vehicles";
+import { hasVehicle, primaryVehicle, vehicleLabel, vehicleById } from "../state/vehicles";
 import type { Feature, LatLng } from "../engine/types";
 import type { Role } from "../state/model";
 
@@ -30,6 +30,8 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
   const [winEnd, setWinEnd] = useState(activeLeg?.window.end ?? 760);
   const [prefSmoke, setPrefSmoke] = useState(!!activeLeg?.soft?.smokeFree);
   const [prefSub, setPrefSub] = useState(!!activeLeg?.soft?.subgroup);
+  // Qué vehículo del garage ofrezco en ESTA salida (PR-A2). Fallback: el primero.
+  const [vehId, setVehId] = useState<string | undefined>(activeLeg?.vehicleId ?? primaryVehicle(me)?.id);
   const [savedFlash, setSavedFlash] = useState(false);
 
   // resync al cambiar de evento
@@ -43,6 +45,7 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
     setPrefSmoke(!!activeLeg?.soft?.smokeFree);
     setPrefSub(!!activeLeg?.soft?.subgroup);
     setOrigin(activeLeg?.origin ?? me.home);
+    setVehId(activeLeg?.vehicleId ?? primaryVehicle(me)?.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
@@ -90,6 +93,7 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
             role,
             origin,
             window: { start: winStart, end: winEnd },
+            vehicleId: role === "driver" ? vehId : undefined,
             maxDetourMin: role === "driver" ? detour : undefined,
             maxWalkMin: role === "passenger" ? walk : undefined,
             needs: role === "passenger" ? needs : undefined,
@@ -155,10 +159,10 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
           {role === "driver" && (
             <>
               <div className="field">
-                <span>{T("trip.vehicle")}</span>
-                {(() => {
-                  const veh = primaryVehicle(me);
-                  if (!veh) return <p className="sub">{T("profile.noVehicle")}</p>;
+                <span>{T("trip.whichVehicle")}</span>
+                {me.vehicles.length === 0 && <p className="sub">{T("profile.noVehicle")}</p>}
+                {me.vehicles.length === 1 && (() => {
+                  const veh = me.vehicles[0];
                   return (
                     <div className="card vehLine">
                       <span className="vehLineName">{vehicleLabel(veh, T("garage.autoN", { n: veh.capacity }))}</span>
@@ -169,6 +173,32 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
                     </div>
                   );
                 })()}
+                {me.vehicles.length > 1 && (
+                  <div className="vehPicker">
+                    {me.vehicles.map((veh) => {
+                      // Id efectivo: el elegido si sigue existiendo, si no el primero.
+                      const selectedId = vehicleById(me, vehId)?.id ?? me.vehicles[0].id;
+                      const on = selectedId === veh.id;
+                      return (
+                        <button
+                          key={veh.id}
+                          type="button"
+                          className={`vehOpt ${on ? "vehOpt-on" : ""}`}
+                          aria-pressed={on}
+                          onClick={() => setVehId(veh.id)}
+                        >
+                          <span className="vehOptName">{vehicleLabel(veh, T("garage.autoN", { n: veh.capacity }))}</span>
+                          <span className="sub num">{T("common.seatsN", { n: veh.capacity })}</span>
+                          {veh.features.length > 0 && (
+                            <span className="vehOptFeat">
+                              {veh.features.map((f) => T(`feature.${f}` as TKey)).join(" · ")}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 <p className="sub mapHint">{T("trip.editGarageHint")}</p>
               </div>
               <div className="field">
