@@ -22,11 +22,11 @@
 - [x] **PR1 `feat/brand-convoyar`** — rebrand completo: manifest, capacitor, index.html,
       package.json, storage key, sw.js, vocabulario i18n (convoy/armar convoys), seed
       (Comunidad Convoyar), docs, tests actualizados. Este archivo (TODO.md) nace acá.
-- [ ] **PR2 `feat/i18n-multilang`** — 6 idiomas: es, en, pt, de, it, fr.
-      Reestructurar `src/i18n.ts` → `src/i18n/` (index + un archivo por idioma,
-      `TKey` sigue siendo `keyof typeof es`). Selector de idioma con banderas en Perfil
-      (y luego en onboarding). Formatos de fecha por locale (hoy hay ternarios es/en
-      hardcodeados en pantallas — reemplazar por `localeOf(lang)`).
+- [x] **PR2 `feat/i18n-multilang`** — 6 idiomas: es, en, pt, de, it, fr. ✅
+      `src/i18n.ts` → `src/i18n/` (index + un archivo por idioma; `TKey = keyof typeof es`).
+      Selector con banderas en Perfil. `localeOf(lang)` reemplaza los ternarios es/en.
+      Test de paridad `i18n.test.ts` (mismas claves + placeholders + marca intacta, 20 tests).
+      Traducciones generadas con workflow de subagentes (uno por idioma) + verificación.
 - [ ] **PR3 `feat/visual-delight`** — capa de deleite tipo Duolingo:
       confetti al conseguir convoy, radio de caminata dibujado en el mapa al mover el
       slider, transiciones entre tabs, animaciones de tarjetas (stagger), press-effect

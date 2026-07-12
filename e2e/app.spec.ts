@@ -155,14 +155,26 @@ test.describe("Perfil", () => {
     await expect(page.getByText("¡Gracias! Reseña guardada.")).toBeVisible();
   });
 
-  test("cambio de idioma y de tema", async ({ page }) => {
+  test("cambio de idioma (6 idiomas) y de tema", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("tab", { name: "Perfil" }).click();
-    await page.getByRole("tab", { name: "EN" }).click();
+    // inglés
+    await page.getByRole("button", { name: /English/ }).click();
     await expect(page.getByRole("tab", { name: "Explore" })).toBeVisible();
-    await page.getByRole("tab", { name: "Dark" }).click();
+    // portugués
+    await page.getByRole("button", { name: /Português/ }).click();
+    await expect(page.getByRole("tab", { name: "Explorar" })).toBeVisible();
+    // alemán
+    await page.getByRole("button", { name: /Deutsch/ }).click();
+    await expect(page.getByRole("tab", { name: "Profil" })).toBeVisible();
+    // francés e italiano existen en la grilla
+    await expect(page.getByRole("button", { name: /Français/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Italiano/ })).toBeVisible();
+    // volver a español y probar tema
+    await page.getByRole("button", { name: /Español/ }).click();
+    await page.getByRole("tab", { name: "Oscuro" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-    await page.getByRole("tab", { name: "Light" }).click();
+    await page.getByRole("tab", { name: "Claro" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   });
 });

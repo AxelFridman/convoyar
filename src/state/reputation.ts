@@ -3,7 +3,7 @@
  * Sin React ni efectos: fáciles de testear y de mover a un backend.
  */
 import type { AppState, JoinRequest, Member, Review, TripRecord } from "./model";
-import type { Lang } from "../i18n";
+import { localeOf, type Lang } from "../i18n";
 
 export interface Rating {
   /** Promedio 1–5, o null si nunca fue calificado. */
@@ -46,7 +46,7 @@ export function tripsOf(state: Pick<AppState, "tripHistory">, memberId: string):
 export function memberSince(joinedISO: string, lang: Lang, now: Date = new Date()): string {
   const joined = new Date(joinedISO);
   const days = Math.max(0, Math.floor((now.getTime() - joined.getTime()) / 86400000));
-  const rtf = new Intl.RelativeTimeFormat(lang === "es" ? "es-AR" : "en-US", { numeric: "auto" });
+  const rtf = new Intl.RelativeTimeFormat(localeOf(lang), { numeric: "auto" });
   if (days < 30) return rtf.format(-days, "day");
   if (days < 365) return rtf.format(-Math.floor(days / 30), "month");
   return rtf.format(-Math.floor(days / 365), "year");

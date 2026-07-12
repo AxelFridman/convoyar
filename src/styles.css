@@ -1081,6 +1081,35 @@ button:focus-visible {
   padding-left: 10px;
 }
 
+/* ---- selector de idioma ---- */
+.langGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.langCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.langCard-on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+.langFlag {
+  font-size: 22px;
+}
+
 /* ---- tabbar ---- */
 .tabbar {
   position: fixed;
