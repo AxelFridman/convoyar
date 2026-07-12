@@ -92,8 +92,10 @@ test.describe("Explorar (modo público, tipo BlaBlaCar)", () => {
     await page.getByRole("tab", { name: "Explorar" }).click();
     await page.getByRole("button", { name: /Valen R\./ }).first().click();
     await expect(page.getByText("En Convoyar")).toBeVisible();
-    await expect(page.getByText(/\d+ viajes/)).toBeVisible();
+    await expect(page.locator(".profileStats .pill", { hasText: /\d+ viajes/ }).first()).toBeVisible();
     await expect(page.getByText("Reseñas")).toBeVisible();
+    // los logros aparecen en el perfil público (insignias de confianza)
+    await expect(page.locator(".badges .badge2-on").first()).toBeVisible();
     await expect(page.getByText("Súper puntual y el auto impecable.")).toBeVisible();
   });
 

@@ -845,6 +845,58 @@ button:focus-visible {
   outline: none;
   border-bottom-color: var(--accent);
 }
+/* logros / insignias (PR-E1) */
+.badges {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.badge2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  text-align: center;
+  opacity: 0.5;
+  filter: grayscale(1);
+  transition: opacity 0.2s ease, filter 0.2s ease, transform 0.12s ease;
+}
+.badge2-on {
+  opacity: 1;
+  filter: none;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface2));
+}
+.badge2-on:active { transform: scale(0.96); }
+.badge2Emoji { font-size: 26px; line-height: 1; }
+.badge2Lbl { font-size: 11px; font-weight: 600; color: var(--muted); }
+.badge2-on .badge2Lbl { color: var(--text); }
+
+/* barra de completar perfil */
+.completeBar {
+  height: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.completeFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--ok)));
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.completeSteps {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
 /* puerta a Ajustes desde Perfil (fila con chevron) */
 .settingsEntry {
   display: flex;
