@@ -39,6 +39,9 @@ test("recorrido visual completo", async ({ page }) => {
   // matching del asado
   await page.getByRole("tab", { name: "Inicio" }).click();
   await page.getByText("Asado del sábado").click();
+  // radio de caminata en el mapa
+  await page.getByRole("tab", { name: "Necesito lugar" }).click();
+  await page.locator(".walkCircle").first().waitFor();
   await shoot(page, "05-mi-viaje");
   await page.getByRole("tab", { name: "Admin" }).click();
   await page.getByRole("button", { name: "Armar convoys" }).click();

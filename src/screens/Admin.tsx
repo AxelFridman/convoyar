@@ -14,6 +14,7 @@ import {
 import { can } from "../services/billing";
 import { downloadCSV, downloadJSON } from "../services/export";
 import { minutesToHHMM } from "../engine/geo";
+import { Confetti } from "../components/Celebration";
 import { IconDownload, IconLeaf, IconWarn, IconCar, IconUsers } from "../components/Icons";
 
 export default function Admin({ eventId }: { eventId: string | null }) {
@@ -24,6 +25,7 @@ export default function Admin({ eventId }: { eventId: string | null }) {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [upsell, setUpsell] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [party, setParty] = useState(false);
 
   if (!ev) return <div className="screen"><p className="sub center">{T("trip.noEvent")}</p></div>;
 
@@ -77,8 +79,16 @@ export default function Admin({ eventId }: { eventId: string | null }) {
 
   const stats = assignment?.result.stats;
 
+  // Cuenta de pasajeros con lugar antes de calcular: si va a haber convoys, festejamos.
+  const paxCount = legs.filter((l) => l.role === "passenger").length;
+  const runAndCelebrate = async () => {
+    await runMatch(ev.id);
+    if (paxCount > 0) setParty(true);
+  };
+
   return (
     <div className="screen">
+      {party && <Confetti onDone={() => setParty(false)} />}
       <header className="topbar">
         <div>
           <div className="eyebrow">{ev.title}</div>
@@ -128,10 +138,11 @@ export default function Admin({ eventId }: { eventId: string | null }) {
         type="button"
         className="btn btn-primary btn-block"
         disabled={computing || !hasLegs}
-        onClick={() => runMatch(ev.id)}
+        onClick={runAndCelebrate}
       >
         {computing ? T("admin.computing") : assignment ? T("admin.recompute") : T("admin.compute")}
       </button>
+      {computing && <div className="computingBar" aria-hidden="true" />}
       {!hasLegs && <p className="sub center">{T("admin.needLegs")}</p>}
 
       {assignment && (

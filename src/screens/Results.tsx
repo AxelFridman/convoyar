@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { useStore, useT } from "../state/store";
 import { type TKey } from "../i18n";
 import { RideCard } from "../components/RideCard";
 import MapPicker, { type MapMarker } from "../components/MapPicker";
-import { IconWarn } from "../components/Icons";
+import { Confetti } from "../components/Celebration";
+import { IconWarn, IconCheck } from "../components/Icons";
+
+/** Celebraciones ya mostradas (por cálculo + usuario), para no repetir al volver a la pestaña. */
+const celebrated = new Set<string>();
 
 export default function Results({ eventId }: { eventId: string | null }) {
   const { state } = useStore();
   const T = useT();
+  const [party, setParty] = useState(false);
   const ev = state.events.find((e) => e.id === eventId);
   if (!ev) return <div className="screen"><p className="sub center">{T("trip.noEvent")}</p></div>;
 
@@ -18,7 +23,10 @@ export default function Results({ eventId }: { eventId: string | null }) {
     return (
       <div className="screen">
         <Header title={T("nav.results")} sub={ev.title} />
-        <p className="sub center">{T("results.empty") + " " + T("results.emptyAdmin")}</p>
+        <div className="emptyState">
+          <div className="emptyArt" aria-hidden="true">🗺️</div>
+          <p className="sub center">{T("results.empty") + " " + T("results.emptyAdmin")}</p>
+        </div>
       </div>
     );
   }
@@ -32,6 +40,14 @@ export default function Results({ eventId }: { eventId: string | null }) {
       : undefined;
   const meUnassigned = myLeg && result.unassigned.find((u) => u.passengerLegId === myLeg.id);
 
+  // Celebrar una sola vez cuando conseguís lugar en este cálculo.
+  const celebrateKey = myRide && myLeg ? `${ev.id}:${assignment.computedAt}:${myLeg.id}` : null;
+  if (celebrateKey && !celebrated.has(celebrateKey)) {
+    celebrated.add(celebrateKey);
+    // setState en render controlado por el guard del Set → no hace loop.
+    if (!party) setParty(true);
+  }
+
   const routeMarkers: MapMarker[] | undefined = myRide
     ? myRide.stops.map((s, i) => ({
         loc: s.point,
@@ -41,7 +57,15 @@ export default function Results({ eventId }: { eventId: string | null }) {
 
   return (
     <div className="screen">
+      {party && <Confetti onDone={() => setParty(false)} />}
       <Header title={T("nav.results")} sub={ev.title} />
+
+      {myRide && myLeg?.role !== "driver" && (
+        <div className="celebrateBanner">
+          <span className="celebrateIcon"><IconCheck size={18} /></span>
+          <b>{T("results.gotSeatTitle")}</b>
+        </div>
+      )}
 
       {meUnassigned && (
         <div className="alert">

@@ -3,6 +3,7 @@ import { useStore, useT } from "../state/store";
 import { type TKey } from "../i18n";
 import { Segmented, Slider, Stepper, Chip, TimeInput } from "../components/UI";
 import MapPicker from "../components/MapPicker";
+import { walkRadiusMeters } from "../engine/geo";
 import { isParticipant } from "../state/reputation";
 import type { Feature, LatLng } from "../engine/types";
 import type { Role } from "../state/model";
@@ -138,7 +139,11 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
               ]}
               onTap={setOrigin}
               height={190}
+              walkRadius={role === "passenger" && walk > 0 ? { center: origin, meters: walkRadiusMeters(walk) } : undefined}
             />
+            {role === "passenger" && walk > 0 && (
+              <p className="sub mapHint">{T("trip.walkRadiusHint")}</p>
+            )}
           </div>
 
           {role === "driver" && (

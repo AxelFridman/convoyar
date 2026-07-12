@@ -27,11 +27,14 @@
       Selector con banderas en Perfil. `localeOf(lang)` reemplaza los ternarios es/en.
       Test de paridad `i18n.test.ts` (mismas claves + placeholders + marca intacta, 20 tests).
       Traducciones generadas con workflow de subagentes (uno por idioma) + verificación.
-- [ ] **PR3 `feat/visual-delight`** — capa de deleite tipo Duolingo:
-      confetti al conseguir convoy, radio de caminata dibujado en el mapa al mover el
-      slider, transiciones entre tabs, animaciones de tarjetas (stagger), press-effect
-      en botones, empty states ilustrados, celebración al armar convoys (admin),
-      contador animado en métricas. Regenerar screenshots del README acá.
+- [x] **PR3 `feat/visual-delight`** — capa de deleite tipo Duolingo: ✅
+      confetti (`Celebration.tsx`, puro CSS/JS) al conseguir convoy en Resultados y al
+      armar convoys en Admin; radio de caminata dibujado en vivo en el mapa
+      (`walkRadiusMeters` + círculo Leaflet que late); stagger de entrada de pantalla,
+      press-effect en botones/chips/tarjetas, sheen en el botón primario, pop de chips,
+      empty states ilustrados (Explorar, Resultados), barra de "armando", banner de
+      celebración, ícono de tab activo con bounce. Todo respeta prefers-reduced-motion.
+      Screenshots regeneradas.
 - [ ] **PR4 `feat/onboarding`** — wizard primera vez: bienvenida → idioma → nombre →
       email (opcional) → tu casa en el mapa → ¿tenés auto? → notificaciones → ¡listo!
       (con confetti). Flag `settings.onboarded`; `resetDemo` lo vuelve a mostrar.
