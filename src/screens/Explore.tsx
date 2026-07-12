@@ -6,10 +6,10 @@ import { Sheet } from "../components/UI";
 import { IconCar, IconCheck, IconGlobe, IconPin, IconUsers } from "../components/Icons";
 import { localeOf, type TKey } from "../i18n";
 
-type DateRange = "all" | "today" | "weekend" | "week";
+export type DateRange = "all" | "today" | "weekend" | "week";
 
-/** ¿La fecha del evento cae dentro del rango elegido? (relativo a `now`). */
-function inRange(dateISO: string, range: DateRange, now: Date): boolean {
+/** ¿La fecha del evento cae dentro del rango elegido? (relativo a `now`). Exportada para tests. */
+export function inRange(dateISO: string, range: DateRange, now: Date): boolean {
   if (range === "all") return true;
   const d = new Date(dateISO);
   const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate());
@@ -20,9 +20,10 @@ function inRange(dateISO: string, range: DateRange, now: Date): boolean {
   if (range === "today") return diffDays === 0;
   if (range === "week") return diffDays >= 0 && diffDays <= 7;
   if (range === "weekend") {
-    // Próximo sábado y domingo (o el finde en curso).
+    // Finde en curso o el próximo. Si hoy YA es domingo (dow=0), el sábado del
+    // finde en curso es ayer, así que el propio domingo sigue contando.
     const dow = now.getDay(); // 0 dom … 6 sáb
-    const toSat = (6 - dow + 7) % 7;
+    const toSat = dow === 0 ? -1 : (6 - dow) % 7;
     const sat = startOfDay(new Date(today.getTime() + toSat * dayMs));
     const sun = startOfDay(new Date(sat.getTime() + dayMs));
     return ev.getTime() === sat.getTime() || ev.getTime() === sun.getTime();

@@ -66,10 +66,22 @@ describe("solicitudes y permisos", () => {
     }
   });
 
-  it("aprobada = participante aunque no sea de la org", () => {
+  it("participación según visibilidad del evento", () => {
+    // ev2 (Tigre) es PÚBLICO: solo organizador + aprobados + con leg, NO todo el padrón.
+    expect(isParticipant(s, tigre.id, "m0")).toBe(true); // organizador
     expect(isParticipant(s, tigre.id, "c6")).toBe(true); // Delfi, aprobada
     expect(isParticipant(s, tigre.id, "c1")).toBe(false); // Abril, pendiente
-    expect(isParticipant(s, tigre.id, "m3")).toBe(true); // de la org
+    expect(isParticipant(s, tigre.id, "m3")).toBe(false); // de la org, pero el evento es público
+    // ev1 (Asado) es PRIVADO: cualquier miembro de la org participa.
+    expect(isParticipant(s, "ev1", "m3")).toBe(true);
+  });
+
+  it("un evento público no expone el padrón de la org en participantsOf", () => {
+    const pub = participantsOf(s, tigre.id);
+    expect(pub).toContain("m0"); // organizador
+    expect(pub).toContain("c6"); // aprobada
+    expect(pub).not.toContain("m3"); // socio de la org que no viaja
+    expect(pub.length).toBeLessThan(10); // no son los 26 de la org
   });
 
   it("myRequestFor devuelve la última solicitud", () => {

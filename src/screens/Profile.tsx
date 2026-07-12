@@ -37,16 +37,21 @@ export default function Profile() {
       setAuthMsg(T("account.invalidEmail"));
       return;
     }
-    dispatch({ type: "updateMember", member: { ...me, email: email.trim(), emailVerified: false } });
+    // No persistimos el email hasta confirmarlo: así no perdés el verificado
+    // anterior si abandonás el flujo. Solo pedimos el código.
     const r = await auth.sendCode(email);
     if (r.ok) {
       setCodeStage(true);
       setAuthMsg(T("account.codeSent", { code: r.demoCode ?? "······" }));
     }
   };
+  // Comparación canónica (minúsculas): el email tipeado coincide con el verificado.
+  const alreadyVerified = !!me.emailVerified && me.email === email.trim().toLowerCase();
   const confirmCode = async () => {
     if (await auth.verifyCode(email, code)) {
-      dispatch({ type: "updateMember", member: { ...me, email: email.trim(), emailVerified: true } });
+      // Guardar en forma canónica (minúsculas) — igual que valida auth — para que
+      // el badge y el botón no se contradigan por diferencias de mayúsculas.
+      dispatch({ type: "updateMember", member: { ...me, email: email.trim().toLowerCase(), emailVerified: true } });
       setCodeStage(false);
       setCode("");
       setAuthMsg(T("account.verifyOk"));
@@ -195,16 +200,16 @@ export default function Profile() {
             setCodeStage(false);
             setAuthMsg("");
           }}
-          placeholder="vos@email.com"
+          placeholder={T("ob.emailPlaceholder")}
         />
         {!codeStage ? (
           <button
             type="button"
             className="btn btn-ghost btn-sm"
-            disabled={!email.trim() || (me.email === email.trim() && me.emailVerified)}
+            disabled={!email.trim() || (alreadyVerified)}
             onClick={startVerify}
           >
-            {me.emailVerified && me.email === email.trim() ? `✓ ${T("account.verified")}` : T("account.sendCode")}
+            {alreadyVerified ? `✓ ${T("account.verified")}` : T("account.sendCode")}
           </button>
         ) : (
           <div className="row gap">

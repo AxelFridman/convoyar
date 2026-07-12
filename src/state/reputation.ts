@@ -85,12 +85,18 @@ export function canAdminEvent(
   return !!org?.adminIds.includes(memberId);
 }
 
-/** ¿Participa ya del evento? (miembro de la org, o admitido vía solicitud). */
+/** ¿Participa ya del evento?
+ *  - Evento PRIVADO: cualquier miembro de la org participa (es el flujo de org).
+ *  - Evento PÚBLICO: solo el organizador, los aprobados y quien ya tiene un leg.
+ *    (Los demás miembros de la org piden lugar como cualquiera — no se los mete
+ *    de oficio, ni se expone el padrón de la org en un viaje público.) */
 export function isParticipant(state: AppState, eventId: string, memberId: string): boolean {
   const ev = state.events.find((e) => e.id === eventId);
   if (!ev) return false;
+  if (ev.createdBy === memberId) return true;
   const org = state.orgs.find((o) => o.id === ev.orgId);
-  if (org?.memberIds.includes(memberId)) return true;
+  if (ev.visibility === "private" && org?.memberIds.includes(memberId)) return true;
+  if (state.legs.some((l) => l.eventId === eventId && l.memberId === memberId)) return true;
   return state.joinRequests.some(
     (r) => r.eventId === eventId && r.memberId === memberId && r.status === "approved"
   );
@@ -105,8 +111,13 @@ export function participantsOf(
   const ev = state.events.find((e) => e.id === eventId);
   if (!ev) return [];
   const ids = new Set<string>();
-  const org = state.orgs.find((o) => o.id === ev.orgId);
-  org?.memberIds.forEach((id) => ids.add(id));
+  if (ev.createdBy) ids.add(ev.createdBy);
+  // Solo un evento privado suma a todo el padrón de la org; uno público no
+  // (mismo criterio que isParticipant: evita exponer/incluir a quien no viaja).
+  if (ev.visibility === "private") {
+    const org = state.orgs.find((o) => o.id === ev.orgId);
+    org?.memberIds.forEach((id) => ids.add(id));
+  }
   state.joinRequests
     .filter((r) => r.eventId === eventId && r.status === "approved")
     .forEach((r) => ids.add(r.memberId));
