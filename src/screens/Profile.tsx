@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { useStore, useT } from "../state/store";
 import { localeOf, type TKey } from "../i18n";
 import { Chip, Sheet, Stepper } from "../components/UI";
-import { Avatar, MemberProfile, Stars } from "../components/People";
+import { Avatar, Badges, MemberProfile, Stars } from "../components/People";
 import { memberSince, ratingOf, tripsOf } from "../state/reputation";
+import { profileCompletion } from "../state/achievements";
 import { blankVehicle, newVehicleId } from "../state/vehicles";
 import Settings from "./Settings";
 import { IconChevronRight, IconSettings } from "../components/Icons";
@@ -26,6 +27,7 @@ export default function Profile() {
   const [showSettings, setShowSettings] = useState(false);
   const rating = ratingOf(state, me.id);
   const myTrips = tripsOf(state, me.id);
+  const completion = profileCompletion(me);
 
   const setVehicles = (vehicles: Vehicle[]) =>
     dispatch({ type: "updateMember", member: { ...me, vehicles } });
@@ -82,6 +84,25 @@ export default function Profile() {
             <div className="sub">{T("profile.memberSince", { since: memberSince(me.joinedISO, lang) })}</div>
           </div>
         </div>
+      </div>
+
+      {completion.pct < 100 && (
+        <div className="field">
+          <span>{T("complete.title", { pct: completion.pct })}</span>
+          <div className="completeBar" aria-hidden="true">
+            <div className="completeFill" style={{ width: `${completion.pct}%` }} />
+          </div>
+          <div className="completeSteps">
+            {completion.steps.filter((s) => !s.done).map((s) => (
+              <span key={s.key} className="pill">{T(s.key as TKey)}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="field">
+        <span>{T("ach.title")}</span>
+        <Badges memberId={me.id} />
       </div>
 
       <div className="field">

@@ -10,7 +10,25 @@ import {
   tripsOf
 } from "../state/reputation";
 import { IconStar, IconCar, IconWalk } from "./Icons";
-import { localeOf } from "../i18n";
+import { achievementsOf, type Achievement } from "../state/achievements";
+import { localeOf, type TKey } from "../i18n";
+
+/** Grilla de insignias: ganadas en color, pendientes atenuadas con candado. */
+export function Badges({ memberId }: { memberId: string }) {
+  const { state } = useStore();
+  const T = useT();
+  const list = achievementsOf(state, memberId);
+  return (
+    <div className="badges">
+      {list.map((a: Achievement) => (
+        <div key={a.id} className={`badge2 ${a.earned ? "badge2-on" : ""}`} title={T(`ach.${a.id}.desc` as TKey)}>
+          <span className="badge2Emoji" aria-hidden="true">{a.earned ? a.emoji : "🔒"}</span>
+          <span className="badge2Lbl">{T(`ach.${a.id}.title` as TKey)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Avatar con iniciales y color estable por id. */
 export function Avatar({ id, name, size = 40 }: { id: string; name: string; size?: number }) {
@@ -134,6 +152,9 @@ export function MemberProfile({ memberId, allowRate }: { memberId: string; allow
           </span>
         )}
       </div>
+
+      <h4 className="eyebrow">{T("ach.title")}</h4>
+      <Badges memberId={m.id} />
 
       {reviews.length > 0 && (
         <>
