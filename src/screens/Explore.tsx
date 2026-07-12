@@ -35,7 +35,12 @@ export default function Explore({
         </div>
       </header>
 
-      {events.length === 0 && <p className="sub center">{T("explore.empty")}</p>}
+      {events.length === 0 && (
+        <div className="emptyState">
+          <div className="emptyArt" aria-hidden="true">🧭</div>
+          <p className="sub center">{T("explore.empty")}</p>
+        </div>
+      )}
 
       {events.map((ev) => {
         const mine = ev.createdBy === state.meId;

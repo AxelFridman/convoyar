@@ -1145,10 +1145,211 @@ button:focus-visible {
 .tabbar .tab-on {
   color: var(--accent);
 }
+.tabbar button svg {
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.tabbar .tab-on svg {
+  transform: translateY(-2px) scale(1.12);
+}
+
+/* ============ CAPA DE DELEITE (PR3 visual-delight) ============ */
+
+/* --- entrada de pantalla + stagger de tarjetas --- */
+.screen > * {
+  animation: rise 0.34s both;
+}
+.screen > *:nth-child(1) { animation-delay: 0.02s; }
+.screen > *:nth-child(2) { animation-delay: 0.06s; }
+.screen > *:nth-child(3) { animation-delay: 0.10s; }
+.screen > *:nth-child(4) { animation-delay: 0.14s; }
+.screen > *:nth-child(5) { animation-delay: 0.18s; }
+.screen > *:nth-child(6) { animation-delay: 0.22s; }
+.screen > *:nth-child(n + 7) { animation-delay: 0.26s; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- micro-interacción de botones: press físico --- */
+.btn,
+.chip,
+.planCard,
+.langCard,
+.moveOpt,
+.eventCard,
+.exploreCard,
+.codeRow {
+  transition: transform 0.12s ease, box-shadow 0.16s ease, border-color 0.16s ease,
+    background 0.16s ease;
+}
+.btn:active,
+.chip:active,
+.planCard:active,
+.langCard:active,
+.moveOpt:active,
+.eventCard:active,
+.exploreCard:active,
+.codeRow:active {
+  transform: scale(0.97);
+}
+.btn-primary:not(:disabled):hover,
+.btn-ok:not(:disabled):hover {
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.btn-primary,
+.btn-ok {
+  position: relative;
+  overflow: hidden;
+}
+/* brillo que cruza el botón primario al aparecer */
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.25) 50%, transparent 70%);
+  transform: translateX(-120%);
+  animation: sheen 2.8s ease-in-out 0.6s;
+}
+@keyframes sheen {
+  to { transform: translateX(120%); }
+}
+
+/* --- chips que se activan con un pop --- */
+.chip-on,
+.seg-on {
+  animation: pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes pop {
+  0% { transform: scale(0.9); }
+  60% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* --- confetti --- */
+.confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 300;
+  overflow: hidden;
+}
+.confettiPiece {
+  position: absolute;
+  top: -16px;
+  animation-name: fall;
+  animation-timing-function: cubic-bezier(0.4, 0.1, 0.6, 1);
+  animation-fill-mode: forwards;
+  will-change: transform, opacity;
+}
+@keyframes fall {
+  0% { transform: translateY(-16px) translateX(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) translateX(var(--drift, 0)) rotate(540deg); opacity: 0.9; }
+}
+.confettiFlash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 300;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 60%);
+  animation: flashOut 0.7s ease forwards;
+}
+@keyframes flashOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* --- banner de celebración --- */
+.celebrateBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ok) 22%, var(--surface)), var(--surface));
+  border: 1px solid color-mix(in srgb, var(--ok) 45%, var(--line));
+  border-radius: 16px;
+  padding: 14px 16px;
+  font-size: 16px;
+  animation: rise 0.34s both, bannerPulse 2.4s ease 0.3s;
+}
+.celebrateIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--ok);
+  color: #fff;
+  flex-shrink: 0;
+  animation: badgePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes badgePop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+@keyframes bannerPulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  30% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 25%, transparent); }
+}
+
+/* --- empty states ilustrados --- */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.emptyArt {
+  font-size: 56px;
+  line-height: 1;
+  animation: floaty 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+/* --- círculo de caminata en el mapa: latido suave --- */
+.walkCircle {
+  animation: walkPulse 2.6s ease-in-out infinite;
+}
+@keyframes walkPulse {
+  0%, 100% { stroke-opacity: 0.9; fill-opacity: 0.1; }
+  50% { stroke-opacity: 0.5; fill-opacity: 0.18; }
+}
+.mapHint {
+  margin-top: 6px;
+}
+
+/* --- número que cuenta hacia arriba (métricas) --- */
+.statVal {
+  animation: countIn 0.5s ease both;
+}
+@keyframes countIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- spinner del cálculo (armar convoys) --- */
+.computingBar {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  background-size: 200% 100%;
+  animation: slide 1.1s linear infinite;
+  margin-top: 8px;
+}
+@keyframes slide {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
     transition: none !important;
   }
+  .screen > * { opacity: 1 !important; transform: none !important; }
 }

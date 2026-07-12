@@ -15,6 +15,8 @@ interface Props {
   route?: LatLng[];
   onTap?: (loc: LatLng) => void;
   height?: number;
+  /** Círculo de "hasta acá camino" alrededor de un punto (radio en metros). */
+  walkRadius?: { center: LatLng; meters: number };
 }
 
 const ERROR_TILE =
@@ -38,7 +40,7 @@ function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 }
 
-export default function MapPicker({ center, zoom = 12, markers = [], route, onTap, height = 220 }: Props) {
+export default function MapPicker({ center, zoom = 12, markers = [], route, onTap, height = 220, walkRadius }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
@@ -79,6 +81,19 @@ export default function MapPicker({ center, zoom = 12, markers = [], route, onTa
     const layer = layerRef.current;
     if (!map || !layer) return;
     layer.clearLayers();
+    // Círculo de caminata primero, para que quede debajo de los marcadores.
+    if (walkRadius && walkRadius.meters > 0) {
+      L.circle([walkRadius.center.lat, walkRadius.center.lng], {
+        radius: walkRadius.meters,
+        color: "#FFB53F",
+        weight: 1.5,
+        opacity: 0.9,
+        fillColor: "#FFB53F",
+        fillOpacity: 0.12,
+        className: "walkCircle",
+        interactive: false,
+      }).addTo(layer);
+    }
     for (const m of markers) {
       L.marker([m.loc.lat, m.loc.lng], { icon: divIcon(m.kind, m.label), interactive: false }).addTo(layer);
     }
@@ -89,12 +104,18 @@ export default function MapPicker({ center, zoom = 12, markers = [], route, onTa
       ).addTo(layer);
     }
     const pts = [...markers.map((m) => m.loc), ...(route ?? [])];
-    if (pts.length > 1) {
+    // Con radio de caminata, encuadrar SOLO el círculo (el destino puede estar
+    // lejísimos y achicaría el círculo hasta hacerlo invisible; acá importa
+    // "hasta dónde camino desde mi origen").
+    if (walkRadius && walkRadius.meters > 0) {
+      const bounds = L.latLng(walkRadius.center.lat, walkRadius.center.lng).toBounds(walkRadius.meters * 2.6);
+      map.fitBounds(bounds, { padding: [16, 16], maxZoom: 16 });
+    } else if (pts.length > 1) {
       map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lng])), { padding: [28, 28], maxZoom: 14 });
     } else if (pts.length === 1) {
       map.setView([pts[0].lat, pts[0].lng], Math.max(map.getZoom(), 13));
     }
-  }, [markers, route]);
+  }, [markers, route, walkRadius]);
 
   return <div ref={ref} className="map" style={{ height }} />;
 }

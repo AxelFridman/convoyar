@@ -18,6 +18,13 @@ export function walkMinutes(a: LatLng, b: LatLng): number {
   return (haversineKm(a, b) * 1.25 * 60) / 4.5;
 }
 
+/** Radio en metros alcanzable caminando en `minutes` — inverso de walkMinutes
+ *  (línea recta). Sirve para dibujar en el mapa cuánto está dispuesto a caminar
+ *  el pasajero, coherente con lo que evalúa el motor. */
+export function walkRadiusMeters(minutes: number): number {
+  return (minutes * 4.5 * 1000) / (1.25 * 60);
+}
+
 /** RNG determinista (mulberry32) para desempates reproducibles y datos de demo. */
 export function mulberry32(seed: number): () => number {
   let t = seed >>> 0;
