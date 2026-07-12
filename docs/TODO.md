@@ -35,9 +35,12 @@
       empty states ilustrados (Explorar, Resultados), barra de "armando", banner de
       celebración, ícono de tab activo con bounce. Todo respeta prefers-reduced-motion.
       Screenshots regeneradas.
-- [ ] **PR4 `feat/onboarding`** — wizard primera vez: bienvenida → idioma → nombre →
-      email (opcional) → tu casa en el mapa → ¿tenés auto? → notificaciones → ¡listo!
-      (con confetti). Flag `settings.onboarded`; `resetDemo` lo vuelve a mostrar.
+- [x] **PR4 `feat/onboarding`** — wizard primera vez (`screens/Onboarding.tsx`): ✅
+      bienvenida → idioma → nombre → email (opcional, validado) → casa en el mapa →
+      ¿tenés auto? (+capacidad) → notificaciones → confetti. Barra de progreso,
+      pasos como array {id, body, canNext} (agregar/quitar = trivial). Flag
+      `settings.onboarded` (seed=true; se rejuega desde Perfil "Ver la introducción").
+      App muestra el wizard a pantalla completa si `!onboarded`. 26 claves ob.* × 6 idiomas.
 - [ ] **PR5 `feat/account-comms`** — email + verificación (código simulado localmente,
       interfaz `services/auth.ts` lista para backend real), chat por convoy
       (mensajes entre participantes de una salida, respuestas simuladas de la demo),

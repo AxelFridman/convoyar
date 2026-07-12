@@ -215,6 +215,14 @@ export default function Profile() {
 
       <button
         type="button"
+        className="btn btn-ghost btn-block"
+        onClick={() => dispatch({ type: "setSettings", patch: { onboarded: false } })}
+      >
+        {T("profile.replayOnboarding")}
+      </button>
+
+      <button
+        type="button"
         className="btn btn-ghost danger btn-block"
         onClick={() => {
           if (confirm(T("profile.resetConfirm"))) {

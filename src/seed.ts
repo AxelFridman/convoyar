@@ -416,7 +416,10 @@ export function buildSeed(): AppState {
     joinRequests,
     reviews,
     tripHistory,
-    settings: { lang: "es", theme: "system", plan: "pro", notifPermission: false },
+    // La demo representa a un usuario ya establecido → onboarded. El wizard se
+    // puede rejugar desde Perfil ("Ver introducción"); un usuario nuevo real
+    // (sin estado guardado + backend) arrancaría con onboarded: false.
+    settings: { lang: "es", theme: "system", plan: "pro", notifPermission: false, onboarded: true },
     activeOrgId: "org1",
   };
 }
