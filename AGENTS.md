@@ -3,10 +3,16 @@
 > Leé esto entero antes de tocar código. Son 5 minutos y te ahorra romper invariantes
 > que los tests no siempre atrapan. Documentos hermanos: [docs/TODO.md](docs/TODO.md)
 > (**estado vivo del trabajo — empezá por ahí para retomar**), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-> (diseño en profundidad) y [docs/ROADMAP.md](docs/ROADMAP.md) (qué falta y cómo encararlo).
+> (diseño en profundidad), [docs/ROADMAP.md](docs/ROADMAP.md) (qué falta) y
+> [docs/lanzamiento/](docs/lanzamiento/) (**guía operativa paso a paso para lanzar de
+> verdad**: Supabase, auth, deploy web, Play Store, App Store, push, monetización, OSRM,
+> analytics). El schema Postgres ejecutable vive en [server/](server/).
 >
 > Metodología de trabajo: una branch `feat/*` por bloque de trabajo → PR → merge.
 > Toda feature a medias queda anotada en docs/TODO.md antes de cerrar la sesión.
+>
+> **Secretos:** `.env` y `server/.env` están gitignoreados. NUNCA commitees claves reales
+> (Supabase `service_role`, passwords). GitHub push protection está activo y rechaza el push.
 
 ## Qué es esto
 
