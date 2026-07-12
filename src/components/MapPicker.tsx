@@ -94,14 +94,15 @@ export default function MapPicker({ center, zoom = 12, markers = [], route, onTa
         interactive: false,
       }).addTo(layer);
     }
+    if (route && route.length > 1) {
+      const latlngs = route.map((p) => [p.lat, p.lng] as [number, number]);
+      // Casing oscuro debajo + línea ámbar arriba = sensación de "ruta" con profundidad.
+      L.polyline(latlngs, { color: "#00000055", weight: 8, opacity: 0.5, lineCap: "round", lineJoin: "round" }).addTo(layer);
+      L.polyline(latlngs, { color: "#FFB53F", weight: 4, opacity: 0.95, lineCap: "round", lineJoin: "round" }).addTo(layer);
+    }
+    // Marcadores encima de la ruta.
     for (const m of markers) {
       L.marker([m.loc.lat, m.loc.lng], { icon: divIcon(m.kind, m.label), interactive: false }).addTo(layer);
-    }
-    if (route && route.length > 1) {
-      L.polyline(
-        route.map((p) => [p.lat, p.lng]),
-        { color: "#FFB53F", weight: 3, opacity: 0.85, dashArray: "6 8" }
-      ).addTo(layer);
     }
     const pts = [...markers.map((m) => m.loc), ...(route ?? [])];
     // Con radio de caminata, encuadrar SOLO el círculo (el destino puede estar
