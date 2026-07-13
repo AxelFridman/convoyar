@@ -4,12 +4,16 @@ name: Deploy web (Cloudflare Pages)
 # (Cloudflare Pages, proyecto convoyar-web → convoyar.com). También corre a mano
 # desde la pestaña Actions (workflow_dispatch).
 #
-# 🧑 Requiere estos Secrets en GitHub (Settings → Secrets and variables → Actions):
-#   CLOUDFLARE_API_TOKEN      (token con permiso Cloudflare Pages: Edit)
+# 🧑 Requiere estos 4 Secrets en GitHub (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN      (token con permiso "Cloudflare Pages: Edit")
 #   CLOUDFLARE_ACCOUNT_ID
 #   VITE_SUPABASE_URL         (el de PROD: https://qlcwluvhrbkwjkjigsog.supabase.co)
 #   VITE_SUPABASE_ANON_KEY    (el sb_publishable_... de PROD)
 # (Son claves públicas por diseño salvo el token de Cloudflare; NUNCA pongas el sb_secret_.)
+#
+# Si FALTA cualquiera de los 4, el workflow NO falla: se saltea con una advertencia.
+# Así un push nunca manda mail de error, y NUNCA se sube a producción un build sin
+# Supabase (que rompería la app). El deploy manual sigue disponible: `npm run deploy`.
 
 on:
   push:
@@ -20,18 +24,38 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Verificar que estén los 4 secrets
+        id: check
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SB_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SB_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$CF_TOKEN" ] && [ -n "$CF_ACCT" ] && [ -n "$SB_URL" ] && [ -n "$SB_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Auto-deploy salteado::Faltan Secrets de Cloudflare/Supabase en GitHub. Cargá los 4 (Settings → Secrets and variables → Actions) para activar el deploy automático. Mientras tanto, deployá a mano con 'npm run deploy'."
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.check.outputs.ready == 'true'
       - uses: actions/setup-node@v4
+        if: steps.check.outputs.ready == 'true'
         with:
           node-version: "20"
           cache: "npm"
       - run: npm ci
+        if: steps.check.outputs.ready == 'true'
       - name: Build (env de producción)
+        if: steps.check.outputs.ready == 'true'
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Deploy a Cloudflare Pages (producción)
+        if: steps.check.outputs.ready == 'true'
         run: npx --yes wrangler@4 pages deploy dist --project-name convoyar-web --branch main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
