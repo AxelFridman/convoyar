@@ -389,6 +389,22 @@ function settingsToRow(memberId: string, s: Settings) {
   };
 }
 
+/** Mappers puros expuestos SÓLO para tests (repo.test.ts). No usar en runtime:
+ *  no dependen de `supabase` y no tocan la red, así se testean sin backend. */
+export const __test = {
+  toMember,
+  toOrg,
+  toEvent,
+  toLeg,
+  toJoinRequest,
+  toReview,
+  toMessage,
+  toSettings,
+  legToRow,
+  eventToRow,
+  memberToRow
+};
+
 /* ============================ bootstrap del miembro ============================ */
 
 /** Nombre del alta: user_metadata.name (lo setea signUpWithPassword) o, como
