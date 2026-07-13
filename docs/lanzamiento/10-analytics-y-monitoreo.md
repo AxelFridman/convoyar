@@ -159,8 +159,8 @@ de tu control.
 
 - ⚠️ **Nunca** mandes domicilios (`home`), emails ni nombres a Sentry ni a PostHog. El
   `home` es el dato más sensible del modelo (invariante de privacidad #6, ver [doc 01](01-supabase-base-de-datos.md)).
-- **Anonimizá el user id:** identificá a la persona por su **`member id`** (`m0`, `m1`…),
-  **nunca por el email**. Así podés seguir un embudo sin exponer quién es.
+- **Anonimizá el user id:** identificá a la persona por su **`member id`** (un uuid con backend;
+  `m0`/`m1`… en la demo local), **nunca por el email**. Así seguís un embudo sin exponer quién es.
 - En Sentry: `sendDefaultPii: false` (ya está arriba) y revisá los `beforeSend` para
   scrubbear cualquier payload que arrastre datos.
 - En PostHog: `person_profiles: "identified_only"` y no pases props con nombres/mails.

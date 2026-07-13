@@ -5,26 +5,61 @@
 > Regla: si una feature no está terminada, TIENE que figurar acá antes de cerrar la sesión.
 > Metodología: una branch `feat/*` por bloque → PR → merge a `main`. Rollback = revertir el PR.
 
-## ⚠️ CAMBIOS DE MODELO — para quien conecta el backend (Supabase) en paralelo
+## 📍 Estado actual (branch `feat/supabase-connect`, 2026-07-13)
 
-> Cada vez que el modelo (`src/state/model.ts`) cambia, la clave de localStorage sube de
-> versión y el schema de la DB debe re-migrar. `server/schema.sql` ya está actualizado; acá
-> queda el delta explícito para aplicar en Supabase. (No toqué `docs/lanzamiento/01` para no
-> pisar tu edición — aplicá esto ahí cuando puedas.)
+**El backend real está conectado.** La app dejó de ser sólo local: en dev/prod habla con
+Supabase; en tests, E2E y `build:single` sigue 100 % local (interruptor `hasSupabase` en
+`services/supabaseClient.ts`). Si sos nuevo y querés entender dónde está el proyecto, empezá acá.
 
-- **v3 → v4 (PR-A1, garage — sesión 2026-07-12):** `members.vehicle jsonb` (uno) pasó a
-  `members.vehicles jsonb default '[]'` (**Vehicle[]**; cada uno con `id`, `alias?`,
-  `capacity`, `features[]`, `smokeFree`, `plate?`). Además `legs` suma `vehicle_id text`
-  (qué vehículo del garage se ofrece por viaje; null = el primero). Migración Postgres:
-  ```sql
-  alter table public.members add column vehicles jsonb not null default '[]';
-  update public.members set vehicles =
-    case when vehicle is null then '[]'::jsonb
-         else jsonb_build_array(vehicle || jsonb_build_object('id','veh-'||id||'-0')) end;
-  alter table public.members drop column vehicle;
-  alter table public.legs add column vehicle_id text;
-  ```
-  Clave localStorage: `convoyar:v3` → `convoyar:v4`. El cliente re-seedea si la versión no coincide.
+**Hecho ✅**
+- [x] Cliente Supabase (`services/supabaseClient.ts`, `@supabase/supabase-js`) + adaptador
+      `services/repo.ts` (`loadRemote` / `writeAction` / `subscribeRealtime`). Store cablea sesión + realtime.
+- [x] Auth **email + contraseña** (`services/auth.ts`: signUp/signIn/reset/updatePassword;
+      `screens/Auth.tsx`). `meId` deriva de la sesión (`onAuthStateChange`). **NO es OTP.**
+- [x] Org personal por usuario ("Mis viajes") vía RPC `ensure_personal_org` al primer login.
+      `Member.home` es opcional; la ubicación va por viaje (`Leg`).
+- [x] Migraciones corridas en **dev y prod** (idempotentes, en `server/`): `migrate-v3-to-v4.sql`
+      (garage v4 + publicación realtime), `migrate-personal-org.sql`, `migrate-orgs.sql`
+      (invitaciones), `migrate-moderation.sql`.
+- [x] **RLS activo** en todas las tablas; **Realtime habilitado** (tablas compartidas en la
+      publicación `supabase_realtime`, agregadas por la migración v4).
+- [x] Android **scaffoldeado** (Capacitor 8, `android/` sincronizado con el build de prod,
+      íconos/splash, firma preconfigurada por `keystore.properties`).
+- [x] Deploy web en Cloudflare Pages (proyecto `convoyar-web`) por CLI; **preview live** en
+      `https://supabase-preview.convoyar-web.pages.dev`.
+- [x] Dominio `convoyar.com` **comprado** (del dueño).
+- [x] Modelo/backend de **moderación** (reportar pausa hasta revisión, bloquear personal) y de
+      **grupos privados/invitaciones** (código / email / link con toggle) escritos en `server/`.
+- [x] Rename del repo GitHub a `AxelFridman/convoyar` (el remoto ya apunta ahí).
+
+**Pendiente ⏳**
+- [ ] **Flip de producción**: `convoyar.com` todavía sirve la versión vieja; apuntar el dominio
+      (ya comprado) al deploy de `convoyar-web`.
+- [ ] **Cablear la UI** de moderación (reportar/bloquear) y de invitaciones por email/link con
+      toggle: las RPC existen en `server/` pero el cliente hoy sólo usa el código de invitación.
+- [ ] **Push nativo** (credenciales Firebase listas; falta el código) → `docs/lanzamiento/07`.
+- [ ] **Play Store**: keystore + `.aab` firmado + cuenta Play + 14 días de testing (parte del dueño).
+- [ ] **iOS**: sin empezar (requiere macOS).
+- [ ] **Borrar mi cuenta** (obligatorio Apple/Google): Edge Function + acción en Perfil (PR-B3).
+
+## CAMBIOS DE MODELO — historial de migraciones (ya aplicadas en dev + prod)
+
+> Cada cambio del modelo (`src/state/model.ts`) sube la clave de localStorage y necesita una
+> migración Postgres. Todas las de abajo ya están **corridas** y viven como archivos ejecutables
+> e idempotentes en `server/`. Clave localStorage actual: **`convoyar:v4`** (el cliente re-seedea
+> en modo local si la versión no coincide).
+
+- ✅ **v3 → v4 (garage), `server/migrate-v3-to-v4.sql`:** `members.vehicle jsonb` (uno) pasó a
+  `members.vehicles jsonb default '[]'` (**Vehicle[]**; cada uno con `id`, `alias?`, `capacity`,
+  `features[]`, `smokeFree`, `plate?`); `legs` suma `vehicle_id text` (qué vehículo del garage se
+  ofrece por viaje; null = el primero). Además agrega las tablas compartidas a la publicación
+  `supabase_realtime`.
+- ✅ **Org personal, `server/migrate-personal-org.sql`:** RPC `ensure_personal_org` (security
+  definer) que crea la org "Mis viajes" del usuario nuevo al primer login.
+- ✅ **Orgs / invitaciones, `server/migrate-orgs.sql`:** RPC `create_org`, `join_org_by_code`
+  (con toggle `link_enabled`, apagado por defecto), `add_member_by_email`, `set_org_link`, `leave_org`.
+- ✅ **Moderación, `server/migrate-moderation.sql`:** `members.status` (active/paused), tablas
+  `reports` y `member_blocks`, RPC `report_member` (pausa hasta revisión humana) / `block_member` (personal).
 
 ## Convenciones de marca (decididas en PR1)
 
@@ -36,7 +71,7 @@
 | Evento/salida | salida (event) — sin cambio |
 | Pedir unirse a una salida pública | Pedir lugar |
 | Id de app (stores) | `app.convoyar` |
-| Clave localStorage | `convoyar:v2` |
+| Clave localStorage | `convoyar:v4` |
 
 ## Tanda "más lindo / más features / más config" (sesión 2026-07-12, parte 2)
 
@@ -109,9 +144,10 @@
       `settings.onboarded` (seed=true; se rejuega desde Perfil "Ver la introducción").
       App muestra el wizard a pantalla completa si `!onboarded`. 26 claves ob.* × 6 idiomas.
 - [x] **PR5 `feat/account-comms`** — cuentas, comunicaciones y preferencias. ✅
-      Verificación de email con código (`services/auth.ts`: `AuthProvider` +
-      `LocalAuthProvider` simulado, contrato listo para Supabase/Auth0/propio; el
-      código se muestra en la demo, en prod nunca vuelve al cliente). Chat por convoy
+      Verificación de email con código simulado (`services/auth.ts`: `AuthProvider` +
+      `LocalAuthProvider`). **⚠️ Superado:** en `feat/supabase-connect` se reemplazó por auth
+      real **email + contraseña** contra Supabase (ver "Estado actual" arriba); ya no hay
+      `AuthProvider`/`LocalAuthProvider`. Chat por convoy
       (`components/Chat.tsx`, mensajes entre participantes con respuesta simulada;
       `participantsOf` en reputation.ts). Preferencias de aviso por tipo (toggles):
       asignaciones/solicitudes/chat/email; `diffNotifs` y el chat respetan `notifPrefs`.
@@ -157,9 +193,10 @@
 - Las capturas de `docs/screenshots/` muestran la marca vieja hasta PR3.
 - `Intl.PluralRules` no se usa todavía (los 6 idiomas iniciales funcionan con `_one`),
   pero ruso/árabe/etc. lo van a necesitar — el punto único de cambio es `translate()`.
-- El historial de viajes es seed: cuando exista backend, materializar `TripRecord`s
-  al pasar la fecha del evento y habilitar reseñas solo entre co-viajeros.
-- Rename del repo GitHub `caravana` → `convoyar` (redirect automático de GitHub).
+- El historial de viajes sigue siendo seed: aunque el backend ya existe, falta materializar
+  `TripRecord`s al pasar la fecha del evento y habilitar reseñas solo entre co-viajeros.
+- Reputación aún derivada en el cliente: con RLS activo conviene materializarla server-side
+  (hoy es manipulable). Ver `docs/GROWTH.md` P0-3.
 
 ## Cómo retomar en una semana (checklist de arranque)
 

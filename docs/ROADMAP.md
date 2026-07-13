@@ -1,6 +1,8 @@
 # Roadmap — de MVP local a producto real
 
-> Estado al 2026-07: **Fase 1 completa** (MVP local-first con modo público simulado).
+> Estado al 2026-07: **Fase 1 completa** y **Fase 2 conectada** — Supabase real (auth email +
+> contraseña, orgs, realtime, RLS; migraciones corridas en dev y prod). Falta el *flip* de
+> producción a `convoyar.com` (hoy corre un preview live), push nativo y las tiendas.
 > Cada fase deja la app funcionando; ninguna requiere reescritura.
 
 ## Fase 1 — MVP local ✅ (esto que estás viendo)
@@ -15,34 +17,38 @@
       aceptar/rechazar mirando rating ★, historial de viajes y antigüedad; reseñas
       1–5 con comentario; organizador simulado (demo sin backend).
 - [x] PWA instalable + build de un solo archivo + Capacitor configurado.
-- [x] es/en, modo oscuro, monetización cableada y apagada.
-- [x] 39 tests unitarios/integración + 13 E2E Playwright.
+- [x] 6 idiomas (es/en/pt/de/it/fr), modo oscuro, monetización cableada y apagada.
+- [x] Suite unit/integración + E2E Playwright (ver `package.json`).
 
-## Fase 2 — Multi-dispositivo real
+## Fase 2 — Multi-dispositivo real ✅ conectada (Supabase)
 
-Objetivo: dos personas en dos teléfonos ven la misma org. Sugerido: **Supabase**
-(Postgres + Auth + Realtime, capa free generosa) — pero cualquier backend que hable
-el contrato del motor sirve.
+Dos personas en dos teléfonos ven la misma org. Backend: **Supabase** (Postgres + Auth +
+Realtime, capa free). Estado ítem por ítem:
 
-1. **Auth**: Supabase Auth (magic link). `meId` deja de ser fijo; `AppState.meId`
-   pasa a derivarse de la sesión.
-2. **Esquema**: las colecciones de `model.ts` son las tablas (orgs, members, events,
-   legs, join_requests, reviews, trip_history). RLS: miembros ven su org; eventos
-   públicos visibles para todos; solicitudes visibles para solicitante + organizador.
-3. **Sync**: reemplazar `services/storage.ts` por un repositorio remoto con cache
-   local (mantener la firma load/save para no tocar el store). Realtime para
-   solicitudes y asignaciones.
-4. **Borrar la simulación**: `scheduleSimulatedReply` y el sweep on-mount de
-   store.tsx desaparecen; `requestJoin`/`decideRequest` quedan igual pero contra el
-   backend. La UI no cambia.
-5. **Matching en server** (opcional): el motor es puro TS → corre en una Edge
-   Function tal cual (`solveMatching(input, provider)`). Conviene cuando un evento
-   supere ~100 participantes o para no recalcular en N clientes.
-6. **Push real**: `@capacitor/push-notifications` + FCM/APNs, o Web Push en PWA.
-   Enganchar donde hoy está `services/notify.ts`.
-7. **Historial real**: al pasar la fecha del evento con asignación, materializar
-   `TripRecord`s (hoy el historial es seed). Habilitar reseñas solo entre quienes
-   compartieron viaje (hoy la demo permite reseñar desde cualquier perfil).
+1. [x] **Auth**: Supabase Auth con **email + contraseña** (alta, login, reset; `services/auth.ts`
+   + `screens/Auth.tsx`). `meId` ya no es fijo: se deriva de la sesión (`onAuthStateChange`).
+2. [x] **Esquema + RLS**: tablas en `server/schema.sql` (derivadas de `model.ts`) con RLS en
+   `server/rls.sql`; miembros ven su org, eventos públicos visibles para todos, solicitudes
+   para solicitante + organizador. Migraciones corridas: v3→v4 (garage + realtime), org
+   personal, orgs (invitaciones), moderación.
+3. [x] **Sync**: `services/repo.ts` (`loadRemote` + `writeAction`) habla con Supabase;
+   `services/storage.ts` quedó como **cache local** (offline). Realtime para solicitudes,
+   asignaciones y chat (`subscribeRealtime`).
+4. [x] **Org personal**: cada usuario nuevo arranca con su org "Mis viajes" (RPC
+   `ensure_personal_org`, `security definer`).
+5. [x] **Simulación apagada con backend**: `scheduleSimulatedReply` y el sweep on-mount siguen
+   en el código pero **gateados con `if (hasSupabase) return`** — sólo corren en modo local/demo.
+   Con backend, `requestJoin`/`decideRequest` van contra la base y Realtime avisa. La UI no cambia.
+6. [ ] **Push real**: `@capacitor/push-notifications` + FCM/APNs, o Web Push en PWA. Credenciales
+   de Firebase ya listas; falta el código. Enganchar donde hoy está `services/notify.ts`.
+7. [ ] **Matching en server** (opcional): el motor es puro TS → corre en una Edge Function tal
+   cual (`solveMatching(input, provider)`). Conviene para eventos de 100+, para no recalcular en
+   N clientes, y para no filtrar domicilios en el modo público (nota de privacidad del doc 01).
+8. [ ] **Historial real**: al pasar la fecha del evento con asignación, materializar
+   `TripRecord`s (hoy el historial es seed) y habilitar reseñas solo entre co-viajeros.
+9. [ ] **Cablear en la UI** las RPC ya escritas de invitaciones (email / link con toggle) y de
+   moderación (reportar / bloquear): existen en `server/` pero el cliente sólo usa el código de
+   invitación y `ensure_personal_org`.
 
 ## Fase 3 — Ruteo y escala
 
@@ -58,20 +64,26 @@ el contrato del motor sirve.
 ## Fase 4 — Producto
 
 - Monetización: encender `billing.ts` (Stripe web / RevenueCat stores; AdMob/AdSense
-  si se quiere ads en free). Los gates ya existen.
+  si se quiere ads en free). Los gates ya existen. Todo gratis por ahora.
 - Métricas históricas por org (% asignados, CO₂ acumulado).
 - Accesibilidad AA completa (hoy: roles ARIA y contraste razonables, falta audit).
-- Más idiomas (pt-BR primero); `translate()` ya soporta el patrón.
-- Moderación del modo público: reportes, bloqueos, verificación de identidad.
+- Más idiomas: ya hay 6 (es/en/pt/de/it/fr); sumar según mercado (`translate()` escala).
+- Moderación del modo público: **reportar (pausa) y bloquear ya modelados en el backend**
+  (`server/migrate-moderation.sql`) — falta cablear la UI. Verificación de identidad: más adelante.
 
-## Publicación en stores (cuando quieras)
+## Publicación en stores
+
+**Android ya está scaffoldeado** (plataforma `android/` agregada y sincronizada con el build de
+prod, íconos/splash generados, firma preconfigurada). Para actualizar y firmar:
 
 ```bash
-npm run build
-npx cap add android && npx cap sync android
-npx cap open android   # Android Studio → firmar → .aab → Play Console
-# iOS igual con `ios` (requiere macOS/Xcode)
+npm run build && npx cap sync android   # recompila la web de prod y la copia al proyecto nativo
+npx cap open android                     # Android Studio → firmar → .aab → Play Console
+# iOS: pendiente. `npx cap add ios` (requiere macOS/Xcode).
 ```
 
-Checklist store: íconos/splash (usar @capacitor/assets), política de privacidad
-(la app no manda datos a servidores hoy — decirlo es fácil), y para push, FCM/APNs.
+Falta (parte del dueño): keystore + `.aab` firmado + cuenta Play + los 14 días de testing.
+Checklist en [docs/lanzamiento/05](lanzamiento/05-google-play.md). ⚠️ **La política de privacidad
+ya NO puede decir "la app no manda datos a servidores"**: desde que se conectó Supabase se
+recolectan email, ubicaciones y contenido — declararlo con la verdad. Push: FCM/APNs →
+[doc 07](lanzamiento/07-push-notifications.md).

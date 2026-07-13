@@ -104,12 +104,12 @@ En **[appstoreconnect.apple.com](https://appstoreconnect.apple.com)** → My App
   declará con la verdad que recolectás **email, ubicación y contenido del usuario** y para qué.
 - **Clasificación por edad.**
 - **Política de privacidad:** la URL del [doc 05 · Paso 1](05-google-play.md).
-- **Cuenta de prueba para el revisor:** como la app pide login, dejale usuario + cómo obtener
-  el código en las notas de revisión. Apple **rechaza** si no puede entrar.
+- **Cuenta de prueba para el revisor:** como la app pide login, dejale **email + contraseña** de
+  una cuenta demo en las notas de revisión. Apple **rechaza** si no puede entrar.
 
 > ℹ️ **Sign in with Apple:** Apple lo obliga **solo si** ofrecés login social de terceros
-> (Google/Facebook). Convoyar usa **email OTP solo**, así que **no** te aplica. Si algún día
-> agregás "entrar con Google", vas a tener que agregar también "entrar con Apple".
+> (Google/Facebook). Convoyar usa **email + contraseña solo**, así que **no** te aplica. Si algún
+> día agregás "entrar con Google", vas a tener que agregar también "entrar con Apple".
 
 ---
 

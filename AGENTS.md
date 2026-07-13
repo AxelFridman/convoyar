@@ -6,7 +6,7 @@
 > (diseño en profundidad), [docs/ROADMAP.md](docs/ROADMAP.md) (qué falta) y
 > [docs/lanzamiento/](docs/lanzamiento/) (**guía operativa paso a paso para lanzar de
 > verdad**: Supabase, auth, deploy web, Play Store, App Store, push, monetización, OSRM,
-> analytics). El schema Postgres ejecutable vive en [server/](server/).
+> analytics). El schema Postgres ejecutable y sus migraciones (ya corridas en dev+prod) viven en [server/](server/).
 >
 > Metodología de trabajo: una branch `feat/*` por bloque de trabajo → PR → merge.
 > Toda feature a medias queda anotada en docs/TODO.md antes de cerrar la sesión.
@@ -21,9 +21,16 @@ coordinan "quién lleva a quién" con un motor de matching propio (CVRPTW a pequ
 y además hay un **modo público tipo BlaBlaCar**: viajes descubribles donde la gente pide
 lugar y el organizador acepta/rechaza mirando reputación, historial y antigüedad.
 
-Stack: React 18 + TypeScript + Vite + Leaflet/OSM. **Cero APIs pagas** (requisito duro).
-Sin backend: estado en localStorage (`convoyar:v2`), un solo dispositivo, `meId` fijo (`m0`).
-Eso es deliberado (MVP local-first); el camino a multi-dispositivo está en el roadmap.
+Stack: React 18 + TypeScript + Vite + Leaflet/OSM + **Supabase** (Postgres + Auth + Realtime).
+**Cero APIs pagas de mapas/ruteo** (requisito duro): mapas OSM, ruteo mock u OSRM self-hosted.
+
+**Backend real conectado.** El interruptor `hasSupabase` (`services/supabaseClient.ts`) elige el modo:
+- **Con backend** (dev/prod, hay env vars `VITE_SUPABASE_*`): auth **email + contraseña**,
+  datos en Supabase, sync por **Realtime**, `meId` derivado de la sesión, y cada usuario
+  arranca con su **org personal** ("Mis viajes", RPC `ensure_personal_org`).
+- **Local/demo** (`npm test`, E2E, `build:single`, o sin env vars): estado en localStorage
+  (`convoyar:v4`) con fallback en memoria, un dispositivo, `meId` fijo (`m0`), sin login, con
+  la simulación del organizador ajeno. Este modo se mantiene a propósito (tests y demos offline).
 
 ## Comandos
 
@@ -50,14 +57,17 @@ src/
     routing.ts    RoutingProvider: Mock (haversine) + OSRM real (swap de 1 línea en store)
     geo.ts        haversine, minutos de caminata, RNG determinístico
   state/
-    model.ts      TODO el modelo de datos (AppState v2). Cambios acá = bump de versión.
-    store.tsx     Context + useReducer. Acciones, runMatch, flujo público, timers demo.
+    model.ts      TODO el modelo de datos (AppState v4). Cambios acá = bump de versión + migración.
+    store.tsx     Context + useReducer. Acciones, runMatch, flujo público; con backend: bootstrap
+                  de sesión (onAuthStateChange), loadRemote, suscripción realtime; timers demo (sólo local).
     reputation.ts Helpers puros de reputación/permisos (ratingOf, canAdminEvent, …)
     seed.ts       (en src/) Demo determinística: org privada + comunidad pública
-  screens/      Home · Explore (público) · MyTrip · Results · Admin · Profile
-  components/   People (Avatar/Stars/MemberProfile) · RideCard · MapPicker · UI kit · Icons
-  services/     storage (localStorage+fallback) · billing (apagado) · notify · export
-  i18n.ts       es/en. Plural: clave con sufijo `_one` se usa sola cuando vars.n === 1.
+  screens/      Home · Explore (público) · MyTrip · Results · Admin · Profile · Auth (login)
+  components/   People (Avatar/Stars/MemberProfile) · RideCard · Chat · MapPicker · UI kit · Icons
+  services/     supabaseClient (hasSupabase + cliente) · repo (AppState ⇄ Supabase + realtime) ·
+                auth (email+contraseña) · storage (cache local + fallback) · billing (apagado) · notify · export
+  i18n/         es/en/pt/de/it/fr. Plural: clave con sufijo `_one` se usa sola cuando vars.n === 1.
+server/         schema.sql · rls.sql · migraciones (v3→v4, org personal, orgs, moderación) · edge-functions
 e2e/            Playwright: flujos reales + screenshots.spec (capturas a docs/screenshots)
 ```
 
@@ -82,24 +92,31 @@ e2e/            Playwright: flujos reales + screenshots.spec (capturas a docs/sc
 
 ## Modelo de datos en 30 segundos (state/model.ts)
 
-- `Org` (miembros, `adminIds`, puntos de encuentro) → `EventDoc` (**`visibility:
+- `Org` (miembros, `adminIds`, `joinCode`, puntos de encuentro) → `EventDoc` (**`visibility:
   "private" | "public"`**, `createdBy`) → `Leg` (respuesta de un miembro a un evento:
-  conductor con desvío máx / pasajero con caminata máx + ventana horaria).
+  conductor con desvío máx / pasajero con caminata máx + ventana horaria; `vehicleId?` = qué
+  vehículo del garage lleva). `Member.home?` es **opcional**; el origen real va por viaje (`Leg`).
+- Garage: `Member.vehicles: Vehicle[]` (cada uno con `id`, `alias?`, `capacity`, `features[]`, `smokeFree`).
 - Modo público: `JoinRequest` (pending/approved/rejected) + `Review` (1–5★) +
   `TripRecord` (historial) + `Member.joinedISO` (antigüedad).
 - `Assignment` = resultado del motor por evento (`state.assignments[eventId]`).
-- **Migración**: `AppState.version === 2` y clave `convoyar:v2`. Si cambiás el modelo,
-  subí la versión y la clave (el estado viejo se descarta y se re-seedea: aceptable
-  mientras sea demo local; cuando haya backend, escribir migración real).
+- **Migración**: `AppState.version === 4` y clave `convoyar:v4`. En modo local, si cambiás el
+  modelo subís versión+clave (el estado viejo se descarta y se re-seedea). **Con el backend ya
+  conectado**, todo cambio de modelo ADEMÁS necesita su migración Postgres en `server/` (ver
+  `migrate-v3-to-v4.sql`, `migrate-personal-org.sql`, `migrate-orgs.sql`, `migrate-moderation.sql`),
+  corrida en dev **y** prod. Las tablas compartidas van a la publicación `supabase_realtime`.
 
 ## Flujo público (tipo BlaBlaCar) — cómo funciona hoy
 
 - `Explore.tsx` lista eventos `visibility === "public"`. Pedir lugar → `store.requestJoin()`.
-- **No hay backend**, así que el "organizador" de un evento ajeno es simulado:
-  `scheduleSimulatedReply` (store.tsx) aprueba a los ~4s, crea el `Leg` del aceptado
-  (`defaultPassengerLeg`), corre el matching y notifica. Al reabrir la app, las
-  solicitudes pendientes de otra sesión se resuelven igual (efecto on-mount).
-  **Cuando conectes backend real, esa simulación es lo primero que se borra.**
+- **Con backend (Supabase):** solicitud, decisión del organizador y aprobación son **reales**
+  entre personas distintas y sincronizan por **Realtime** (`services/repo.ts` `subscribeRealtime`);
+  el store recarga con `loadRemote` al recibir el cambio. La UX es idéntica a la de la demo.
+- **En modo local/demo (`!hasSupabase`):** no hay otro humano, así que el "organizador" de un
+  evento ajeno es simulado: `scheduleSimulatedReply` (store.tsx, **gateado con
+  `if (hasSupabase) return`**) aprueba a los ~4s, crea el `Leg` del aceptado
+  (`defaultPassengerLeg`), corre el matching y notifica. Un sweep on-mount resuelve pendientes
+  de otra sesión. Esta simulación sólo corre sin backend (no se borró: se apaga por el gate).
 - Lado organizador (tus eventos): `RequestsPanel` en Admin — muestra rating, viajes,
   antigüedad y mensaje del solicitante; `decideRequest()` acepta (crea leg + recalcula
   con `warmStart` si ya había asignación) o rechaza. Notificación al afectado siempre.
@@ -130,8 +147,10 @@ e2e/            Playwright: flujos reales + screenshots.spec (capturas a docs/sc
 - **Pantalla nueva** → screens/ + tab en `App.tsx` + claves i18n (es+en) + smoke test.
 - **Ruteo real** → levantar OSRM (README §OSRM) y cambiar `MockRoutingProvider` por
   `OsrmRoutingProvider` en `store.tsx` (~línea 230). Una sola llamada `matrix()` por cálculo.
-- **Backend real** → el contrato es `buildMatchInput(state, eventId) → MatchInput` y
-  `MatchResult` de vuelta. Ver docs/ROADMAP.md fase 2 (Supabase sugerido).
+- **Backend real** → **ya conectado (Supabase).** Las escrituras viven en `services/repo.ts`
+  (`writeAction`) y la carga en `loadRemote`; auth en `services/auth.ts`. Si agregás una acción
+  que muta `AppState`, además del `dispatch` sumá su escritura en `repo.ts` y, si es una tabla
+  nueva, su migración en `server/` + policy RLS + (si se comparte) la publicación realtime.
 - **Monetización** → `services/billing.ts` tiene los rails (planes, gates, `AdSlot`,
   `purchase()` stub). No inventes otro sistema: encendé ese.
 

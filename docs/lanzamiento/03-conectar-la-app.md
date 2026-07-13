@@ -9,18 +9,16 @@
 
 | | |
 |---|---|
-| ⏱️ Tiempo | La config (env) son 15 min 🧑. El código es una PR grande 🤖. |
+| ⏱️ Tiempo | Ya hecho. Lo que queda: 2 env vars en el hosting (15 min 🧑). |
 | 💰 Costo | USD 0 |
-| 🧑 / 🤖 | **Mayormente CÓDIGO** (esto lo puede hacer Claude en una PR). Vos ponés las env vars y decidís el alcance. |
+| 🧑 / 🤖 | El código **ya está** 🤖. Vos ponés las env vars en el hosting y probás con 2 dispositivos. |
 
-> ### 📍 Estado (2026-07-12): ❌ ESTE ES EL PASO QUE FALTA
-> Verifiqué el repo: **no hay `@supabase/supabase-js` ni `supabaseClient.ts`**. O sea, la app
-> **todavía es 100% local** — no habla con la base de Supabase que ya creaste. Todo lo demás
-> (login real, ver lo mismo en dos teléfonos, borrar la simulación) **depende de esta PR**.
-> Es código, lo puedo hacer yo: decime "dale con el doc 03" y lo armo (branch → PR → verde).
->
-> **Ya te dejé listo:** en [`.env`](../../.env) están los aliases `VITE_SUPABASE_URL` y
-> `VITE_SUPABASE_ANON_KEY` (= tu `sb_publishable_...`) que el cliente de abajo va a leer.
+> ### 📍 Estado (2026-07-13): ✅ HECHO
+> La app **ya está conectada a Supabase**: `@supabase/supabase-js` instalado, `supabaseClient.ts`
+> (con `hasSupabase`), `repo.ts` (AppState ⇄ tablas + realtime) y auth **email + contraseña**. Es
+> multiusuario real: dos personas en dos dispositivos ven la misma salida (en tests, E2E y
+> `build:single` sigue 100 % local). Este doc queda como **referencia de cómo se hizo** y qué
+> falta pulir. Env vars `VITE_SUPABASE_*` en [`.env`](../../.env) (dev) y `.env.production.local`.
 
 > 🧩 **Nota sobre la PR7 (`feat/server-skeleton`).** El plan original tenía un servidor
 > propio con Postgres. Con Supabase **no lo necesitás**: el "adaptador remoto" que este doc
@@ -32,13 +30,13 @@
 ## El mapa del cambio (qué toca esta PR)
 
 ```
-+ src/services/supabaseClient.ts   (nuevo)  cliente + hasSupabase
-+ src/services/authSupabase.ts     (doc 02) provider de auth real
-+ src/services/repo.ts             (nuevo)  adaptador: AppState ⇄ tablas de Supabase
-~ src/services/auth.ts             elige provider según hasSupabase
-~ src/services/storage.ts          pasa a ser CACHE local (offline), no la verdad
-~ src/state/store.tsx              carga desde repo, escribe al repo, se suscribe a realtime
-- src/state/store.tsx              BORRAR scheduleSimulatedReply + sweep on-mount + auto-reply de chat
++ src/services/supabaseClient.ts   cliente + hasSupabase                                   ✅
++ src/services/repo.ts             adaptador: AppState ⇄ tablas + realtime                 ✅
+~ src/services/auth.ts             email + contraseña contra Supabase Auth                 ✅
++ src/screens/Auth.tsx             pantalla de alta / login / recovery                     ✅
+~ src/services/storage.ts          quedó como CACHE local (offline), no la verdad          ✅
+~ src/state/store.tsx              sesión (onAuthStateChange) + loadRemote + writeAction + subscribeRealtime  ✅
+~ src/state/store.tsx              scheduleSimulatedReply + sweep + auto-reply de chat: GATEADOS con `if (hasSupabase) return` (no borrados)  ✅
 ```
 
 La filosofía **local-first no se pierde**: `storage.ts` sigue existiendo como **cache** para
@@ -46,10 +44,10 @@ que la app abra al toque y funcione sin señal; Supabase es la fuente de verdad 
 
 ---
 
-## Paso 1 — Instalar el cliente 🤖 ⏱️ 2 min
+## Paso 1 — Instalar el cliente 🤖 ✅ hecho
 
 ```bash
-npm i @supabase/supabase-js
+npm i @supabase/supabase-js   # ✅ ya instalado (^2.110)
 ```
 
 ---
@@ -99,9 +97,8 @@ export const supabase = hasSupabase
   : (null as never);
 ```
 
-`hasSupabase` es el interruptor: con env vars → backend real; sin ellas → sigue la demo
-local (útil para tests y para `build:single`). El [doc 02](02-auth-real.md) ya lo usa para
-elegir el `AuthProvider`.
+`hasSupabase` es el interruptor: con env vars → backend real; sin ellas (o en tests/`build:single`)
+→ sigue la demo local. El [doc 02](02-auth-real.md) lo usa para prender la auth real (email + contraseña).
 
 > 📱 **Sesión en móvil:** en Capacitor conviene guardar la sesión con `@capacitor/preferences`
 > en vez de `localStorage`, pasándole un `storage` custom al `createClient`. Es un detalle de
@@ -168,16 +165,18 @@ red; y cada acción del store, además de despachar, llama al `repo.*` correspon
 
 ---
 
-## Paso 5 — Realtime: adiós a la simulación 🤖 ⚠️
+## Paso 5 — Realtime: adiós a la simulación (con backend) 🤖
 
-Hoy, como no hay backend, el "otro humano" es falso. Con Supabase Realtime, es real. En
-`store.tsx` **borrá** estas tres piezas de simulación (confirmadas en el código):
+Con Supabase Realtime, el "otro humano" es real. La simulación **no se borró**: quedó **gateada**
+con `if (hasSupabase) return`, así sigue viva para el modo demo local (tests, `build:single`) y se
+apaga sola con backend. Las tres piezas gateadas en `store.tsx`:
 
-- `scheduleSimulatedReply` (definición en **store.tsx ~386**) y sus llamadas (~444 y ~456).
-- El **sweep on-mount** que resolvía solicitudes viejas (~454–464).
-- La **auto-respuesta de chat** simulada (~530).
+- `scheduleSimulatedReply` (la respuesta automática del organizador ajeno).
+- El **sweep on-mount** que resolvía solicitudes viejas.
+- La **auto-respuesta de chat** simulada.
 
-Y en su lugar, suscribite a los cambios que te importan:
+Con backend, la suscripción real vive en `services/repo.ts` (`subscribeRealtime`), que el store
+usa para recargar el estado ante cambios. La idea (referencia):
 
 ```ts
 useEffect(() => {
@@ -197,8 +196,9 @@ useEffect(() => {
 }, [meId]);
 ```
 
-⚠️ **Habilitá Realtime en cada tabla** que quieras escuchar: en el dashboard, Database →
-Replication (o Table → habilitar Realtime). Sin eso, no llegan los eventos.
+✅ **Realtime ya está habilitado**: la migración `migrate-v3-to-v4.sql` agrega las tablas
+compartidas a la publicación `supabase_realtime`. (Si agregás una tabla nueva que quieras
+escuchar, sumala a esa publicación.)
 
 Cuando el organizador real (otra persona) acepta tu pedido, Realtime dispara el evento →
 tu app refetchea → ves "¡te aceptaron!" sin recargar. **Idéntico a la UX de la demo, pero de verdad.**
@@ -220,7 +220,7 @@ domicilios no pueden filtrarse a otros clientes.
 ## Paso 7 — Probar de verdad 🧑 ⏱️ 10 min
 
 1. `npm run dev` con `.env.local` cargado.
-2. Registrate con tu email real → llega el código ([doc 02](02-auth-real.md)) → entrás.
+2. Registrate con nombre + email + contraseña → (si "Confirm email" está ON) confirmás por email → entrás ([doc 02](02-auth-real.md)).
 3. Abrí la app en **otro dispositivo/navegador** (o incógnito), registrate con **otro** email.
 4. Desde uno pedí lugar en una salida pública; desde el otro (el organizador) aceptá.
 5. ✅ El primero recibe la aprobación **sin recargar**. Si eso pasa, la simulación murió y el
@@ -230,15 +230,15 @@ domicilios no pueden filtrarse a otros clientes.
 
 ## ✅ Checklist de este doc
 
-- [ ] `@supabase/supabase-js` instalado
-- [ ] `.env.local` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`; `.env*` en `.gitignore`
-- [ ] `supabaseClient.ts` con `hasSupabase`
-- [ ] `authSupabase.ts` activo (doc 02) y `auth.ts` eligiendo provider
-- [ ] `repo.ts` mapea AppState ⇄ tablas; store carga con `loadRemote` (fallback a cache)
-- [ ] **Borradas** las 3 piezas de simulación en `store.tsx` (`scheduleSimulatedReply`, sweep, auto-reply chat)
-- [ ] Realtime habilitado en las tablas y suscripción en el store
-- [ ] `npm test` + `npm run typecheck` en verde
-- [ ] **Probado con dos usuarios reales en dos dispositivos** ✅
+- [x] `@supabase/supabase-js` instalado
+- [x] Env vars `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` en `.env`; `.env*` en `.gitignore`
+- [x] `supabaseClient.ts` con `hasSupabase`
+- [x] `auth.ts` (email + contraseña) + `screens/Auth.tsx` (doc 02)
+- [x] `repo.ts` mapea AppState ⇄ tablas; store carga con `loadRemote` (fallback a cache)
+- [x] Las 3 piezas de simulación en `store.tsx` **gateadas** con `if (hasSupabase) return` (no borradas)
+- [x] Realtime habilitado (publicación `supabase_realtime`, migración v4) + suscripción en el store
+- [ ] `npm test` + `npm run typecheck` en verde (correlo vos)
+- [ ] **Probado con dos usuarios reales en dos dispositivos**
 
 ---
 

@@ -55,7 +55,7 @@ destinos) y contenido (mensajes, reseñas).
 
 - Redactá una política honesta: qué datos pedís, para qué, dónde se guardan (Supabase), que
   no se venden, cómo se borra la cuenta, y un contacto.
-- Publicala en una URL estable: puede ser una página de tu dominio (`convoyar.app/privacidad`)
+- Publicala en una URL estable: puede ser una página de tu dominio (`convoyar.com/privacidad`)
   o una ruta estática servida por el mismo hosting del [doc 04](04-deploy-web-pwa.md).
 - Podés partir de un generador (Termly, iubenda tienen free tier) **pero revisala** para que
   diga la verdad de lo que hace Convoyar. No copies una genérica que mienta.
@@ -223,7 +223,7 @@ Después completá TODO lo que Console te va marcando con ⚠️ (no te deja pub
   **ubicación** (casa/destinos), **contenido del usuario** (mensajes, reseñas). Decí que
   viajan cifrados (HTTPS) y que el usuario puede borrar su cuenta. Mentir acá = suspensión.
 - **Acceso a la app:** como la app requiere login, dale al revisor un **usuario de prueba**
-  (email + cómo recibir el código, o una cuenta demo) para que pueda entrar.
+  (email + contraseña de una cuenta demo) para que pueda entrar.
 - **Política de privacidad:** pegá la URL del Paso 1.
 
 ---

@@ -15,31 +15,31 @@ de [01 · Supabase](01-supabase-base-de-datos.md) (de donde salen las claves que
 
 | | |
 |---|---|
-| ⏱️ Tiempo | ~30 min (sin dominio) · +20 min con dominio propio |
-| 💰 Costo | USD 0 (Free tier) · dominio propio opcional ~USD 12/año |
-| 🧑 / 🤖 | Casi todo **VOS** (dashboard de Cloudflare). Un solo archivo nuevo en el repo (🤖). |
+| ⏱️ Tiempo | ~30 min el deploy · +20 min el flip de `convoyar.com` (Paso 6) |
+| 💰 Costo | USD 0 (Free tier). Dominio `convoyar.com` **ya comprado**. |
+| 🧑 / 🤖 | Casi todo **VOS** (dashboard/CLI de Cloudflare). Un solo archivo en el repo (🤖). |
 
-> ### 📍 Estado (2026-07-12): ✅ LIVE en https://convoyar-web.pages.dev
-> Ya está deployado y sirviendo la app (lo verifiqué: HTTP 200). Cómo se resolvió:
-> - El intento inicial era un **Worker** (deploy con `npx wrangler deploy`) y fallaba con
->   *"Vite 5.4.21 cannot be automatically configured, update to 6.0.0"*. **No actualizamos Vite**
->   (rompería los tests): se hizo con **Cloudflare Pages**, que sirve `dist/` sin wrangler ni Vite 6.
-> - Se creó el proyecto **`convoyar-web`** y se subió por CLI (**direct upload**):
+> ### 📍 Estado (2026-07-13): ✅ preview LIVE · ⏳ falta el flip de producción
+> El build **con Supabase conectado** ya está deployado y sirviendo en el **preview**:
+> **https://supabase-preview.convoyar-web.pages.dev** (proyecto Cloudflare **Pages** `convoyar-web`).
+> Cómo se resolvió:
+> - El intento inicial era un **Worker** (`npx wrangler deploy`) y fallaba con *"Vite 5.4.21 cannot
+>   be automatically configured, update to 6.0.0"*. **No actualizamos Vite** (rompería los tests):
+>   se hizo con **Cloudflare Pages**, que sirve `dist/` sin wrangler-deploy ni Vite 6.
+> - Se creó el proyecto **`convoyar-web`** y se sube por CLI (**direct upload**):
 >   ```bash
->   npm run build
->   npx wrangler pages deploy dist --project-name convoyar-web --branch main
+>   npm run build   # hornea las VITE_SUPABASE_* de .env.production.local (prod)
+>   npx wrangler pages deploy dist --project-name convoyar-web
 >   ```
 >   (con `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` del `.env`). Repetí esos 2 comandos
->   para re-deployar cuando cambies algo.
+>   para re-deployar. En este flujo por CLI las `VITE_*` se hornean **en tu máquina al buildear**.
 >
-> **Lo que falta:** (a) apuntar `convoyar.com` a este proyecto Pages (ver Paso 6, y borrar el
-> Worker viejo que hoy muestra "Hello world"); (b) cuando exista el cliente Supabase
-> ([doc 03](03-conectar-la-app.md)), **rebuildear** con las env vars **prod** — en este flujo
-> por CLI las `VITE_*` se hornean **en tu máquina al buildear** (desde `.env`), no en el panel.
+> **Lo que falta:** el **flip de producción** — `convoyar.com` (ya comprado) **todavía sirve la
+> versión vieja**. Apuntá el dominio al deploy de `convoyar-web` (Paso 6) y borrá el Worker viejo
+> que muestra "Hello world".
 >
-> 💡 Si preferís **auto-deploy en cada push**, en el dashboard podés crear un Pages con
-> **Connect to Git** (repo `AxelFridman/convoyar`, build `npm run build`, output `dist`) — ahí
-> sí las env vars van en el panel. El CLI de arriba es el atajo manual que ya te dejó la web viva.
+> 💡 Si preferís **auto-deploy en cada push**, en el dashboard creás un Pages con **Connect to Git**
+> (repo `AxelFridman/convoyar`, build `npm run build`, output `dist`) — ahí las env vars van en el panel.
 
 > ### ⚠️ Worker vs Pages (por qué el 404)
 > Cloudflare tiene dos productos que se confunden. Para este proyecto querés **Pages**:
@@ -100,7 +100,7 @@ El `200` es clave: es un *rewrite* (servís el index pero mantenés la URL), no 
 1. Andá a **[dash.cloudflare.com](https://dash.cloudflare.com)** → creá la cuenta gratis
    (o logueate, ya la hiciste en la Fase 0).
 2. En el menú lateral: **Workers & Pages → Create → Pages → Connect to Git**.
-3. Autorizá a Cloudflare a ver tu GitHub y elegí el repo **`AxelFridman/caravana`**.
+3. Autorizá a Cloudflare a ver tu GitHub y elegí el repo **`AxelFridman/convoyar`**.
 4. En **Set up builds and deployments** completá:
 
 | Campo | Valor |
@@ -150,7 +150,7 @@ Puntos que **tenés que** entender:
 > pegan a la base de dev y no ensucian producción.
 
 Ahora sí: **Save and Deploy**. El primer build tarda ~2 min. Al terminar tenés una URL tipo
-`https://caravana.pages.dev`. Abrila: ya está en internet. 🎉
+`https://convoyar-web.pages.dev`. Abrila: ya está en internet. 🎉
 
 ---
 
@@ -159,9 +159,9 @@ Ahora sí: **Save and Deploy**. El primer build tarda ~2 min. Al terminar tenés
 - **Cada push a `main` redeploya solo.** Hacés `git push`, Cloudflare buildea y publica en
   ~2 min. No tenés que tocar nada más nunca.
 - **Preview deploys por rama:** cada rama (y cada PR) genera su **propia URL temporal**
-  (`https://<hash>.caravana.pages.dev`) con ese código, sin pisar producción. Ideal para
+  (`https://<hash>.convoyar-web.pages.dev`) con ese código, sin pisar producción. Ideal para
   probar una feature en el celu antes de mergear, o para mandarle un preview a alguien.
-- El estado de cada build (verde/rojo, logs) lo ves en **Workers & Pages → caravana →
+- El estado de cada build (verde/rojo, logs) lo ves en **Workers & Pages → convoyar-web →
   Deployments**.
 
 ---
@@ -171,7 +171,7 @@ Ahora sí: **Save and Deploy**. El primer build tarda ~2 min. Al terminar tenés
 El manifest y el service worker ya están en el repo, así que el deploy **ya es una PWA
 instalable**. Confirmalo en un teléfono real (no solo en la compu):
 
-1. Abrí la URL (`caravana.pages.dev` o tu dominio) en el celu.
+1. Abrí la URL (`convoyar-web.pages.dev` o tu dominio) en el celu.
 2. **Android/Chrome:** menú ⋮ → **"Agregar a pantalla de inicio"** / "Instalar app".
    **iOS/Safari:** botón Compartir → **"Agregar a pantalla de inicio"**.
 3. Debería aparecer el ícono, abrir a pantalla completa (sin barra del navegador) y andar.
@@ -187,24 +187,22 @@ instalable**. Confirmalo en un teléfono real (no solo en la compu):
 
 ---
 
-## Paso 6 — Dominio propio (OPCIONAL) 🧑 💰 ~USD 12/año ⏱️ 20 min
+## Paso 6 — El flip de producción a `convoyar.com` 🧑 ⏱️ 20 min ⚠️ EL PENDIENTE CLAVE
 
-`caravana.pages.dev` funciona perfecto para lanzar. Un dominio propio (ej. `convoyar.app`)
-queda más profesional pero **no es obligatorio**.
+`convoyar.com` **ya es tuyo** (comprado, en Cloudflare). Hoy la producción todavía sirve la
+versión vieja: falta apuntar el dominio al deploy de `convoyar-web`.
 
-1. **Comprá el dominio.** Podés hacerlo en el propio **Cloudflare → Domain Registration**
-   (lo vende al costo, ~USD 10–12/año para `.app`) o en cualquier registrador.
-2. Si lo comprás **en Cloudflare**: andá a **Pages → caravana → Custom domains → Set up a
-   domain**, escribí `convoyar.app`, y Cloudflare configura el **DNS y el HTTPS solos**
-   (registrador y hosting son la misma cuenta). Cero fricción.
-3. Si el dominio está **en otro registrador**: agregá el dominio en Custom domains y
-   Cloudflare te dice qué poner. Dos caminos:
-   - Apuntar los **nameservers** del dominio a los de Cloudflare (control total del DNS), o
-   - Dejar un **CNAME** de `www` (o del dominio) hacia `caravana.pages.dev`.
-4. El certificado HTTPS lo emite Cloudflare gratis; tarda unos minutos en propagar.
+1. Andá a **Pages → convoyar-web → Custom domains → Set up a domain**, escribí `convoyar.com`
+   (y `www.convoyar.com` si querés). Como el registrador y el hosting son la misma cuenta de
+   Cloudflare, el **DNS y el HTTPS se configuran solos**. Cero fricción.
+2. Borrá el **Worker viejo** que hoy responde en `convoyar.com` ("Hello world"), o el registro
+   DNS que lo apunta, para que el dominio sirva el Pages nuevo.
+3. Confirmá que `https://convoyar.com` abre la app conectada a Supabase (no la versión vieja).
+4. En Supabase → Auth → URL Configuration, sumá `https://convoyar.com` a Site URL y Redirect
+   URLs (para los links de confirmación/reset — ver [doc 02](02-auth-real.md)).
 
-> 💡 `.app` y `.dev` fuerzan HTTPS a nivel navegador (preload HSTS), así que ni siquiera hay
-> forma de servir la app insegura. Buen default para una PWA.
+> 💡 Si el dominio estuviera en **otro** registrador: apuntá los **nameservers** a Cloudflare, o
+> dejá un **CNAME** de `www` hacia `convoyar-web.pages.dev`. No es tu caso (ya está en Cloudflare).
 
 ---
 
@@ -213,7 +211,7 @@ queda más profesional pero **no es obligatorio**.
 | Concepto | Costo |
 |---|---|
 | Cloudflare Pages (web estática) | **USD 0** — ancho de banda ilimitado, builds gratis (límite práctico: 500 builds/mes) |
-| Dominio propio | ~USD 12/año (opcional) |
+| Dominio `convoyar.com` | ✅ ya comprado (renovación ~USD 10–12/año) |
 
 **¿Cuándo pagás?** Por tráfico web estático, prácticamente **nunca**. El free tier de Pages
 no tiene tope de ancho de banda; el único límite real es **500 builds/mes** (o sea ~16 pushes
@@ -226,14 +224,14 @@ los 100 GB/mes de tráfico, por eso preferimos Cloudflare.
 ## ✅ Checklist de este doc
 
 - [ ] 🤖 `public/_redirects` con `/*  /index.html  200` en el repo
-- [ ] 🧑 Proyecto de Pages creado y conectado a `AxelFridman/caravana`
+- [ ] 🧑 Proyecto de Pages creado y conectado a `AxelFridman/convoyar`
 - [ ] 🧑 Build command = `npm run build`, output = `dist`, preset Vite/None
 - [ ] 🧑 `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` cargadas en Production
 - [ ] 🧑 Confirmado que **no** pegaste la `service_role`
 - [ ] 🧑 Primer deploy en verde, URL pública abre bien
 - [ ] 🧑 Refrescar en una ruta profunda **no** tira 404 (fallback SPA anda)
 - [ ] 🧑 Instalada como PWA en un celu real ("Agregar a pantalla de inicio")
-- [ ] 🧑 (Opcional) Dominio propio apuntando con HTTPS
+- [ ] 🧑 **Flip:** `convoyar.com` apuntando al deploy de `convoyar-web` (Worker viejo borrado)
 
 ---
 
@@ -253,9 +251,8 @@ los 100 GB/mes de tráfico, por eso preferimos Cloudflare.
 
 ---
 
-🎉 **Fin de la Fase 1.** Convoyar ya es una app real en internet: base de datos en la nube,
-login por email de verdad, sync entre personas y una URL instalable en el celu. Mandale el
-link a un amigo y ambos ven la misma salida. Cuando quieras llevarla a las tiendas, seguís
-con la Fase 2.
+🎉 **Fase 1 casi cerrada.** Convoyar ya es una app real en internet (preview live): base de
+datos en la nube, login con **email + contraseña**, sync entre personas y una URL instalable en
+el celu. Falta el último paso: el **flip de `convoyar.com`** (Paso 6). Después, a las tiendas (Fase 2).
 
 **Siguiente:** [05 · Google Play](05-google-play.md) → publicar la app en Android.

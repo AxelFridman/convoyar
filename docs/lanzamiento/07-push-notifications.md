@@ -20,8 +20,8 @@ tener las apps nativas armadas (docs [05](05-google-play.md)/[06](06-app-store-i
 > `google-services.json` (Android) y el **service account admin** (sender). La tabla
 > `device_tokens` ya existe en la base ([doc 01](01-supabase-base-de-datos.md) ✅).
 > **Lo que falta es 100% código** (Pasos 4–5: plugin + `registerPush` + Edge Function
-> `send-push`), y conviene hacerlo **después del [doc 03](03-conectar-la-app.md)** (el push se
-> apoya en el login/`meId` real). El push real solo se puede *probar* con la app corriendo en
+> `send-push`). El [doc 03](03-conectar-la-app.md) (login + `meId` real) **ya está hecho**, así
+> que esto está listo para encarar. El push real solo se puede *probar* con la app corriendo en
 > un dispositivo — no antes.
 >
 > ⚠️ El service account (`convoyar-940ec-df257ecbfdb6.json`) es **admin total**: está

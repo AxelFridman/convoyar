@@ -15,16 +15,18 @@
 | 💰 Costo    | USD 0 (Free tier)                                                               |
 | 🧑 / 🤖     | Casi todo**VOS** (dashboard + SQL). El código de conexión es el doc 03. |
 
-> ### 📍 Estado (2026-07-12): ✅ casi todo hecho
+> ### 📍 Estado (2026-07-13): ✅ hecho
 > - ✅ Proyectos **`convoyar-prod`** (`qlcwluvhrbkwjkjigsog`) y **`convoyar-dev`** creados.
-> - ✅ **Schema aplicado en prod** — lo verifiqué contra la API REST: las tablas existen y responden.
-> - ✅ Claves guardadas en `.env` (en el formato **nuevo** de Supabase — ver Paso 2).
-> - ⏳ **Falta que confirmes que RLS quedó activado** (Paso 4 tiene cómo chequearlo).
+> - ✅ **Schema + migraciones aplicados en prod Y dev**: `schema.sql` + `migrate-v3-to-v4`
+>   (garage v4 + realtime), `migrate-personal-org`, `migrate-orgs`, `migrate-moderation`.
+> - ✅ **RLS activo** en todas las tablas y **Realtime habilitado** (publicación `supabase_realtime`).
+> - ✅ Claves guardadas en `.env` (formato **nuevo** de Supabase — ver Paso 2).
 >
-> El schema canónico ya vive en [`server/schema.sql`](../../server/schema.sql) + la seguridad
-> en [`server/rls.sql`](../../server/rls.sql) (PR7 los dejó como archivos ejecutables, idénticos
-> a los bloques de abajo). Si tenés que re-correr algo, usá **esos archivos** para no mantener
-> dos copias que se desincronizan.
+> El schema canónico y las migraciones viven en [`server/`](../../server/) (`schema.sql`,
+> `rls.sql`, `migrate-*.sql`) como archivos ejecutables e idempotentes. **El bloque de schema
+> de abajo es la base v3**; encima corren las migraciones (v4 con garage + realtime, org personal,
+> orgs/invitaciones, moderación). Si tenés que re-correr algo, usá **esos archivos** para no
+> mantener dos copias que se desincronizan.
 
 ---
 
@@ -93,7 +95,8 @@ aparte y no la toques todavía.
 ## Paso 3 — Cargar el schema 🧑 ⏱️ 10 min
 
 En el dashboard: **SQL Editor → New query**. Pegá **todo** el bloque de abajo y dale **Run**.
-Está derivado 1:1 de [`src/state/model.ts`](../../src/state/model.ts) (`AppState` v3).
+Está derivado de [`src/state/model.ts`](../../src/state/model.ts): este bloque es la base **v3**;
+el modelo actual es **v4** y `server/migrate-v3-to-v4.sql` (ya corrida) lo actualiza (garage + realtime).
 
 > **Decisiones de diseño del schema:**
 >
@@ -433,9 +436,9 @@ create policy tokens_all_self on public.device_tokens
 > usuarios, corré una revisión de seguridad dedicada (el proyecto ya tiene el comando
 > `/security-review`, y el doc [10](10-analytics-y-monitoreo.md) habla de esto).
 
-### ✅ Verificá que RLS quedó activado (hacelo ahora) 🧑 ⏱️ 2 min
+### ✅ Verificá que RLS quedó activado 🧑 ⏱️ 2 min
 
-Es el único pendiente real de este doc. Dos formas:
+Ya está **activo** (lo dejó `rls.sql` + las migraciones). Si querés re-chequearlo, dos formas:
 
 - **En el dashboard (rápido):** Table Editor → entrá a cualquier tabla (ej. `members`) → arriba
   a la derecha tiene que decir **"RLS enabled"** con el candado verde. Si alguna dice

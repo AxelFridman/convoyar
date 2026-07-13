@@ -12,7 +12,7 @@
 └──────────────┬────────────────────────────────────────────────────────────┘
                │ useStore() — context + useReducer
 ┌──────────────▼────────────────── state/ ──────────────────────────────────┐
-│  model.ts   AppState v2 (orgs, members, events, legs, assignments,        │
+│  model.ts   AppState v4 (orgs, members, events, legs, assignments,        │
 │             joinRequests, reviews, tripHistory, notifications, settings)  │
 │  store.tsx  reducer + acciones + runMatch/manualMove/cancelDriver         │
 │             + flujo público: requestJoin/decideRequest/rateMember         │
@@ -66,10 +66,13 @@ producto "si no hay match, se dice claramente por qué" está cableada en el tip
 
 - **Una sola fuente de verdad** (`AppState`) en un `useReducer`; las pantallas no
   tienen estado de dominio propio, solo estado de UI efímero (sheets abiertos, forms).
-- **Persistencia**: debounce de 250 ms a localStorage con fallback en memoria
-  (iframes/incógnito). Clave versionada `convoyar:v2`; el hydrate exige
-  `version === 2` y si no, re-seedea. Versionar clave + campo juntos hace la
-  migración trivial mientras no haya datos reales de usuarios.
+- **Persistencia**: dos modos según `hasSupabase` (`services/supabaseClient.ts`).
+  - **Con backend:** la verdad vive en Postgres (Supabase). `services/repo.ts` hace `loadRemote`
+    (arma el `AppState` desde las tablas) y `writeAction` (escribe por acción); localStorage
+    queda como **cache** para abrir rápido y offline. Sync por Realtime.
+  - **Local/demo:** debounce de 250 ms a localStorage con fallback en memoria (iframes/incógnito),
+    clave versionada `convoyar:v4`; el hydrate exige `version === 4` y si no, re-seedea.
+  Un cambio de modelo sube clave+versión **y** requiere su migración Postgres en `server/`.
 - **`stateRef`**: los callbacks del store leen `stateRef.current` para no capturar
   estado viejo, pero un `dispatch` no se refleja hasta el próximo render. Por eso
   toda secuencia "modifico legs y calculo" pasa los legs explícitos vía
@@ -77,6 +80,25 @@ producto "si no hay match, se dice claramente por qué" está cableada en el tip
 - **Notificaciones por diff**: `diffNotifs(prev, next)` compara asignaciones y genera
   avisos "te asignamos / tu viaje cambió / quedaste sin lugar (motivo)". No hay push
   real; `services/notify.ts` usa la Notification API del navegador si hay permiso.
+
+## Backend (Supabase) — cómo se conecta
+
+El backend está **conectado**. `services/supabaseClient.ts` expone `supabase` (el cliente) y
+`hasSupabase` (true con env vars en dev/prod; false en tests, E2E y `build:single`). Ese único
+interruptor decide todo: con él prendido, `store.tsx` arranca la sesión (`onAuthStateChange`),
+crea la org personal del usuario nuevo (RPC `ensure_personal_org`), carga con `loadRemote` y se
+suscribe a Realtime (`subscribeRealtime`); con él apagado, corre la demo local de siempre.
+
+- **Auth**: email + contraseña (`services/auth.ts`). `meId` = member ligado a `auth.uid()`.
+- **Datos**: `services/repo.ts` mapea `AppState` ⇄ tablas (snake_case ⇄ camelCase) y escribe por
+  acción (`writeAction`). Schema y policies en `server/` (`schema.sql`, `rls.sql`); las migraciones
+  (`migrate-v3-to-v4`, `-personal-org`, `-orgs`, `-moderation`) ya se corrieron en dev y prod.
+  RLS activo en todas las tablas.
+- **Realtime**: las tablas compartidas están en la publicación `supabase_realtime`; un cambio en
+  la base recarga el estado del cliente sin recargar la página.
+- **Privacidad del motor**: los domicilios (`member_home`) son self-only por RLS. Para el modo
+  público con desconocidos conviene correr el matching en una Edge Function (motor TS puro) y
+  devolver sólo puntos de encuentro + ETAs, nunca las casas (pendiente; ver lanzamiento 01/03).
 
 ## Modo público (tipo BlaBlaCar)
 
@@ -98,19 +120,21 @@ Decisiones de diseño:
 - **Permisos**: `canAdminEvent` = creador del evento ∨ admin de la org (los eventos
   públicos de otros no te muestran Admin). `isParticipant` = miembro de la org ∨
   solicitud aprobada (gate de MyTrip).
-- **Simulación del organizador ajeno** (`scheduleSimulatedReply`): sin backend no hay
-  otro humano, así que pedidos a eventos de la comunidad se aprueban solos a los ~4 s,
-  con leg + matching + notificación, y un sweep on-mount resuelve pendientes de
-  sesiones anteriores. Está marcado en el código como lo primero que muere cuando
-  haya backend. La UI lo declara ("Demo local: el organizador responde solo").
+- **Organizador ajeno — real con backend, simulado sin él.** Con Supabase, la solicitud, la
+  decisión y la aprobación son reales entre personas distintas y llegan por Realtime. En modo
+  local/demo (`!hasSupabase`), `scheduleSimulatedReply` aprueba solo a los ~4 s (leg + matching
+  + notificación) y un sweep on-mount resuelve pendientes de sesiones anteriores. La simulación
+  no se borró: está **gateada con `if (hasSupabase) return`**, y la UI lo declara en modo demo
+  ("el organizador responde solo").
 
 ## i18n
 
-Diccionarios planos `es`/`en` con el tipo `TKey = keyof typeof es` — una clave que
-falte en `en` es error de compilación. Interpolación `{var}` por split/join (sin
-dependencias). Plurales: si `vars.n === 1` y existe `clave_one`, `translate` la usa
-automáticamente. Suficiente para es/en; si algún día hay idiomas con plurales
-complejos, reemplazar por `Intl.PluralRules` en `translate` (un solo punto de cambio).
+Diccionarios planos en `src/i18n/` — **6 idiomas** (es/en/pt/de/it/fr) con el tipo
+`TKey = keyof typeof es`: una clave que falte en cualquier idioma es error de compilación.
+Interpolación `{var}` por split/join (sin dependencias). Plurales: si `vars.n === 1` y existe
+`clave_one`, `translate` la usa automáticamente. Suficiente para los 6 actuales; si algún día
+hay idiomas con plurales complejos, reemplazar por `Intl.PluralRules` en `translate` (un solo
+punto de cambio).
 
 ## Monetización (apagada, cableada)
 
@@ -122,18 +146,19 @@ hoy es `metricsExport` (export CSV/JSON en Admin) para que el rail se pueda prob
 ## Distribución
 
 - **Web/PWA**: `dist/` estático con manifest + service worker (cache de shell y de
-  tiles, límite 250) → instalable, tolera mala señal.
-- **Un archivo**: `dist-single/index.html` (~400 KB) vía vite-plugin-singlefile.
-- **Stores**: Capacitor ya configurado (`app.convoyar`); `npx cap add android|ios`
-  sobre `dist/`. Push nativo: enganchar `@capacitor/push-notifications` donde hoy
-  está `services/notify.ts`.
+  tiles, límite 250) → instalable, tolera mala señal. Deploy en Cloudflare Pages
+  (proyecto `convoyar-web`); hoy corre un preview live, el flip de `convoyar.com` está pendiente.
+- **Un archivo**: `dist-single/index.html` (~400 KB) vía vite-plugin-singlefile (siempre local).
+- **Stores**: Capacitor 8 (`app.convoyar`). **Android ya scaffoldeado** (`android/` agregado y
+  sincronizado con el build de prod); falta keystore + `.aab` + cuenta Play. iOS pendiente.
+  Push nativo: enganchar `@capacitor/push-notifications` donde hoy está `services/notify.ts`.
 
 ## Testing
 
 | Capa | Herramienta | Qué cubre |
 |---|---|---|
 | Motor | vitest (`engine/matching.test.ts`) | restricciones duras, warmStart, escala 90+20, determinismo |
-| Estado/dominio | vitest (`state/public.test.ts`) | reputación, permisos, consistencia del seed v2 |
+| Estado/dominio | vitest (`state/public.test.ts`) | reputación, permisos, consistencia del seed v4 |
 | Integración | vitest (`state/integration.test.ts`) | seed → buildMatchInput → motor sin violaciones |
 | Render | vitest (`state/smoke.test.tsx`) | cada pantalla renderiza con el seed |
 | Flujos reales | Playwright (`e2e/app.spec.ts`) | matching, explorar→pedir→aceptado, solicitudes admin, ratings, tema/idioma |

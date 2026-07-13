@@ -14,7 +14,7 @@ Demo de fábrica incluida: *La Banda del Asado* (26 personas, 8 autos, 5 puntos 
 
 > 🤖 **¿Sos un agente de IA?** Empezá por [AGENTS.md](AGENTS.md). Diseño en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), estado vivo en [docs/TODO.md](docs/TODO.md), qué falta para escalar en [docs/GROWTH.md](docs/GROWTH.md).
 >
-> 🚀 **¿Querés lanzarlo de verdad?** (multi-dispositivo, login real, Play Store, App Store): guía paso a paso en [docs/lanzamiento/](docs/lanzamiento/). Base de datos en [server/](server/).
+> 🚀 **Estado de lanzamiento:** el backend real ya está **conectado** (Supabase: alta/login con **email + contraseña**, orgs, realtime, RLS activo, migraciones corridas en dev y prod). Falta el *flip* de producción a `convoyar.com` (hoy corre un preview live) y publicar en las tiendas. Guía operativa paso a paso en [docs/lanzamiento/](docs/lanzamiento/); migraciones SQL en [server/](server/).
 
 ---
 
@@ -23,7 +23,7 @@ Demo de fábrica incluida: *La Banda del Asado* (26 personas, 8 autos, 5 puntos 
 ```bash
 npm install
 npm run dev        # abre http://localhost:5173
-npm test           # 94 tests (motor + integración + modo público + i18n + auth + smoke)
+npm test           # unit + integración (motor · público · i18n · auth · garage · smoke)
 ```
 
 Otros comandos:
@@ -51,7 +51,10 @@ npm run preview       # sirve dist/ localmente
 - **Reputación y logros**: reseñas de 1–5 estrellas, historial, perfil público con antigüedad, **insignias** (primer viaje, cinco estrellas, garage…) y barra de "completá tu perfil".
 - **Aporte de nafta sugerido** (informativo, sin cobros): estima cuánto acercarle al conductor, para arreglar entre las personas.
 - **Simple por fuera, potente por dentro**: lo core siempre visible; la configuración avanzada (cuenta, idioma, tema, formato de hora, preferencias de viaje por defecto, aporte de nafta) vive en **Ajustes**, a un tap.
-- **Cuenta y comunicaciones**: verificación de email por código, **chat por convoy** entre participantes, y preferencias de aviso por tipo (asignaciones / solicitudes / chat / email).
+- **Cuentas reales**: alta e inicio de sesión con **email + contraseña** (Supabase Auth) y recuperación de contraseña. Cada usuario nuevo arranca con su **org personal** ("Mis viajes"); en modo demo local (sin backend) la app abre directo con la org de fábrica, sin login.
+- **Grupos privados**: ilimitados y gratis. Se comparte un **código de invitación**; el modelo de backend soporta además invitar por **email** y por **link con toggle** (estilo Drive, apagado por defecto).
+- **Comunicaciones**: **chat por convoy** entre participantes y preferencias de aviso por tipo (asignaciones / solicitudes / chat / email).
+- **Moderación**: **reportar** (pausa a la persona reportada hasta que un humano revise) y **bloquear** (personal: dejás de ver a quien bloqueás). Sin verificación de identidad por ahora.
 - **Admin**: armar/rearmar convoys, mover pasajeros a mano (con aviso si rompe una restricción), aceptar/rechazar solicitudes, cancelar conductor (recálculo incremental con `warmStart`), métricas (asignados, autos, desvío, CO₂) y export CSV/JSON.
 - **Celebraciones tipo Duolingo**: confetti al conseguir convoy y al armarlos, micro-interacciones, empty states ilustrados.
 - **6 idiomas** (🇦🇷 es · 🇺🇸 en · 🇧🇷 pt · 🇩🇪 de · 🇮🇹 it · 🇫🇷 fr), modo oscuro/claro, mobile-first.
@@ -61,14 +64,16 @@ npm run preview       # sirve dist/ localmente
 | Área | Estado |
 |---|---|
 | Motor de matching (CVRPTW a pequeña escala) | **Real.** Módulo independiente en `src/engine/`, sin dependencias de UI. 90 pax + 20 autos en <1 s. |
-| Modo público: solicitudes, aceptar/rechazar, reputación, historial | **Real** (lógica y UI completas). Lo único simulado es el *otro* humano: como no hay backend, el organizador de un evento ajeno "responde" solo a los ~4 s (`scheduleSimulatedReply` en `store.tsx`, primero en morir cuando haya backend). |
+| Backend / multi-dispositivo | **Real y conectado (Supabase).** Cliente en `src/services/supabaseClient.ts`; lectura/escritura y realtime en `src/services/repo.ts`. El interruptor `hasSupabase` prende el backend en dev/prod y lo apaga en tests, E2E y `build:single` (que siguen 100 % locales). |
+| Auth | **Real: email + contraseña** (Supabase Auth), en `src/services/auth.ts` (alta, login, reset). En modo demo local no hay login: arranca con `meId "m0"`. |
+| Modo público: solicitudes, aceptar/rechazar, reputación, historial | **Real** (lógica y UI completas). Con backend, las solicitudes entre personas reales sincronizan por **Realtime**. En modo demo local, el organizador ajeno "responde" solo a los ~4 s (`scheduleSimulatedReply` en `store.tsx`, **sólo activo si `!hasSupabase`**). |
 | Ruteo | **Mock por defecto** (`MockRoutingProvider`: haversine ×1.3 a 26 km/h). Adaptador **OSRM real ya escrito** (`OsrmRoutingProvider`), swap de 1 línea (ver abajo). |
 | Mapas | **Real**: Leaflet + tiles de OpenStreetMap (atribución incluida, obligatoria). |
-| Chat del convoy | **Real** (UI + estado). La respuesta del otro participante es simulada (demo sin backend), igual que el organizador ajeno. |
-| Verificación de email | **Simulada** (`services/auth.ts`: código de 6 dígitos que la demo muestra en pantalla). Contrato `AuthProvider` listo para Supabase Auth / propio. |
-| Persistencia | localStorage (clave `convoyar:v4`) con fallback en memoria. Un dispositivo. |
-| Multi-dispositivo / auth / push | **Stubs, pero con el camino listo.** Schema Postgres + RLS ya escritos en [server/](server/); guía de conexión en [docs/lanzamiento/](docs/lanzamiento/). El motor se muda respetando el contrato `MatchInput → MatchResult`. |
-| Monetización | **Cableada y apagada** (ver abajo). |
+| Chat del convoy | **Real** (UI + estado; con backend sincroniza por Realtime). La auto-respuesta simulada sólo corre en modo demo local. |
+| Persistencia | Con backend: **Postgres en Supabase** (multi-dispositivo). En modo demo: localStorage (clave `convoyar:v4`) con fallback en memoria, un dispositivo. |
+| Moderación (reportar / bloquear) | **Modelo en el backend** (`server/migrate-moderation.sql`: reportar pausa hasta revisión humana, bloquear es personal). Falta cablear la UI. Sin verificación de identidad por ahora. |
+| Push notifications | **Pendiente.** Hoy: avisos in-app + Notification API del navegador (app abierta). Credenciales de Firebase listas; push nativo por hacer → [docs/lanzamiento/07](docs/lanzamiento/07-push-notifications.md). |
+| Monetización | **Cableada y apagada** (100 % gratis, ver abajo). |
 
 ## Arquitectura
 
@@ -80,13 +85,14 @@ src/
     routing.ts    interfaz RoutingProvider + Mock + OSRM (una llamada matrix() por evento)
     geo.ts        haversine, caminata, RNG determinístico
   state/        store (context + useReducer), modelo v4, reputación, garage, logros, persistencia debounced
-  screens/      Inicio · Explorar (público) · Mi viaje · Resultados · Admin · Perfil
-  components/   People (avatar/estrellas/perfil), MapPicker (Leaflet), RideCard, UI kit, íconos
-  services/     storage · billing · notify · export
-  i18n.ts       es/en con interpolación {var} y plurales (_one)
+  screens/      Inicio · Explorar (público) · Mi viaje · Resultados · Admin · Perfil · Auth (login)
+  components/   People (avatar/estrellas/perfil), MapPicker (Leaflet), RideCard, Chat, UI kit, íconos
+  services/     supabaseClient (hasSupabase) · repo (AppState ⇄ Supabase + realtime) · auth (email+pass) · storage (cache local) · billing · notify · export
+  i18n/         6 idiomas (es/en/pt/de/it/fr) con interpolación {var} y plurales (_one)
   seed.ts       demo determinística: org privada + comunidad pública (Buenos Aires)
-e2e/            Playwright: 22 flujos reales + generador de capturas
-docs/           ARCHITECTURE.md · ROADMAP.md · screenshots/
+server/         SQL ejecutable: schema · rls · migraciones (v3→v4, org personal, orgs, moderación) · edge-functions
+e2e/            Playwright: flujos reales + generador de capturas
+docs/           ARCHITECTURE.md · ROADMAP.md · TODO.md · GROWTH.md · lanzamiento/ · screenshots/
 ```
 
 **Contrato del motor** (lo único que un backend futuro necesita respetar):
@@ -121,18 +127,16 @@ Geocoding futuro (buscar direcciones por texto): [Nominatim](https://nominatim.o
 
 **Un solo archivo:** `npm run build:single` genera `dist-single/index.html` autocontenido (~380 KB). Sirve para mandar por mail/Drive o demos. Solo necesita internet para los tiles del mapa.
 
-**Android / iOS (Capacitor):** el proyecto ya trae `capacitor.config.json` (`app.convoyar`).
+**Android (Capacitor):** ya **scaffoldeado**. Capacitor 8 (`@capacitor/core|cli|android`) instalado, plataforma `android/` agregada y sincronizada con el build de producción, íconos/splash generados y firma de release preconfigurada por `android/keystore.properties`. Falta lo que sólo puede hacer el dueño: generar y respaldar la keystore, el `.aab` firmado y la cuenta de Google Play. Paso a paso en [docs/lanzamiento/05](docs/lanzamiento/05-google-play.md).
 
 ```bash
-npm run build
-npm i @capacitor/core @capacitor/cli @capacitor/android @capacitor/ios
-npx cap add android    # y/o: npx cap add ios
-npx cap sync
-npx cap open android   # Android Studio → firmar → .aab para Play Store
-npx cap open ios       # Xcode → firmar → App Store (requiere macOS)
+npm run build && npx cap sync android   # recompila la web (prod) y la copia al proyecto nativo
+npx cap open android                     # Android Studio → firmar → .aab para Play Store
 ```
 
-Para push nativas después: `@capacitor/push-notifications` + FCM/APNs, enganchando donde hoy está `services/notify.ts`.
+**iOS:** pendiente (requiere macOS/Xcode). `npx cap add ios` cuando toque → [docs/lanzamiento/06](docs/lanzamiento/06-app-store-ios.md).
+
+Para push nativas: `@capacitor/push-notifications` + FCM/APNs, enganchando donde hoy está `services/notify.ts` → [docs/lanzamiento/07](docs/lanzamiento/07-push-notifications.md).
 
 ## Monetización (apagada por diseño)
 
@@ -146,17 +150,17 @@ Nada de esto afecta la funcionalidad actual: hoy es 100 % gratis y sin anuncios.
 
 ## Roadmap
 
-1. **MVP local (esto)** ✅ — motor + UI completa + modo público tipo BlaBlaCar + onboarding + 6 idiomas + chat + verificación de email (simulada) + deleite visual. Un dispositivo, ruteo mock con adaptador OSRM listo.
-2. **Sync real** — Supabase (schema ya escrito en [server/](server/)): orgs compartidas, auth, realtime, push, solicitudes entre personas reales. El motor se muda tal cual. Guía en [docs/lanzamiento/](docs/lanzamiento/).
-3. **Escala** — OSRM propio, geocoding Nominatim, métricas históricas, confianza (verificación de identidad, reportes).
+1. **MVP local** ✅ — motor + UI completa + modo público tipo BlaBlaCar + onboarding + 6 idiomas + chat + deleite visual. Un dispositivo, ruteo mock con adaptador OSRM listo.
+2. **Sync real (Supabase)** ✅ **conectado** — orgs, **auth email + contraseña**, realtime, org personal por usuario, solicitudes entre personas reales; migraciones corridas en dev+prod, RLS activo, el motor se mudó respetando el contrato. Falta: **flip de producción a `convoyar.com`** (hoy corre un preview live) y **push nativo**. Guía en [docs/lanzamiento/](docs/lanzamiento/).
+3. **Tiendas y escala** — Android scaffoldeado (falta keystore + `.aab` + cuenta Play); iOS pendiente; push; luego OSRM propio, geocoding Nominatim, métricas históricas, confianza (moderación ya modelada en el backend; verificación de identidad más adelante).
 
 Detalle técnico en [docs/ROADMAP.md](docs/ROADMAP.md) · qué falta para "nivel Silicon Valley" en [docs/GROWTH.md](docs/GROWTH.md) · cómo lanzar en [docs/lanzamiento/](docs/lanzamiento/).
 
 ## Decisiones que tomé distinto al spec (y por qué)
 
 - **"Mover pasajero" con selector en vez de drag-and-drop**: en pantallas táctiles chicas el drag entre tarjetas largas es frustrante; un sheet con la lista de autos (capacidad visible) es más rápido y accesible. La lógica (`applyManualMove` + aviso de violaciones) es la misma.
-- **Cliente-side + export en vez de backend multi-usuario**: mantiene el "gratis de operar" absoluto del MVP y no bloquea nada — el contrato del motor está pensado para mudarse a server sin tocar la UI.
-- **PWA primero, stores después**: mismo código, `dist/` ya es instalable; Capacitor queda configurado para cuando quieras publicar.
+- **Local-first primero, backend después (cumplido)**: el MVP arrancó 100 % cliente-side (gratis de operar, sin bloqueos), y el contrato del motor permitió **mudarse a Supabase sin tocar la UI** — que es exactamente lo que pasó. El modo local sigue vivo (interruptor `hasSupabase`) para tests, `build:single` y demos offline.
+- **PWA primero, stores después**: mismo código; `dist/` ya es instalable como PWA y **Android ya está scaffoldeado** con Capacitor (falta la parte del dueño: keystore, `.aab`, cuenta Play).
 
 ## Licencia
 

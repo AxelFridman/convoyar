@@ -1,42 +1,45 @@
 # 🚀 Lanzamiento de Convoyar — guía operativa paso a paso
 
-> **Qué es esta carpeta.** Convoyar hoy funciona 100 % en el navegador, en un solo
-> dispositivo, sin backend (todo vive en `localStorage`, ver [AGENTS.md](../../AGENTS.md)).
-> Para lanzarlo **de verdad** —que dos personas en dos teléfonos vean la misma salida,
-> que el login mande un email real, que esté en Google Play y App Store— hay que
-> levantar infraestructura. Casi todo eso son cosas que **tenés que hacer vos con el
-> mouse y a veces con la tarjeta** (crear cuentas, apretar botones en dashboards, pagar
-> fees de las tiendas, subir archivos). Esta carpeta es tu checklist maestro: un
-> documento detallado por cada pieza, en orden, pensado para el **free tier** pero
-> **fácil de escalar** cuando tengas plata y usuarios.
+> **Qué es esta carpeta.** El backend real de Convoyar **ya está conectado** (Supabase: auth
+> **email + contraseña**, orgs, realtime, RLS; migraciones corridas en dev y prod). Dos personas
+> en dos teléfonos ya ven la misma salida en el **preview** live. Lo que falta para lanzar del
+> todo —apuntar `convoyar.com` al deploy, publicar en Google Play y App Store, push nativo— es en
+> su mayoría cosas que **hacés vos con el mouse y a veces con la tarjeta** (dashboards, fees de
+> tiendas, subir archivos, firmar). Esta carpeta es tu checklist maestro: un documento por pieza,
+> en orden, pensado para el **free tier** y fácil de escalar. (La app sigue corriendo 100 % local
+> en tests y `build:single` vía el interruptor `hasSupabase`, ver [AGENTS.md](../../AGENTS.md).)
 
 > **Stack elegido:** Supabase (Postgres + Auth + Realtime) como backend, deploy web en
 > Cloudflare Pages / Netlify, y las apps nativas con Capacitor a **Google Play** y **App Store**.
 
 ---
 
-## 📍 Estado actual (verificado el 2026-07-12)
+## 📍 Estado actual (2026-07-13)
 
-Esto es lo que **realmente** está hecho a hoy (lo probé contra tus servicios, no es una suposición):
+Lo que **realmente** está hecho a hoy:
 
-| Pieza | Estado | Detalle verificado |
+| Pieza | Estado | Detalle |
 |---|---|---|
-| Proyectos Supabase (prod + dev) | ✅ **hecho** | `convoyar-prod` y `convoyar-dev` creados; claves en `.env` |
-| Schema en la base (prod) | ✅ **hecho** | Probé la API: las tablas `members`, `orgs`, etc. existen y responden |
-| RLS (seguridad) | ⏳ **verificá vos** | No lo pude confirmar desde afuera; instrucciones en el [doc 01](01-supabase-base-de-datos.md) |
-| Auth por email | 🟡 **a medias / trabado** | Falta SMTP (necesita dominio) y multi-idioma → ver [doc 02](02-auth-real.md), reescrito |
-| **App conectada a Supabase** | ❌ **NO hecho** | No hay `@supabase/supabase-js` ni cliente. **La app todavía NO usa la base.** Es el paso crítico → [doc 03](03-conectar-la-app.md) |
-| Deploy web (Cloudflare) | ✅ **LIVE** | Deployado en **https://convoyar-web.pages.dev** (Cloudflare **Pages**, no Worker). Falta apuntar `convoyar.com` → [doc 04](04-deploy-web-pwa.md) |
-| Resend / dominio | ❌ **trabado** | `convoyar.com` no resuelve (no lo controlás) → Resend nunca verifica. Alternativas en [doc 02](02-auth-real.md) |
-| Sentry | 🟡 **a medias** | Proyecto creado, DSN en `.env`; falta cablearlo bien (y con cuidado de privacidad) → [doc 10](10-analytics-y-monitoreo.md) |
+| Proyectos Supabase (prod + dev) | ✅ **hecho** | `convoyar-prod` (`qlcwluvhrbkwjkjigsog`) y `convoyar-dev`; claves en `.env` |
+| Schema + migraciones (prod **y** dev) | ✅ **hecho** | `schema.sql` + `migrate-v3-to-v4` / `-personal-org` / `-orgs` / `-moderation` corridas |
+| RLS (seguridad) | ✅ **activo** | prendido en todas las tablas (`server/rls.sql` + migraciones) → [01](01-supabase-base-de-datos.md) |
+| Realtime | ✅ **habilitado** | tablas compartidas en la publicación `supabase_realtime` (viene en la migración v4) |
+| Auth | ✅ **real: email + contraseña** | `services/auth.ts` + `screens/Auth.tsx` (alta, login, reset). **No es OTP** → [02](02-auth-real.md) |
+| **App conectada a Supabase** | ✅ **hecho** | `@supabase/supabase-js`, `supabaseClient.ts`, `repo.ts`; multiusuario real → [03](03-conectar-la-app.md) |
+| Deploy web (Cloudflare Pages) | ✅ **preview LIVE** | `https://supabase-preview.convoyar-web.pages.dev` (proyecto `convoyar-web`, deploy por CLI) → [04](04-deploy-web-pwa.md) |
+| Dominio `convoyar.com` | ✅ comprado · ⏳ **flip** | es del dueño; **producción todavía sirve la versión vieja** — falta apuntarlo al deploy nuevo → [04](04-deploy-web-pwa.md) |
+| Android (Capacitor) | 🏗️ **scaffoldeado** | `android/` sincronizado; falta keystore + `.aab` + cuenta Play (dueño) → [05](05-google-play.md) |
+| Push nativo | ⏳ **pendiente** | credenciales Firebase listas; falta el código → [07](07-push-notifications.md) |
+| iOS | ⏳ **pendiente** | requiere macOS → [06](06-app-store-ios.md) |
+| Sentry / analytics | 🟡 **a medias** | DSN en `.env`; falta cablear (opcional, Fase 3) → [10](10-analytics-y-monitoreo.md) |
 
-> **En una frase:** tenés la base de datos lista y las cuentas creadas, pero **la app sigue
-> siendo local** (no habla con Supabase todavía). El próximo paso que desbloquea todo es el
-> **[doc 03](03-conectar-la-app.md)** — eso es código, lo puedo hacer yo en una PR. Después,
-> deploy con las env vars correctas y probar con dos dispositivos.
+> **En una frase:** la app **ya es multiusuario de verdad** (Supabase conectado, RLS, realtime,
+> auth email + contraseña) y corre en un preview live. El próximo hito es el **flip de producción**:
+> apuntar `convoyar.com` (ya comprado) al deploy de `convoyar-web`. Después: push, Play Store, iOS.
 
-**Tu ruta más corta a "funciona de verdad":** doc 03 (conectar, 🤖 yo) → doc 04 (2 env vars
-en Cloudflare, 🧑 vos) → probar login con SMTP default de Supabase (sin depender de Resend/dominio).
+**Tu ruta más corta a producción:** flip de `convoyar.com` al deploy de `convoyar-web`
+([doc 04](04-deploy-web-pwa.md), 🧑 vos) → push nativo ([doc 07](07-push-notifications.md), 🤖) →
+Play Store ([doc 05](05-google-play.md), 🧑 vos).
 
 ---
 
@@ -64,18 +67,19 @@ secretos. Cada doc te dice exactamente dónde.
 |---|---|---|
 | Motor de matching | ✅ **Real** (puro TS, `src/engine/`) | Igual (se muda tal cual al server si hace falta) |
 | Mapas | ✅ **Real** (Leaflet + OpenStreetMap) | Igual |
-| Base de datos | ❌ `localStorage`, un dispositivo | ✅ Postgres en Supabase, multi-dispositivo → **[01](01-supabase-base-de-datos.md)** |
-| Login / verificación de email | ❌ Código simulado (`LocalAuthProvider`) | ✅ OTP real por email → **[02](02-auth-real.md)** |
-| Sync entre personas reales | ❌ Simulado (`scheduleSimulatedReply`) | ✅ Realtime de Supabase → **[03](03-conectar-la-app.md)** |
-| Web en internet | ❌ Solo `localhost` | ✅ URL pública + PWA instalable → **[04](04-deploy-web-pwa.md)** |
-| App en Google Play | ❌ Solo Capacitor configurado | ✅ Publicada → **[05](05-google-play.md)** |
-| App en App Store | ❌ | ✅ Publicada → **[06](06-app-store-ios.md)** |
-| Push notifications | ❌ Solo Notification API del navegador | ✅ FCM / APNs / Web Push → **[07](07-push-notifications.md)** |
+| Base de datos | ✅ **Postgres en Supabase, multiusuario** (localStorage queda como cache) | Igual → **[01](01-supabase-base-de-datos.md)** |
+| Login / auth | ✅ **Real: email + contraseña** (`services/auth.ts`) | Igual → **[02](02-auth-real.md)** |
+| Sync entre personas reales | ✅ **Realtime de Supabase** (`subscribeRealtime`); la simulación quedó gateada en modo local | Igual → **[03](03-conectar-la-app.md)** |
+| Web en internet | ✅ **Preview live** (`supabase-preview.convoyar-web.pages.dev`) · ⏳ falta flip a `convoyar.com` | Producción en el dominio → **[04](04-deploy-web-pwa.md)** |
+| App en Google Play | 🏗️ **Android scaffoldeado** (falta keystore + `.aab` + cuenta) | Publicada → **[05](05-google-play.md)** |
+| App en App Store | ❌ (requiere macOS) | Publicada → **[06](06-app-store-ios.md)** |
+| Push notifications | ❌ Solo Notification API del navegador (credenciales Firebase listas) | ✅ FCM / APNs / Web Push → **[07](07-push-notifications.md)** |
+| Moderación (reportar / bloquear) | 🟡 **Modelo en backend** (`migrate-moderation.sql`); falta UI | UI cableada → nota en [03](03-conectar-la-app.md) |
 | Monetización | ⚪ Cableada y **apagada** (`billing.ts`) | ⚪ Encendida cuando quieras → **[08](08-monetizacion.md)** |
 | Ruteo por calle real | ⚪ Mock (haversine); adaptador OSRM escrito | ⚪ OSRM self-hosted (opcional) → **[09](09-ruteo-osrm.md)** |
-| Errores / métricas de producto | ❌ Nada | ✅ Sentry + PostHog free → **[10](10-analytics-y-monitoreo.md)** |
+| Errores / métricas de producto | 🟡 DSN de Sentry en `.env`; falta cablear | ✅ Sentry + PostHog free → **[10](10-analytics-y-monitoreo.md)** |
 
-✅ real · ❌ falta / mock · ⚪ opcional o para más adelante
+✅ hecho · 🏗️ scaffoldeado · 🟡 a medias · ❌ falta · ⚪ opcional o para más adelante
 
 ---
 
@@ -90,12 +94,12 @@ usuarios reales.
   (ya lo tenés), [Supabase](https://supabase.com), [Cloudflare](https://cloudflare.com).
 - Instalá lo básico local: Node 20+, Git, y (para más adelante) Android Studio.
 
-### Fase 1 — La app es real y está en internet (1 día) 💰 ~USD 0
-1. **[01 · Supabase / base de datos](01-supabase-base-de-datos.md)** — creás el proyecto y la DB.
-2. **[02 · Auth real](02-auth-real.md)** — login por email de verdad.
-3. **[03 · Conectar la app](03-conectar-la-app.md)** — enchufás el front al backend (borra los mocks).
-4. **[04 · Deploy web / PWA](04-deploy-web-pwa.md)** — sale a internet, instalable en el celu.
-> 🎉 Al final de la Fase 1 ya podés mandarle el link a un amigo y ambos ven la misma salida.
+### Fase 1 — La app es real y está en internet ✅ (hecha, salvo el flip de dominio) 💰 ~USD 0
+1. ✅ **[01 · Supabase / base de datos](01-supabase-base-de-datos.md)** — proyecto, DB, migraciones y RLS.
+2. ✅ **[02 · Auth real](02-auth-real.md)** — login con **email + contraseña**.
+3. ✅ **[03 · Conectar la app](03-conectar-la-app.md)** — front enchufado al backend; la simulación quedó gateada.
+4. 🏗️ **[04 · Deploy web / PWA](04-deploy-web-pwa.md)** — preview live; **falta el flip de `convoyar.com`**.
+> 🎉 Ya podés mandarle el link del preview a un amigo y ambos ven la misma salida.
 
 ### Fase 2 — Está en las tiendas (2–4 días de laburo + días de review) 💰 USD 25 + USD 99/año
 5. **[05 · Google Play](05-google-play.md)** — Android. 💰 USD 25 (pago único).
@@ -120,7 +124,7 @@ usuarios reales.
 | Firebase / FCM (push) | USD 0 | Recomendado |
 | Google Play Console | **USD 25** (pago único, de por vida) | Solo si querés Android |
 | Apple Developer Program | **USD 99 / año** | Solo si querés iOS |
-| Dominio propio (ej. `convoyar.app`) | ~USD 12 / año | Opcional (queda más pro) |
+| Dominio propio `convoyar.com` | ✅ ya comprado | Sí (ya lo tenés; falta apuntarlo al deploy) |
 | Sentry + PostHog | USD 0 (free tier) | Recomendado |
 | **Total mínimo para lanzar en las 3** | **≈ USD 124 primer año** | (USD 25 son de una sola vez) |
 
@@ -140,14 +144,14 @@ Copiá esto y andá tildando. El detalle de cada ítem está en el doc que se li
 
 **Fase 1 — Backend + web**
 - [x] 🧑 Cuenta de Supabase creada y proyectos `convoyar-prod` + `convoyar-dev` levantados → [01](01-supabase-base-de-datos.md)
-- [x] 🧑 Schema SQL corrido (verificado: las tablas existen en prod) → [01](01-supabase-base-de-datos.md)
-- [ ] 🧑 **Verificar que RLS quedó activado** (no lo pude confirmar desde afuera) → [01](01-supabase-base-de-datos.md)
-- [ ] 🧑 Auth por email configurado (para **testear ya**, usá el SMTP default de Supabase; Resend/dominio es para producción) → [02](02-auth-real.md)
-- [ ] 🧑 SMTP propio + multi-idioma → **trabado por falta de dominio** (alternativas en [02](02-auth-real.md))
-- [ ] 🤖 **App conectada a Supabase** (`@supabase/supabase-js`, cliente, repo remoto, mocks borrados) → [03](03-conectar-la-app.md) ← **PASO CRÍTICO, todavía NO hecho**
-- [ ] 🧑 Web deployada con las env vars `VITE_SUPABASE_*` (hoy da 404, faltan vars) → [04](04-deploy-web-pwa.md)
-- [ ] 🧑 (Opcional) Dominio propio apuntando a la web → [04](04-deploy-web-pwa.md)
-- [ ] 🧑 **Probado con dos dispositivos distintos** que ven la misma salida ✅
+- [x] 🧑 Schema SQL + migraciones (`v3-to-v4`, `personal-org`, `orgs`, `moderation`) corridas en prod **y** dev → [01](01-supabase-base-de-datos.md)
+- [x] 🧑 **RLS activado** en todas las tablas + Realtime habilitado → [01](01-supabase-base-de-datos.md)
+- [x] 🤖 Auth **email + contraseña** cableado (`services/auth.ts`, `screens/Auth.tsx`) → [02](02-auth-real.md)
+- [ ] 🧑 SMTP propio (Resend) para volumen/producción — opcional para arrancar (Supabase manda con su SMTP default) → [02](02-auth-real.md)
+- [x] 🤖 **App conectada a Supabase** (`@supabase/supabase-js`, `supabaseClient.ts`, `repo.ts`, realtime; simulación gateada) → [03](03-conectar-la-app.md)
+- [x] 🧑 Web deployada (**preview live** con las env vars `VITE_SUPABASE_*` horneadas) → [04](04-deploy-web-pwa.md)
+- [ ] 🧑 **Flip de producción**: apuntar `convoyar.com` (ya comprado) al deploy de `convoyar-web` → [04](04-deploy-web-pwa.md)
+- [ ] 🧑 **Probado con dos dispositivos distintos** que ven la misma salida
 
 **Fase 2 — Tiendas**
 - [ ] 🧑 Página de **política de privacidad** publicada (obligatoria en ambas tiendas) → [05](05-google-play.md)
@@ -169,11 +173,12 @@ Esta guía es **complementaria** al [docs/TODO.md](../TODO.md). Ese archivo trac
 **código** (las PRs que hace Claude); esta carpeta trackea la **infraestructura** (lo que
 hacés vos). Se tocan en dos lugares:
 
-- **PR5 `feat/account-comms`** dejó `services/auth.ts` con la interfaz `AuthProvider`
-  lista para enchufar Supabase → ver **[02](02-auth-real.md)**.
-- **PR7 `feat/server-skeleton`** planeaba un servidor propio con Postgres. Con Supabase
-  **no lo necesitás para lanzar** (Supabase te da la DB y la API). El server propio queda
-  como plan B / cuando quieras lógica de servidor pesada; lo aclaramos en [03](03-conectar-la-app.md).
+- **`feat/supabase-connect`** conectó el backend: `services/auth.ts` (**email + contraseña**),
+  `services/supabaseClient.ts`, `services/repo.ts` (AppState ⇄ tablas + realtime) → ver
+  **[02](02-auth-real.md)** y **[03](03-conectar-la-app.md)**.
+- **PR7 `feat/server-skeleton`** planeaba un servidor propio con Postgres. Con Supabase **no
+  hizo falta** para lanzar (Supabase da la DB y la API vía RLS). El server propio queda como
+  plan B para lógica de servidor pesada; lo aclaramos en [03](03-conectar-la-app.md).
 
 Cuando una PR toque algo de acá, el doc correspondiente dice qué archivo cambia.
 
@@ -202,7 +207,7 @@ Cuando una PR toque algo de acá, el doc correspondiente dice qué archivo cambi
   servidores. Supabase es eso.
 - **RLS** (Row Level Security): reglas en la base que deciden qué fila puede leer/escribir
   cada usuario. Es tu muro de seguridad; sin esto cualquiera lee todo.
-- **PWA**: la web instalable como app. Ya la tenés; solo falta ponerla en internet.
+- **PWA**: la web instalable como app. Ya está en internet (preview live); falta el flip a `convoyar.com`.
 - **Capacitor**: envuelve tu web en una app nativa Android/iOS. Ya está configurado (`app.convoyar`).
 - **`.aab`**: Android App Bundle, el formato que subís a Google Play (no `.apk`).
 - **Keystore**: el archivo con tu clave de firma de Android. ⚠️ Si lo perdés, es un dolor de cabeza.
