@@ -51,7 +51,8 @@ export function RideCard({
   const driver = legMember(state, ride.driverLegId);
   const veh = legVehicleOf(state, ride.driverLegId);
   const plate = veh?.plate;
-  const free = (veh?.capacity ?? 0) - ride.passengerLegIds.length;
+  // clamp a 0: un assignment viejo (p. ej. tras editar el garage) no debe mostrar negativos.
+  const free = Math.max(0, (veh?.capacity ?? 0) - ride.passengerLegIds.length);
   // Aporte de nafta sugerido por pasajero (informativo, PR-C2).
   const fare = suggestedPerPassenger(
     ride.routeKm,

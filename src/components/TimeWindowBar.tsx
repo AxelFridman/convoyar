@@ -11,13 +11,16 @@ export function TimeWindowBar({
   start,
   end,
   eventMin,
-  labelEvent
+  labelEvent,
+  hour12 = false
 }: {
   start: number;
   end: number;
   eventMin?: number;
   labelEvent?: string;
+  hour12?: boolean;
 }) {
+  const fmt = (m: number) => minutesToHHMM(m, hour12);
   // Eje: desde 1h antes del mínimo hasta 1h después del máximo, mínimo 3h de ancho.
   const lo = Math.max(0, Math.min(start, eventMin ?? start) - 60);
   const hi = Math.min(1439, Math.max(end, eventMin ?? end) + 60);
@@ -31,16 +34,16 @@ export function TimeWindowBar({
   for (let m = Math.ceil(lo / stepH) * stepH; m <= hi; m += stepH) ticks.push(m);
 
   return (
-    <div className="twBar" role="img" aria-label={`${minutesToHHMM(start)}–${minutesToHHMM(end)}`}>
+    <div className="twBar" role="img" aria-label={`${fmt(start)}–${fmt(end)}`}>
       <div className="twTrack">
         {ticks.map((m) => (
           <span key={m} className="twTick" style={{ left: pct(m) }}>
-            <span className="twTickLbl num">{minutesToHHMM(m)}</span>
+            <span className="twTickLbl num">{fmt(m)}</span>
           </span>
         ))}
         <div className="twWindow" style={{ left: pct(start), width }}>
-          <span className="twEdge twEdge-start num">{minutesToHHMM(start)}</span>
-          <span className="twEdge twEdge-end num">{minutesToHHMM(end)}</span>
+          <span className="twEdge twEdge-start num">{fmt(start)}</span>
+          <span className="twEdge twEdge-end num">{fmt(end)}</span>
         </div>
         {eventMin != null && eventMin >= lo && eventMin <= hi && (
           <span className="twEvent" style={{ left: pct(eventMin) }} title={labelEvent}>

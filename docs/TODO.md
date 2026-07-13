@@ -52,14 +52,32 @@
 - [x] **PR-B1 `feat/settings-tab`** — pantalla **Ajustes** separada (cuenta, prefs, idioma,
       tema, **formato de hora 12h/24h nuevo**, plan, intro, reset). Perfil queda con lo core
       (identidad + reputación + historial + garage). `Settings.hour12?` opcional (sin bump).
+- [x] **PR-B2 `feat/personal-defaults`** (PR#13) — `Member.defaults?: TripDefaults`
+      (rol/ventana/needs/smokeFree) precargan viajes nuevos. Editor en Ajustes.
+- [x] **PR-E1 `feat/badges`** (PR#14) — `state/achievements.ts`: 6 insignias + barra
+      "completá tu perfil". `<Badges>` en Perfil y perfil público.
+- [x] **PR-C2 `feat/fuel-split`** (PR#15) — `state/fare.ts`: aporte de nafta sugerido
+      (informativo, sin cobro). `Settings.fuelPricePerL?`. Línea en RideCard.
+- [x] **PR-F1 `feat/route-map`** (PR#16) — ruta ámbar con casing + paradas numeradas en el mapa.
 - [ ] **PR-A3** multi-auto por salida (2 choferes en una familia) — evaluar impacto en motor. Pendiente.
-- [ ] **PR-B2** defaults personales que precargan legs nuevos (ventana/origen/rol/necesidades).
 - [ ] **PR-B3** "borrar mi cuenta" (limpia estado local + hook para backend).
-- [ ] **PR-C1** viajes recurrentes · **PR-C2** aporte de nafta sugerido · **PR-C3** estados del convoy.
+- [ ] **PR-C1** viajes recurrentes · **PR-C3** estados del convoy (confirmado/en camino/llegué).
 - [ ] **PR-D1/D2** modo público mejor (mapa en Explorar, favoritos).
-- [ ] **PR-E1** logros/insignias + barra completar perfil.
-- [ ] **PR-F1/F2/F3** belleza (ruta real en mapa, rediseño tarjeta, tipografía).
+- [ ] **PR-F2/F3** belleza (rediseño tarjeta, tipografía) · ruta de calle real = OSRM (backend).
 - [ ] **PR-G1/G2** accesibilidad AA · idiomas extra.
+
+- [x] **`fix/tanda2-review`** — revisión adversarial (workflow, 11 agentes) de la tanda 2:
+      5 hallazgos confirmados, todos arreglados:
+      1. Borrar un vehículo dejaba la asignación/legs colgados (auto equivocado, asientos
+         negativos, ride fantasma con '?') → `removeVehicle` repunta legs al vehículo que
+         queda e **invalida las asignaciones** de esas salidas (acción `invalidateAssignments`);
+         + clamp de asientos libres a ≥0 en RideCard.
+      2. Rol default "driver" sin auto → conductor fantasma → `seedRole` sanea la precarga
+         y `save()` no persiste un leg de conductor sin vehículo.
+      3. Formato 12h no se aplicaba en avisos, hint de MyTrip ni TimeWindowBar → wireado
+         (`diffNotifs` usa hour12, MyTrip usa `useHhmm`, TimeWindowBar recibe prop `hour12`).
+      4. Pill "✓ verificado" quedaba verde al editar el email → usa `alreadyVerified`.
+      E2E de regresión: borrar vehículo invalida la asignación sin dejar convoy corrupto.
 
 **Deferidos con razón:**
 - **Unidades km/mi** (era parte de PR-B1): no hay superficie de km visible al usuario hoy

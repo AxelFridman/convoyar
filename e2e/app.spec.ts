@@ -335,6 +335,25 @@ test.describe("Garage y vehículo por viaje", () => {
     await page.getByRole("button", { name: "Guardar" }).click();
     await expect(page.getByText("Listo, quedaste anotado.")).toBeVisible();
   });
+
+  test("borrar un vehículo invalida la asignación (no queda convoy corrupto)", async ({ page }) => {
+    await page.goto("/");
+    // como organizador de ev2, armo los convoys
+    await page.getByText("Escapada al Delta").click();
+    await page.getByRole("tab", { name: "Admin" }).click();
+    await page.getByRole("button", { name: "Armar convoys" }).click();
+    await expect(page.getByRole("button", { name: "Rearmar convoys" })).toBeVisible();
+    // borro un vehículo del garage (m0 maneja ev2 → su asignación queda obsoleta)
+    await page.getByRole("tab", { name: "Perfil" }).click();
+    await page.locator(".vehCard").first().getByRole("button", { name: "Quitar vehículo" }).click();
+    // vuelvo a Admin de ev2: la asignación se invalidó (vuelve a 'Armar convoys'),
+    // no hay ride fantasma ni asientos negativos
+    await page.getByRole("tab", { name: "Inicio" }).click();
+    await page.getByText("Escapada al Delta").click();
+    await page.getByRole("tab", { name: "Admin" }).click();
+    await expect(page.getByRole("button", { name: "Armar convoys" })).toBeVisible();
+    await expect(page.getByText("-1")).toHaveCount(0);
+  });
 });
 
 test.describe("Mi viaje", () => {

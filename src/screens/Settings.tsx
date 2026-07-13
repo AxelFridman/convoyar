@@ -79,9 +79,9 @@ export default function Settings({ onBack }: { onBack: () => void }) {
       <div className="field">
         <span>
           {T("account.email")}{" "}
-          {me.email && (
-            <span className={`pill ${me.emailVerified ? "pill-ok" : "pill-warn"}`}>
-              {me.emailVerified ? `✓ ${T("account.verified")}` : T("account.unverified")}
+          {email.trim() && (
+            <span className={`pill ${alreadyVerified ? "pill-ok" : "pill-warn"}`}>
+              {alreadyVerified ? `✓ ${T("account.verified")}` : T("account.unverified")}
             </span>
           )}
         </span>

@@ -36,6 +36,7 @@ type Action =
   | { type: "setLeg"; leg: Leg }
   | { type: "removeLeg"; memberId: string; eventId: string }
   | { type: "setAssignment"; eventId: string; assignment: Assignment }
+  | { type: "invalidateAssignments"; eventIds: string[] }
   | { type: "addNotifs"; notifs: Notification[] }
   | { type: "markNotifsRead" }
   | { type: "updateMember"; member: Member }
@@ -65,6 +66,14 @@ function reducer(s: AppState, a: Action): AppState {
       };
     case "setAssignment":
       return { ...s, assignments: { ...s.assignments, [a.eventId]: a.assignment } };
+    case "invalidateAssignments": {
+      // Descarta asignaciones que quedaron obsoletas (ej. cambió el garage de un
+      // conductor): mejor "sin calcular" que un convoy corrupto. El admin recalcula.
+      if (a.eventIds.length === 0) return s;
+      const assignments = { ...s.assignments };
+      for (const id of a.eventIds) delete assignments[id];
+      return { ...s, assignments };
+    }
     case "addNotifs":
       return { ...s, notifications: [...a.notifs, ...s.notifications].slice(0, 100) };
     case "markNotifsRead":
@@ -160,6 +169,8 @@ function diffNotifs(
   next: MatchResult
 ): Notification[] {
   const lang = s.settings.lang;
+  const hour12 = !!s.settings.hour12;
+  const hhmm = (min: number) => minutesToHHMM(min, hour12);
   const T = (k: TKey, vars?: Record<string, string | number>) => translate(lang, k, vars);
   const ev = s.events.find((e) => e.id === eventId);
   const org = s.orgs.find((o) => o.id === ev?.orgId);
@@ -191,7 +202,7 @@ function diffNotifs(
       const pickup = r.stops.find((st) => st.kind === "pickup" && st.passengerLegId === pLeg);
       const vars = {
         name: name(dMemberId),
-        time: pickup ? minutesToHHMM(pickup.etaMin) : minutesToHHMM(r.departureMin),
+        time: pickup ? hhmm(pickup.etaMin) : hhmm(r.departureMin),
         place: mpName(pickup?.meetingPointId)
       };
       const was = prevDriverOf.get(pLeg);
@@ -205,7 +216,7 @@ function diffNotifs(
         push(
           dMemberId,
           T("notif.driverTitle"),
-          T("notif.driverBody", { n: r.passengerLegIds.length, time: minutesToHHMM(r.departureMin) })
+          T("notif.driverBody", { n: r.passengerLegIds.length, time: hhmm(r.departureMin) })
         );
       }
     }
