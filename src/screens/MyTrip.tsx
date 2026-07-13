@@ -9,9 +9,13 @@ import { isParticipant, canAdminEvent } from "../state/reputation";
 import { hasSupabase } from "../services/supabaseClient";
 import { hasVehicle, primaryVehicle, vehicleLabel, vehicleById } from "../state/vehicles";
 import type { Feature, LatLng } from "../engine/types";
-import type { Role } from "../state/model";
+import type { Member, Role } from "../state/model";
 
 const FEATURES: Feature[] = ["wheelchair", "pets", "big_trunk", "bikes", "child_seat"];
+
+// Fallback para una cuenta vacía/rota: si por algún motivo el miembro propio no
+// está cargado, no crasheamos (garage vacío, sin casa). Nunca pasa en la demo.
+const EMPTY_MEMBER: Member = { id: "", name: "", vehicles: [], joinedISO: "" };
 
 export default function MyTrip({ eventId }: { eventId: string | null }) {
   const { state, dispatch, runMatch } = useStore();
@@ -19,7 +23,7 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
   const hhmm = useHhmm();
   const hour12 = !!state.settings.hour12;
   const ev = state.events.find((e) => e.id === eventId);
-  const me = state.members.find((m) => m.id === state.meId)!;
+  const me = state.members.find((m) => m.id === state.meId) ?? EMPTY_MEMBER;
   const existing = state.legs.find((l) => l.eventId === eventId && l.memberId === state.meId);
   // Un leg "skip" guarda window {0,0} como centinela: no hidratar el form con eso.
   const activeLeg = existing && existing.role !== "skip" ? existing : undefined;

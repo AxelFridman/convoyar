@@ -47,7 +47,7 @@ function Shell() {
   return (
     <div className="app">
       <main className="main">
-        {tab === "home" && <Home onOpenEvent={openEvent} />}
+        {tab === "home" && <Home onOpenEvent={openEvent} onExplore={() => setTab("explore")} />}
         {tab === "explore" && <Explore onOpenEvent={openEvent} />}
         {tab === "trip" && <MyTrip eventId={eventId} />}
         {tab === "results" && <Results eventId={eventId} />}

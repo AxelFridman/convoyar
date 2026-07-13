@@ -9,7 +9,8 @@ import {
   IconUsers,
   IconPin,
   IconGlobe,
-  IconLock
+  IconLock,
+  IconCompass
 } from "../components/Icons";
 import { AdSlot, Segmented, Sheet } from "../components/UI";
 import MapPicker from "../components/MapPicker";
@@ -19,7 +20,13 @@ import { pendingRequestsFor } from "../state/reputation";
 import { localeOf } from "../i18n";
 
 
-export default function Home({ onOpenEvent }: { onOpenEvent: (eventId: string) => void }) {
+export default function Home({
+  onOpenEvent,
+  onExplore
+}: {
+  onOpenEvent: (eventId: string) => void;
+  onExplore?: () => void;
+}) {
   const { state, dispatch } = useStore();
   const lang = state.settings.lang;
   const hour12 = !!state.settings.hour12;
@@ -28,11 +35,43 @@ export default function Home({ onOpenEvent }: { onOpenEvent: (eventId: string) =
   const [createOpen, setCreateOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const org = state.orgs.find((o) => o.id === state.activeOrgId)!;
+  // Una cuenta nueva/vacía puede no tener org activa (0 orgs): NUNCA asumir que
+  // existe. Sin org mostramos un empty state amable en vez de crashear.
+  const org = state.orgs.find((o) => o.id === state.activeOrgId);
+  const unread = state.notifications.filter((n) => n.memberId === state.meId && !n.read).length;
+
+  if (!org) {
+    return (
+      <div className="screen">
+        <header className="topbar">
+          <div>
+            <div className="eyebrow">Convoyar</div>
+            <h1>{T("home.noOrgTitle")}</h1>
+          </div>
+          <button type="button" className="iconBtn" onClick={() => setNotifOpen(true)} aria-label={T("notif.title")}>
+            <IconBell />
+            {unread > 0 && <span className="badge num">{unread}</span>}
+          </button>
+        </header>
+        <div className="emptyState">
+          <div className="emptyArt" aria-hidden="true">🚗</div>
+          <p className="sub center">{T("home.noOrgBody")}</p>
+          {onExplore && (
+            <button type="button" className="btn btn-primary" onClick={onExplore}>
+              <IconCompass size={16} /> {T("home.noOrgCta")}
+            </button>
+          )}
+        </div>
+        <Sheet open={notifOpen} onClose={() => setNotifOpen(false)} title={T("notif.title")}>
+          <NotifList onAllRead={() => dispatch({ type: "markNotifsRead" })} />
+        </Sheet>
+      </div>
+    );
+  }
+
   const events = state.events
     .filter((e) => e.orgId === org.id)
     .sort((a, b) => a.dateISO.localeCompare(b.dateISO));
-  const unread = state.notifications.filter((n) => n.memberId === state.meId && !n.read).length;
 
   const copyCode = async () => {
     try {

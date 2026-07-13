@@ -385,6 +385,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setSession(s);
       try {
         const meId = await bootstrapMember(s.user);
+        // Aseguramos la org personal del usuario server-side (la crea si no existe)
+        // para que pueda crear salidas. Si la RPC no existe todavía (404) o falla,
+        // la ignoramos: el usuario simplemente queda sin org y ve el empty state
+        // de Home. loadRemote levanta la org recién creada si la RPC funcionó.
+        try {
+          const { error: rpcErr } = await client.rpc("ensure_personal_org");
+          if (rpcErr) console.warn("[store] ensure_personal_org devolvió error (se ignora)", rpcErr);
+        } catch (rpcErr) {
+          console.warn("[store] ensure_personal_org falló (se ignora)", rpcErr);
+        }
         const remote = await loadRemote(meId);
         if (cancelled) return;
         // Preservamos lo local (avisos, org activa) igual que el refresh realtime.

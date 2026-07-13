@@ -28,7 +28,12 @@ export async function signUpWithPassword(
   const { data, error } = await supabase.auth.signUp({
     email: email.trim().toLowerCase(),
     password,
-    options: { data: { name: name.trim() } }
+    options: {
+      // El link de confirmación debe volver a la app donde se registró el usuario,
+      // no al Site URL viejo del proyecto.
+      emailRedirectTo: window.location.origin,
+      data: { name: name.trim() }
+    }
   });
   if (error) return { ok: false, message: error.message };
   // Con confirmación de email activada, signUp no devuelve sesión: el usuario

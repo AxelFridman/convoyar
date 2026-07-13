@@ -58,11 +58,16 @@ export default function Auth({ recovery = false }: { recovery?: boolean }) {
         return setError(
           msg.includes("already") || msg.includes("registered")
             ? T("auth.errEmailInUse")
+            : msg.includes("valid email") || msg.includes("invalid email")
+            ? T("auth.errInvalidEmail")
+            : msg.includes("password")
+            ? T("auth.errShortPassword")
             : T("auth.errGeneric")
         );
       }
-      // Con confirmación de email: avisar. Con sesión: el store hidrata y App cambia.
-      if (r.needsConfirm) setInfo(T("auth.needsConfirm"));
+      // Con confirmación de email: mensaje INFO (no error). Con sesión: el store
+      // hidrata y App cambia sola.
+      if (r.needsConfirm) setInfo(T("auth.checkEmailConfirm"));
     } catch {
       setError(T("auth.errGeneric"));
     } finally {
@@ -77,7 +82,16 @@ export default function Auth({ recovery = false }: { recovery?: boolean }) {
     setBusy(true);
     try {
       const r = await signInWithPassword(email, password);
-      if (!r.ok) setError(T("auth.errInvalidCredentials"));
+      if (!r.ok) {
+        const msg = (r.message ?? "").toLowerCase();
+        setError(
+          msg.includes("not confirmed") || msg.includes("email not confirmed")
+            ? T("auth.notConfirmed")
+            : msg.includes("invalid login credentials") || msg.includes("invalid credentials")
+            ? T("auth.badCredentials")
+            : T("auth.errGeneric")
+        );
+      }
       // OK: el store detecta la sesión e hidrata; no navegamos desde acá.
     } catch {
       setError(T("auth.errGeneric"));
@@ -128,27 +142,29 @@ export default function Auth({ recovery = false }: { recovery?: boolean }) {
             <h1 className="obTitle">{T("auth.newPasswordTitle")}</h1>
             <p className="obLead">{T("auth.newPasswordBody")}</p>
           </div>
-          <label className="field">
-            <span>{T("auth.password")}</span>
-            <input
-              className="obInput"
-              type="password"
-              autoFocus
-              value={newPw}
-              onChange={(e) => setNewPw(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && void doUpdatePassword()}
-              placeholder={T("auth.newPasswordPlaceholder")}
-            />
-          </label>
-          {error && <p className="sub obError">{error}</p>}
-          <button
-            type="button"
-            className="btn btn-primary btn-block"
-            disabled={busy || newPw.length < 6}
-            onClick={() => void doUpdatePassword()}
-          >
-            {busy ? T("auth.sending") : T("auth.newPasswordBtn")}
-          </button>
+          <div className="authForm">
+            <label className="field">
+              <span>{T("auth.password")}</span>
+              <input
+                className="obInput"
+                type="password"
+                autoFocus
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void doUpdatePassword()}
+                placeholder={T("auth.newPasswordPlaceholder")}
+              />
+            </label>
+            {error && <p className="sub obError">{error}</p>}
+            <button
+              type="button"
+              className="btn btn-primary btn-block"
+              disabled={busy || newPw.length < 6}
+              onClick={() => void doUpdatePassword()}
+            >
+              {busy ? T("auth.sending") : T("auth.newPasswordBtn")}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -182,7 +198,7 @@ export default function Auth({ recovery = false }: { recovery?: boolean }) {
         </div>
 
         {mode === "forgot" ? (
-          <div>
+          <div className="authForm">
             <h2 className="obTitle">{T("auth.forgotTitle")}</h2>
             <p className="obLead">{T("auth.forgotBody")}</p>
             <label className="field">
@@ -208,7 +224,7 @@ export default function Auth({ recovery = false }: { recovery?: boolean }) {
             </button>
           </div>
         ) : (
-          <div>
+          <div className="authForm">
             <Segmented<Mode>
               value={mode}
               onChange={switchMode}

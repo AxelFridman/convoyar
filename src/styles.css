@@ -1851,6 +1851,17 @@ button:focus-visible {
   border-color: var(--accent);
 }
 .obError { color: var(--danger); }
+.obInfo { color: var(--ok); }
+/* Pantalla de cuentas (login / signup / recuperar): separación vertical generosa
+   y consistente entre tabs, cada campo (label+input), el botón primario y los
+   links secundarios. Que nunca se amontonen ni se toquen. */
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.authForm .obTitle { margin-bottom: 2px; }
+.authForm .obLead { margin-bottom: 2px; }
 .obSkip { margin-top: 2px; }
 .obLangs { margin-top: 4px; }
 .obChoice {

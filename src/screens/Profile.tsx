@@ -10,9 +10,12 @@ import Settings from "./Settings";
 import MapPicker, { DEFAULT_CENTER } from "../components/MapPicker";
 import { IconChevronRight, IconSettings } from "../components/Icons";
 import type { Feature } from "../engine/types";
-import type { Vehicle } from "../state/model";
+import type { Member, Vehicle } from "../state/model";
 
 const FEATURES: Feature[] = ["wheelchair", "pets", "big_trunk", "bikes", "child_seat"];
+
+// Fallback defensivo: una cuenta vacía/rota nunca debe crashear el perfil.
+const EMPTY_MEMBER: Member = { id: "", name: "", vehicles: [], joinedISO: "" };
 
 /**
  * Perfil — lo CORE de tu identidad: quién sos, tu reputación, tu garage.
@@ -23,7 +26,7 @@ export default function Profile() {
   const { state, dispatch } = useStore();
   const T = useT();
   const lang = state.settings.lang;
-  const me = state.members.find((m) => m.id === state.meId)!;
+  const me = state.members.find((m) => m.id === state.meId) ?? EMPTY_MEMBER;
   const [rateId, setRateId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const rating = ratingOf(state, me.id);

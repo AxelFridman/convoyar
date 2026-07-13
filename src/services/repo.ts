@@ -418,7 +418,9 @@ export async function bootstrapMember(user: User): Promise<string> {
   } else {
     meId = crypto.randomUUID();
     const email = user.email ?? undefined;
-    await client.from("members").insert({
+    // Logueamos el error del insert de members: si falla en silencio, el usuario
+    // queda sin fila y todo lo demás (org, settings) se cae en cadena.
+    const { error: memberErr } = await client.from("members").insert({
       id: meId,
       auth_user_id: user.id,
       name: nameFromUser(user),
@@ -427,16 +429,14 @@ export async function bootstrapMember(user: User): Promise<string> {
       joined_at: new Date().toISOString(),
       vehicles: []
     });
+    if (memberErr) console.warn("[repo] insert members falló", memberErr);
   }
 
-  // member_settings con onboarded:true. ignoreDuplicates: NO pisa los ajustes de
-  // un usuario que vuelve; solo crea la fila si falta (cuenta nueva → sin wizard).
-  await client
-    .from("member_settings")
-    .upsert(settingsToRow(meId, { ...DEFAULT_SETTINGS, onboarded: true }), {
-      onConflict: "member_id",
-      ignoreDuplicates: true
-    });
+  // member_settings NO se crea en el alta a propósito: en modo Supabase el gate de
+  // onboarding no depende de él (App usa `!hasSupabase && !onboarded`), y los ajustes
+  // (idioma, tema, notifs) se persisten solos cuando el usuario los cambia
+  // (setSettings → writeAction upsert). Si no hay fila, loadRemote usa DEFAULT_SETTINGS.
+  // Esto elimina el 400 que devolvía el insert/upsert de settings durante el login.
 
   return meId;
 }

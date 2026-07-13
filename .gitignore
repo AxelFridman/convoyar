@@ -41,3 +41,6 @@ android/app/build/
 android/local.properties
 android/.idea/
 android/app/src/main/assets/public/
+
+# Playwright MCP (screenshots/consola de prueba)
+.playwright-mcp/

@@ -8,9 +8,12 @@ import { isValidEmail } from "../services/auth";
 import { storageMode } from "../services/storage";
 import { IconChevronLeft } from "../components/Icons";
 import type { Feature } from "../engine/types";
-import type { NotifPrefs, TripDefaults } from "../state/model";
+import type { Member, NotifPrefs, TripDefaults } from "../state/model";
 
 const FEATURES: Feature[] = ["wheelchair", "pets", "big_trunk", "bikes", "child_seat"];
+
+// Fallback defensivo: una cuenta vacía/rota nunca debe crashear Ajustes.
+const EMPTY_MEMBER: Member = { id: "", name: "", vehicles: [], joinedISO: "" };
 
 /**
  * Ajustes — toda la configuración avanzada, fuera de Perfil (PR-B1).
@@ -21,7 +24,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
   const { state, dispatch, resetDemo } = useStore();
   const T = useT();
   const lang = state.settings.lang;
-  const me = state.members.find((m) => m.id === state.meId)!;
+  const me = state.members.find((m) => m.id === state.meId) ?? EMPTY_MEMBER;
   const prefs = state.settings.notifPrefs;
   const setPref = (k: keyof NotifPrefs, v: boolean) =>
     dispatch({ type: "setSettings", patch: { notifPrefs: { ...prefs, [k]: v } } });
