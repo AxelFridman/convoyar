@@ -62,6 +62,7 @@ export const it: Record<TKey, string> = {
   "trip.role.driver": "Porto gente",
   "trip.role.passenger": "Mi serve un posto",
   "trip.role.none": "Non vengo",
+  "trip.needVehicle": "Per dare passaggi, aggiungi prima un veicolo al tuo garage (scheda Profilo).",
   "trip.origin": "Parti da",
   "trip.mapHint": "Tocca la mappa per spostare il tuo punto di partenza.",
   "trip.from": "Da",
@@ -109,6 +110,7 @@ export const it: Record<TKey, string> = {
 
   "results.empty": "L'assegnazione di questa uscita non è ancora stata calcolata.",
   "results.emptyAdmin": "Sei admin: calcolala dalla scheda Admin.",
+  "results.emptyMember": "L'organizzatore non ha ancora creato i convogli. Ti avvisiamo quando è pronto.",
   "results.youDrive": "Guidi tu",
   "results.youGoWith": "Ti porta {name}",
   "results.walkMin": "{n} min a piedi",
@@ -160,7 +162,7 @@ export const it: Record<TKey, string> = {
   "admin.allAssigned": "Tutti hanno trovato posto 🎉",
   "admin.recalcDone": "Assegnazione aggiornata.",
   "admin.upgrade": "Passa a Pro (demo)",
-  "admin.notOrganizer": "Solo l'organizzatore può gestire questa uscita.",
+  "admin.notOrganizer": "Solo l'organizzatore crea i convogli di questa uscita. Quando saranno pronti, vedrai il tuo posto nella scheda Risultati.",
 
   "profile.name": "Il tuo nome",
   "profile.subgroup": "Sottogruppo",

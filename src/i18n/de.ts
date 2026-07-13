@@ -62,6 +62,7 @@ export const de: Record<TKey, string> = {
   "trip.role.driver": "Ich nehme Leute mit",
   "trip.role.passenger": "Ich brauche einen Platz",
   "trip.role.none": "Bin nicht dabei",
+  "trip.needVehicle": "Um andere mitzunehmen, füge zuerst ein Fahrzeug zu deiner Garage hinzu (Tab Profil).",
   "trip.origin": "Du startest von",
   "trip.mapHint": "Tippe auf die Karte, um deinen Startpunkt zu verschieben.",
   "trip.from": "Von",
@@ -109,6 +110,7 @@ export const de: Record<TKey, string> = {
 
   "results.empty": "Die Zuteilung für dieses Event wurde noch nicht berechnet.",
   "results.emptyAdmin": "Du bist Admin: Berechne sie im Admin-Tab.",
+  "results.emptyMember": "Der Organisator hat die Konvois noch nicht erstellt. Wir sagen dir Bescheid, sobald es so weit ist.",
   "results.youDrive": "Du fährst",
   "results.youGoWith": "{name} nimmt dich mit",
   "results.walkMin": "{n} Min. zu Fuß",
@@ -160,7 +162,7 @@ export const de: Record<TKey, string> = {
   "admin.allAssigned": "Alle haben einen Platz 🎉",
   "admin.recalcDone": "Zuteilung aktualisiert.",
   "admin.upgrade": "Auf Pro wechseln (Demo)",
-  "admin.notOrganizer": "Nur der Organisator kann dieses Event verwalten.",
+  "admin.notOrganizer": "Nur der Organisator erstellt die Konvois dieser Fahrt. Sobald sie fertig sind, siehst du deinen Platz im Tab Ergebnisse.",
 
   "profile.name": "Dein Name",
   "profile.subgroup": "Untergruppe",

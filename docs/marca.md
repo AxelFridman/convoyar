@@ -91,7 +91,6 @@ Pensá en una **buena señal vial**: se entiende de un vistazo, no grita, y te d
   > • Puntos de encuentro claros — tu domicilio exacto no se comparte, solo el punto.
   > • Ventana horaria flexible para entrar fácil a un viaje.
   > • Chat del convoy, reseñas y reputación para viajar con confianza.
-  > • Aporte de nafta sugerido (opcional): lo arreglan entre ustedes, Convoyar no cobra.
   > • Andá en 6 idiomas, con modo claro y oscuro.
   >
   > **Gratis y para todos.** Menos autos, menos gastos, menos CO₂ y más lugar para charlar en
@@ -118,7 +117,6 @@ Pensá en una **buena señal vial**: se entiende de un vistazo, no grita, y te d
   > • Clear meeting points — your exact home address is never shared, only the pickup point.
   > • A flexible time window so it's easy to join a ride.
   > • Convoy chat, reviews and reputation so you ride with confidence.
-  > • Suggested fuel contribution (optional) — you settle it among yourselves; Convoyar takes no cut.
   > • Works in 6 languages, with light and dark mode.
   >
   > **Free, and for everyone.** Fewer cars, lower costs, less CO₂ and more room to chat on the way.
@@ -172,7 +170,6 @@ Pensá en una **buena señal vial**: se entiende de un vistazo, no grita, y te d
   > • Klare Treffpunkte – deine genaue Adresse wird nie geteilt, nur der Treffpunkt.
   > • Flexibles Zeitfenster, damit der Einstieg leichtfällt.
   > • Konvoi-Chat, Bewertungen und Reputation für vertrauensvolle Fahrten.
-  > • Vorgeschlagener Spritbeitrag (optional) – ihr klärt das untereinander; Convoyar nimmt nichts.
   > • In 6 Sprachen, mit hellem und dunklem Modus.
   >
   > **Kostenlos und für alle.** Weniger Autos, weniger Kosten, weniger CO₂ und mehr Platz zum

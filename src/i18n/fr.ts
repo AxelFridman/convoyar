@@ -62,6 +62,7 @@ export const fr: Record<TKey, string> = {
   "trip.role.driver": "J'emmène du monde",
   "trip.role.passenger": "Je cherche une place",
   "trip.role.none": "Je ne viens pas",
+  "trip.needVehicle": "Pour emmener du monde, ajoute d'abord un véhicule à ton garage (onglet Profil).",
   "trip.origin": "Tu pars de",
   "trip.mapHint": "Touche la carte pour déplacer ton point de départ.",
   "trip.from": "De",
@@ -109,6 +110,7 @@ export const fr: Record<TKey, string> = {
 
   "results.empty": "La répartition de cette sortie n'a pas encore été calculée.",
   "results.emptyAdmin": "Tu es admin : calcule-la depuis l'onglet Admin.",
+  "results.emptyMember": "L'organisateur n'a pas encore formé les convois. On te prévient dès que c'est prêt.",
   "results.youDrive": "Tu conduis",
   "results.youGoWith": "{name} t'emmène",
   "results.walkMin": "{n} min à pied",
@@ -160,7 +162,7 @@ export const fr: Record<TKey, string> = {
   "admin.allAssigned": "Tout le monde a une place 🎉",
   "admin.recalcDone": "Répartition mise à jour.",
   "admin.upgrade": "Passer à Pro (démo)",
-  "admin.notOrganizer": "Seul l'organisateur peut gérer cette sortie.",
+  "admin.notOrganizer": "Seul l'organisateur forme les convois de cette sortie. Une fois prêts, tu verras ta place dans l'onglet Résultats.",
 
   "profile.name": "Ton nom",
   "profile.subgroup": "Sous-groupe",

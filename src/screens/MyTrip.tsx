@@ -47,6 +47,8 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
   // Qué vehículo del garage ofrezco en ESTA salida (PR-A2). Fallback: el primero.
   const [vehId, setVehId] = useState<string | undefined>(activeLeg?.vehicleId ?? primaryVehicle(me)?.id);
   const [savedFlash, setSavedFlash] = useState(false);
+  // Se tocó "Conductor" sin tener vehículo → mostramos por qué no se puede y cómo arreglarlo.
+  const [noCarHint, setNoCarHint] = useState(false);
 
   // resync al cambiar de evento (misma precedencia que arriba)
   useEffect(() => {
@@ -147,7 +149,13 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
       <Segmented<Role>
         value={role}
         onChange={(r) => {
-          if (r === "driver" && !canDrive) return;
+          // "Conductor" está bloqueado sin vehículo: en vez de un no-op mudo,
+          // explicamos por qué y cómo cargar uno.
+          if (r === "driver" && !canDrive) {
+            setNoCarHint(true);
+            return;
+          }
+          setNoCarHint(false);
           setRole(r);
         }}
         options={[
@@ -156,6 +164,7 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
           { value: "skip", label: T("trip.role.none") },
         ]}
       />
+      {noCarHint && !canDrive && <p className="sub errorText">{T("trip.needVehicle")}</p>}
 
       {role && role !== "skip" && (
         <>

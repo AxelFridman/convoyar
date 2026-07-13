@@ -463,8 +463,17 @@ export async function bootstrapMember(user: User): Promise<string> {
 
 /* ============================ carga completa ============================ */
 
-/** SELECT de todas las tablas compartidas (RLS filtra) → AppState v4 completo. */
-export async function loadRemote(meId: string): Promise<AppState> {
+/** Columnas públicas de members: TODAS menos `email` (PII). El email de otros
+ *  usuarios no se lee nunca (RLS por columna lo bloquea en el server, ver
+ *  server/migrate-privacy-perms.sql); el email propio lo pasa el store desde la
+ *  sesión de auth vía `selfEmail`. */
+const MEMBER_PUBLIC_COLS =
+  "id, auth_user_id, name, subgroup, vehicles, defaults, joined_at, bio, email_verified, status";
+
+/** SELECT de todas las tablas compartidas (RLS filtra) → AppState v4 completo.
+ *  `selfEmail`: email del usuario logueado (de la sesión), para completar SU perfil
+ *  (el de los demás nunca se lee). */
+export async function loadRemote(meId: string, selfEmail?: string): Promise<AppState> {
   const client = db();
   const [
     membersRes,
@@ -481,7 +490,7 @@ export async function loadRemote(meId: string): Promise<AppState> {
     blocksRes,
     settingsRes
   ] = await Promise.all([
-    client.from("members").select("*"),
+    client.from("members").select(MEMBER_PUBLIC_COLS),
     client.from("member_home").select("*"),
     client.from("orgs").select("*"),
     client.from("org_members").select("*"),
@@ -499,7 +508,11 @@ export async function loadRemote(meId: string): Promise<AppState> {
 
   const homeRows = (homesRes.data ?? []) as MemberHomeRow[];
   const homes = new Map(homeRows.map((h) => [h.member_id, h]));
-  const members = ((membersRes.data ?? []) as MemberRow[]).map((r) => toMember(r, homes.get(r.id)));
+  const members = ((membersRes.data ?? []) as MemberRow[]).map((r) => {
+    const m = toMember(r, homes.get(r.id));
+    // El email propio lo completa el store desde la sesión; el de los demás queda undefined.
+    return selfEmail && m.id === meId ? { ...m, email: selfEmail } : m;
+  });
   const orgMembers = (orgMembersRes.data ?? []) as OrgMemberRow[];
   const orgs = ((orgsRes.data ?? []) as OrgRow[]).map((r) => toOrg(r, orgMembers));
   const events = ((eventsRes.data ?? []) as EventRow[]).map(toEvent);

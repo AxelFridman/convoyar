@@ -62,6 +62,7 @@ export const es = {
   "trip.role.driver": "Llevo gente",
   "trip.role.passenger": "Necesito lugar",
   "trip.role.none": "No voy",
+  "trip.needVehicle": "Para llevar gente primero cargá un vehículo en tu garage (pestaña Perfil).",
   "trip.origin": "Salís desde",
   "trip.mapHint": "Tocá el mapa para mover tu punto de salida.",
   "trip.from": "Desde",
@@ -109,6 +110,7 @@ export const es = {
 
   "results.empty": "Todavía no se calculó la asignación de esta salida.",
   "results.emptyAdmin": "Sos admin: calculala desde la pestaña Admin.",
+  "results.emptyMember": "El organizador todavía no armó los convoys. Te avisamos cuando esté listo.",
   "results.youDrive": "Vas manejando",
   "results.youGoWith": "Te lleva {name}",
   "results.walkMin": "{n} min a pie",
@@ -160,7 +162,7 @@ export const es = {
   "admin.allAssigned": "Todos consiguieron lugar 🎉",
   "admin.recalcDone": "Asignación actualizada.",
   "admin.upgrade": "Pasar a Pro (demo)",
-  "admin.notOrganizer": "Solo el organizador puede administrar esta salida.",
+  "admin.notOrganizer": "Solo el organizador arma los convoys de esta salida. Cuando estén listos, vas a ver tu lugar en la pestaña Resultados.",
 
   "profile.name": "Tu nombre",
   "profile.subgroup": "Subgrupo",

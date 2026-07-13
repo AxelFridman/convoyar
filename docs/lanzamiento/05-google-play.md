@@ -14,23 +14,27 @@ porque la app Android es **esa misma web** empaquetada. Ideal también tener el
 | 💰 Costo | **USD 25** pago único, de por vida |
 | 🧑 / 🤖 | El grueso es **VOS** (cuentas, firma, Console). Algún cambio de código menor es 🤖 |
 
-> ### 📍 Estado (2026-07-13): 🏗️ scaffold listo — falta la parte tuya (cuenta + firma + Console)
-> El proyecto Android **ya está armado y compilando la web de PROD**. Lo que dejó hecho el agente:
-> - ✅ Deps de Capacitor 8 instaladas (`@capacitor/core` · `cli` · `android`, + `@capacitor/assets` en dev).
-> - ✅ Plataforma Android agregada (`npx cap add android`) y sincronizada (`npx cap sync android`) — carpeta `android/` en el repo.
-> - ✅ Web de producción compilada apuntando al Supabase de PROD (proyecto `qlcwluvhrbkwjkjigsog`).
-> - ✅ **Firma de release preconfigurada** en `android/app/build.gradle`: usa `android/keystore.properties` **si existe** (plantilla en `android/keystore.properties.example`). Sin ese archivo, el build debug sigue andando.
-> - ✅ **Versionado** listo: `versionCode 1`, `versionName "1.0.0"`.
-> - ✅ Íconos y splash generados desde `public/icon.svg` (`resources/icon.png` 1024×1024 + `resources/splash.png`, y todos los tamaños Android vía `capacitor-assets`).
-> - ✅ `.gitignore` ajustado: la keystore y los artefactos de build de Android NO se commitean.
+> ### 📍 Estado (2026-07-13): ✅ **AAB firmado GENERADO** — falta solo la burocracia de Play Console
+> El agente compiló y firmó el bundle en esta máquina (SDK de Android Studio detectado). Hecho:
+> - ✅ Deps de Capacitor 8 + plataforma `android/` sincronizada con la web de PROD (Supabase `qlcwluvhrbkwjkjigsog`).
+> - ✅ **Upload key generada**: `android/upload-keystore.jks` (alias `convoyar-upload`), con sus
+>   credenciales en `android/keystore.properties`. **Ambos gitignoreados.** ⚠️ **RESPALDÁ los dos
+>   archivos en 2 lugares seguros**: sin ellos no podés actualizar la app.
+>   SHA-256 de la upload key: `A6:C2:98:B4:71:AD:A8:3F:33:A1:BD:AE:F5:5A:85:E7:91:C4:07:6D:CE:A9:1E:21:74:71:5A:F0:48:22:6C:5F`.
+> - ✅ **`.aab` FIRMADO**: `android/app/build/outputs/bundle/release/app-release.aab` (~3.4 MB). Listo para subir.
+>   Regenerarlo: `export ANDROID_HOME=<sdk>; npm run build && npx cap sync android && (cd android && ./gradlew bundleRelease)`.
+> - ✅ **Versionado**: `versionCode 1`, `versionName "1.0.0"` (subí `versionCode` +1 en cada release futura).
+> - ✅ **Assets de ficha generados**: `resources/store/icon-512.png` (ícono 512×512) y
+>   `resources/store/feature-graphic-1024x500.png` (gráfico destacado 1024×500).
+> - ✅ **Copy de tiendas** (nombre/descripción corta y larga, 6 idiomas) en [`docs/marca.md`](../marca.md).
+> - ✅ **Política de privacidad** pública para el formulario: `https://convoyar.com/privacidad`.
 >
-> **Lo que falta es TUYO y no se puede automatizar** (necesita tu identidad y tus secretos):
-> generar y **respaldar la keystore** (Paso 6), abrir en Android Studio y **generar el `.aab` firmado**
-> (Paso 7), y toda la burocracia de Google (cuenta USD 25 + verificación, ficha, Data safety, y los
-> **14 días de testing cerrado** del Paso 9). **Hacelo cuando te verifiquen la cuenta de desarrollador.**
+> **Lo único que falta es TUYO** (necesita tu cuenta e identidad, ya verificada): crear la app en
+> **Play Console**, subir el `.aab`, completar **ficha + Data safety + clasificación de contenido**, y el
+> **testing cerrado** (Paso 9). Valores listos para pegar más abajo (Paso 8) y en `docs/marca.md`.
 >
-> ⚠️ El `.aab` **no** lo generó el agente a propósito: requiere tu keystore (secreta) y un entorno con
-> Android SDK. Se hace en tu máquina con Android Studio (Paso 7).
+> ⚠️ **Faltan screenshots del teléfono** (mínimo 2): sacalas del emulador/dispositivo con la app
+> corriendo, o del navegador en tamaño móvil. Play no acepta la ficha sin al menos 2.
 
 > ✅ **Buena noticia para vos:** Android se desarrolla **en Windows** sin problema (a
 > diferencia de iOS, que necesita Mac — ver [doc 06](06-app-store-ios.md)). Con tu Windows 11 alcanza.

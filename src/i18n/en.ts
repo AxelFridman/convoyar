@@ -62,6 +62,7 @@ export const en: Record<TKey, string> = {
   "trip.role.driver": "I can drive",
   "trip.role.passenger": "I need a seat",
   "trip.role.none": "Not going",
+  "trip.needVehicle": "To give rides, first add a vehicle to your garage (Profile tab).",
   "trip.origin": "Leaving from",
   "trip.mapHint": "Tap the map to move your starting point.",
   "trip.from": "From",
@@ -109,6 +110,7 @@ export const en: Record<TKey, string> = {
 
   "results.empty": "This event's assignment hasn't been computed yet.",
   "results.emptyAdmin": "You're an admin: compute it from the Admin tab.",
+  "results.emptyMember": "The organizer hasn't built the convoys yet. We'll let you know when it's ready.",
   "results.youDrive": "You're driving",
   "results.youGoWith": "{name} picks you up",
   "results.walkMin": "{n} min walk",
@@ -160,7 +162,7 @@ export const en: Record<TKey, string> = {
   "admin.allAssigned": "Everyone got a seat 🎉",
   "admin.recalcDone": "Assignment updated.",
   "admin.upgrade": "Switch to Pro (demo)",
-  "admin.notOrganizer": "Only the organizer can manage this ride.",
+  "admin.notOrganizer": "Only the organizer builds this ride's convoys. Once they're ready, you'll see your spot in the Results tab.",
 
   "profile.name": "Your name",
   "profile.subgroup": "Subgroup",

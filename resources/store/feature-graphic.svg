@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 500" role="img" aria-label="Convoyar — viajes en grupo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1f27"/>
+      <stop offset="1" stop-color="#14181d"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.8" cy="0.35" r="0.6">
+      <stop offset="0" stop-color="#ffb53f" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ffb53f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f262f"/>
+      <stop offset="1" stop-color="#171c22"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="500" fill="url(#bg)"/>
+  <rect width="1024" height="500" fill="url(#glow)"/>
+
+  <!-- ruta decorativa -->
+  <path d="M-30 430 C 220 360 340 470 520 360 S 880 230 1060 280" fill="none"
+        stroke="#2a333e" stroke-width="9" stroke-linecap="round"/>
+  <path d="M-30 430 C 220 360 340 470 520 360 S 880 230 1060 280" fill="none"
+        stroke="#404b57" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="2 20"/>
+
+  <!-- texto -->
+  <text x="70" y="120" font-family="'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="26" font-weight="800" letter-spacing="6" fill="#ffb53f">CONVOYAR</text>
+  <text x="66" y="240" font-family="'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="82" font-weight="800" letter-spacing="-2" fill="#ecf1f5">Viajes en grupo,</text>
+  <text x="66" y="330" font-family="'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="82" font-weight="800" letter-spacing="-2" fill="#ecf1f5">coordinados.</text>
+  <text x="70" y="410" font-family="'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif"
+        font-size="27" font-weight="500" fill="#93a1b0">Quién lleva a quién, resuelto. Gratis.</text>
+
+  <!-- baldosa/icono a la derecha -->
+  <g transform="translate(712 120)">
+    <rect width="260" height="260" rx="60" fill="url(#tile)" stroke="#2c3540" stroke-width="2"/>
+    <g transform="translate(16 16) scale(0.44)">
+      <path d="M148 372 C 216 300 208 212 364 150" fill="none" stroke="#2b333e" stroke-width="62" stroke-linecap="round"/>
+      <path d="M148 372 C 216 300 208 212 364 150" fill="none" stroke="#5b6675" stroke-width="8" stroke-linecap="round" stroke-dasharray="2 30"/>
+      <circle cx="148" cy="372" r="34" fill="#ffb53f"/>
+      <circle cx="223" cy="257" r="23" fill="#edf1f4"/>
+      <rect x="332" y="118" width="64" height="64" rx="15" fill="#46b878"/>
+    </g>
+  </g>
+</svg>

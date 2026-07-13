@@ -6,7 +6,7 @@ import MapPicker, { type MapMarker } from "../components/MapPicker";
 import { Confetti } from "../components/Celebration";
 import { Chat } from "../components/Chat";
 import { Sheet } from "../components/UI";
-import { isParticipant } from "../state/reputation";
+import { isParticipant, canAdminEvent } from "../state/reputation";
 import { IconWarn, IconCheck } from "../components/Icons";
 
 /** Celebraciones ya mostradas (por cálculo + usuario), para no repetir al volver a la pestaña. */
@@ -44,7 +44,10 @@ export default function Results({ eventId }: { eventId: string | null }) {
         {chatButton}
         <div className="emptyState">
           <div className="emptyArt" aria-hidden="true">🗺️</div>
-          <p className="sub center">{T("results.empty") + " " + T("results.emptyAdmin")}</p>
+          <p className="sub center">
+            {T("results.empty") + " " +
+              T(canAdminEvent(state, ev.id, state.meId) ? "results.emptyAdmin" : "results.emptyMember")}
+          </p>
         </div>
         {chatSheet}
       </div>

@@ -455,7 +455,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         } catch (rpcErr) {
           console.warn("[store] ensure_personal_org falló (se ignora)", rpcErr);
         }
-        const remote = await loadRemote(meId);
+        const remote = await loadRemote(meId, s.user.email ?? undefined);
         if (cancelled) return;
         // Preservamos lo local (avisos, org activa) igual que el refresh realtime.
         rawDispatch({
@@ -502,7 +502,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       timer = setTimeout(async () => {
         const local = stateRef.current;
         try {
-          const remote = await loadRemote(local.meId);
+          const remote = await loadRemote(local.meId, sessionRef.current?.user?.email ?? undefined);
           rawDispatch({
             type: "hydrate",
             state: {
@@ -814,7 +814,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const refreshRemote = useCallback(async (preferOrgId?: string) => {
     if (!supabase) return;
     try {
-      const remote = await loadRemote(stateRef.current.meId);
+      const remote = await loadRemote(stateRef.current.meId, sessionRef.current?.user?.email ?? undefined);
       const prev = preferOrgId ?? stateRef.current.activeOrgId;
       const active = remote.orgs.some((o) => o.id === prev) ? prev : remote.orgs[0]?.id ?? "";
       rawDispatch({
