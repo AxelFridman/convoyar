@@ -13,10 +13,8 @@ en grupos privados como en salidas públicas. **Convoyar no presta el servicio d
 transporte**: los viajes ocurren entre personas que se coordinan a través de la
 app.
 
-> **Aviso importante.** Este documento está redactado de forma honesta pero
-> **no es asesoramiento legal**. Los puntos marcados con
-> `[REVISAR CON UN ABOGADO]` deben ser validados por un profesional antes de
-> publicar u operar.
+El responsable del Servicio es **Axel Fridman**, CUIT **20-43244073-8**,
+Argentina. Contacto: **hola@convoyar.com**.
 
 ---
 
@@ -67,21 +65,15 @@ durante ese viaje es responsabilidad de quienes participan.
 
 ## 2. Quién puede usar el Servicio
 
-`[REVISAR CON UN ABOGADO]` **Por defecto, debés tener 18 años o más** para usar
-Convoyar por tu cuenta, dado que el Servicio implica compartir vehículo con
-otras personas.
-
-Si el titular decide permitir el uso a partir de una edad menor (por ejemplo,
-13 años con consentimiento y supervisión de madre/padre/tutor, algo habitual en
-colegios o clubes), esta cláusula y la Política de Privacidad deben ajustarse y
-cumplir la normativa aplicable de protección de menores.
+**Debés tener 18 años o más** para usar Convoyar, dado que el Servicio implica
+compartir vehículo con otras personas.
 
 Al usar el Servicio declarás que:
 
-- Tenés la edad mínima requerida.
+- Tenés 18 años o más.
 - La información que das es verdadera.
 - Si conducís, tenés licencia vigente, el vehículo en condiciones legales y el
-  seguro obligatorio que exija tu jurisdicción. `[REVISAR CON UN ABOGADO]`
+  seguro obligatorio que exija tu jurisdicción.
 
 ---
 
@@ -100,18 +92,16 @@ Al usar el Servicio declarás que:
 ## 4. Precio: el Servicio es gratis
 
 Usar Convoyar es **gratuito**. No cobramos por crear una cuenta, coordinar
-viajes ni usar las funciones principales.
-
-`[REVISAR CON UN ABOGADO]` Si en el futuro se incorporan funciones pagas,
-publicidad o planes premium, se comunicarán con claridad y estos Términos se
-actualizarán antes de cobrar nada.
+viajes ni usar las funciones principales. Si en el futuro se incorporaran
+funciones pagas, se comunicarían con claridad y estos Términos se actualizarían
+antes de cobrar nada.
 
 ---
 
 ## 5. Cómo funciona la coordinación de viajes
 
 - Creás o te sumás a una **salida/evento** con un origen, un destino y un
-  horario.
+  horario (la hora de la salida es la hora a la que se quiere llegar al destino).
 - Convoyar sugiere **asignaciones** (quién lleva a quién) respetando límites
   como capacidad del vehículo, desvío, ventana horaria, caminata máxima y
   necesidades declaradas.
@@ -124,16 +114,12 @@ actualizarán antes de cobrar nada.
 
 ## 6. Aportes entre usuarios (no es lucro)
 
-El carpooling se basa en **compartir gastos**, no en ganar dinero. Si la app
-muestra un **aporte sugerido** (por ejemplo, para cubrir combustible), es solo
-**informativo** y orientado a repartir costos reales del viaje.
-
-`[REVISAR CON UN ABOGADO]` Convoyar **no procesa pagos** entre usuarios. Cualquier
-arreglo económico ocurre directamente entre las personas. En muchos países,
-cobrar por encima del costo compartido puede convertir el viaje en transporte
-comercial, con obligaciones (licencias, seguros, impuestos) que quedan
-exclusivamente a cargo de quien conduce. No promovemos ni habilitamos el
-transporte con fines de lucro.
+El carpooling se basa en **compartir gastos**, no en ganar dinero. Convoyar
+**no procesa pagos** entre usuarios: cualquier arreglo económico ocurre
+directamente entre las personas. En muchos países, cobrar por encima del costo
+compartido puede convertir el viaje en transporte comercial, con obligaciones
+(licencias, seguros, impuestos) que quedan exclusivamente a cargo de quien
+conduce. No promovemos ni habilitamos el transporte con fines de lucro.
 
 ---
 
@@ -170,10 +156,6 @@ Queremos que Convoyar sea un espacio de confianza. Por eso:
 - Actuamos de buena fe y de la forma más justa posible, pero no podemos
   garantizar un resultado específico en cada caso.
 
-`[REVISAR CON UN ABOGADO]` Según tu jurisdicción (por ejemplo, la Ley de
-Servicios Digitales de la UE), pueden existir obligaciones adicionales de
-notificación, apelación y transparencia en la moderación.
-
 ---
 
 ## 9. Contenido que subís
@@ -205,8 +187,8 @@ Esta es la parte más importante y la decimos sin vueltas:
   viaje, no en Convoyar, en la medida en que lo permita la ley.
 
 Nada de lo anterior busca eximirnos de responsabilidades que la ley **no**
-permite excluir (por ejemplo, por dolo o negligencia grave, o derechos
-irrenunciables del consumidor). `[REVISAR CON UN ABOGADO]`
+permite excluir (por ejemplo, por dolo o culpa grave, o derechos irrenunciables
+del consumidor).
 
 ---
 
@@ -221,7 +203,7 @@ usuario con la prudencia con la que tratarías a alguien que recién conocés.
 
 ## 12. Limitación de responsabilidad
 
-`[REVISAR CON UN ABOGADO]` En la máxima medida permitida por la ley aplicable:
+En la máxima medida permitida por la ley aplicable:
 
 - El Servicio se ofrece **"tal cual" y "según disponibilidad"**, sin garantías
   de que esté libre de errores o interrupciones.
@@ -238,10 +220,10 @@ que no puedan excluirse.
 
 ## 13. Indemnidad
 
-`[REVISAR CON UN ABOGADO]` En la medida permitida por la ley, aceptás mantener
-indemne a Convoyar frente a reclamos de terceros que surjan de tu uso indebido
-del Servicio, del incumplimiento de estos Términos o de la infracción de
-derechos de otras personas.
+En la medida permitida por la ley, aceptás mantener indemne a Convoyar frente a
+reclamos de terceros que surjan de tu uso indebido del Servicio, del
+incumplimiento de estos Términos o de la infracción de derechos de otras
+personas.
 
 ---
 
@@ -277,11 +259,15 @@ siendo tuyo (ver sección 9).
 
 ## 17. Ley aplicable y resolución de disputas
 
-`[REVISAR CON UN ABOGADO]` Completá acá la **ley aplicable** y la **jurisdicción
-competente** (por ejemplo, la del domicilio del titular de Convoyar), respetando
-los derechos irrenunciables que la ley del consumidor le reconozca a los
-usuarios de cada país. Si corresponde, indicá mecanismos de mediación o arbitraje
-y foros de consumo.
+Estos Términos se rigen por las **leyes de la República Argentina**. Ante
+cualquier disputa, se aplicará la jurisdicción de los **tribunales ordinarios de
+la Ciudad Autónoma de Buenos Aires**, salvo que la normativa de defensa del
+consumidor de tu país o domicilio te reconozca un foro distinto e irrenunciable,
+en cuyo caso se respetará ese derecho.
+
+Antes de acudir a la vía judicial, te pedimos que intentes resolver el problema
+escribiéndonos a **hola@convoyar.com**: buscamos solucionar los reclamos de buena
+fe.
 
 ---
 
@@ -291,10 +277,3 @@ y foros de consumo.
 
 **Correo:** hola@convoyar.com
 **Web:** convoyar.com
-
----
-
-*Convoyar es una herramienta gratuita de coordinación de viajes compartidos.
-Este documento está redactado de forma honesta y en lenguaje claro; no
-constituye asesoramiento legal. Los puntos marcados `[REVISAR CON UN ABOGADO]`
-deben validarse con un profesional.*

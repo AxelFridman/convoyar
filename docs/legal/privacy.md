@@ -12,13 +12,9 @@ people, both in private groups (organizations, clubs, schools, events) and in
 public trips where any user can request or offer a seat. Website and contact:
 **convoyar.com** · **hola@convoyar.com**.
 
-> **Important notice.** This document describes our practices honestly, but it
-> **is not legal advice**. Items marked `[REVIEW WITH A LAWYER]` must be
-> validated by a professional before publishing or operating commercially.
-
 ---
 
-## Table of contents
+## Index
 
 1. [Who is responsible for your data](#1-who-is-responsible-for-your-data)
 2. [What data we collect](#2-what-data-we-collect)
@@ -26,7 +22,7 @@ public trips where any user can request or offer a seat. Website and contact:
 4. [Legal basis for processing](#4-legal-basis-for-processing)
 5. [What other users can see (privacy by design)](#5-what-other-users-can-see-privacy-by-design)
 6. [Who we share data with](#6-who-we-share-data-with)
-7. [Service providers (subprocessors)](#7-service-providers-subprocessors)
+7. [Service providers (sub-processors)](#7-service-providers-sub-processors)
 8. [International transfers](#8-international-transfers)
 9. [How long we keep your data](#9-how-long-we-keep-your-data)
 10. [Your rights](#10-your-rights)
@@ -42,13 +38,9 @@ public trips where any user can request or offer a seat. Website and contact:
 
 ## 1. Who is responsible for your data
 
-The controller of your personal data is the owner of Convoyar.
-`[REVIEW WITH A LAWYER]` Fill in the appropriate **legal name (individual or
-company)**, **registered address**, and **country of incorporation**. If your
-jurisdiction requires it (for example, the EU GDPR under certain conditions), you
-may need to appoint a **Data Protection Officer (DPO)** or a representative.
-
-You can reach us about any privacy matter at **hola@convoyar.com**.
+The controller of your personal data is **Axel Fridman**, **CUIT 20-43244073-8**,
+located in **Argentina**. You can reach us about any privacy matter at
+**hola@convoyar.com**.
 
 ---
 
@@ -58,90 +50,83 @@ We collect only what's needed for ride coordination to work. Specifically:
 
 ### 2.1. Account data
 
-- **Email address** — to create your account, sign in, and contact you about the
-  service.
-- **Password** — stored **hashed / encrypted** through our authentication
+- **Email address** — to create your account, sign you in, and contact you about
+  the service.
+- **Password** — stored **encrypted / hashed** through our authentication
   provider (Supabase Auth); we never see it in plain text.
-- **Name** (or display name) you choose to show other users.
+- **Name** (or alias) you choose to show other users.
 
 ### 2.2. Profile data (optional)
 
 - A short **bio**, if you want to write one.
-- Your **vehicle** details (capacity, a nickname, whether it's smoke-free, and
-  optionally the **license plate**) when you offer rides as a driver.
-- Default trip preferences (time window, max walk, max detour, needs such as
-  wheelchair access or pets).
+- Your **vehicle** details (capacity, an alias like "the Golf", whether it's
+  smoke-free, and optionally the **license plate**), when you offer rides as a
+  driver.
+- Default trip preferences (usual role, needs such as wheelchair or pet).
 
 ### 2.3. Location data
 
-- The **origin and destination** of each trip you create or join.
+- **Origin and destination** of each trip you create or join.
 - Optionally, a **"home"** point you use as a default starting location. Saving
-  your home is optional and you can choose not to.
-- We do **not** track your location in the background or continuously. We only
-  use the locations you enter for a trip. `[REVIEW WITH A LAWYER]` If live
-  geolocation is enabled in the future, this section must be updated and require
-  explicit consent.
+  your home is optional and you don't have to.
+- We do not track your location in the background or continuously. We only use
+  the locations you enter for a trip.
 
 ### 2.4. Content you generate
 
 - **Chat messages** with other participants of a trip or convoy.
-- **Reviews and ratings** (1 to 5 stars) you leave or receive after a trip.
-- **Requests** to join public trips and the messages that accompany them.
+- **Reviews and ratings** (1 to 5 stars) you give or receive after a trip.
+- **Requests** to join public trips and the messages that go with them.
 - **Reports and blocks** you make about other users (see the moderation section
   in the Terms).
 
 ### 2.5. Basic technical data
 
 - Minimal operational data: device and browser type, language, theme
-  (light/dark), and technical logs needed to operate and troubleshoot.
-- If you enable push notifications, a **device identifier/token** provided by the
-  messaging service (see below).
+  (light/dark), and technical logs needed to run and troubleshoot the service.
+- If you enable push notifications, a **device identifier/token** provided by
+  the messaging service (see below).
 
-We do **not** collect sensitive data such as ethnicity, political views, health,
-or sexual orientation, and we do not ask for ID documents. Today we do **not**
-perform identity verification of users (see the security section and the Terms).
+**We do not collect** sensitive data such as ethnic origin, ideology, health, or
+sexual orientation, nor do we ask for an ID document. Today we **do not verify
+users' identity** (see the security section and the Terms).
 
 ---
 
 ## 3. What we use your data for
 
-We use your data only to:
+We use your data solely to:
 
-- **Run the service**: create your account, work out who drives whom, suggest
+- **Run the service**: create your account, compute who drives whom, suggest
   meeting points, show your trips, and notify you of changes.
-- **Enable communication between participants**: trip chat, requests, and
-  notices.
-- **Reputation and trust**: display ratings and trip counts so the community can
+- **Communication between participants**: trip chat, requests, and notices.
+- **Reputation and trust**: show ratings and trip counts so the community can
   decide with more information.
 - **Moderation and safety**: process reports and blocks, pause reported accounts
-  until human review, and prevent abuse.
-- **Service communications**: important notices about your account, a trip, or
-  these documents.
+  until a human review, and prevent abuse.
+- **Service communications**: important notices about your account, changes to a
+  trip, or to these documents.
 - **Comply with the law** where applicable.
 
-**We do not sell your personal data.** We do not use it for third-party
-profile-based advertising. `[REVIEW WITH A LAWYER]` If advertising or
-third-party analytics are ever enabled, this section must reflect that
-accurately.
+**We do not sell your personal data.** We do not use it for profile-based
+third-party advertising.
 
 ---
 
 ## 4. Legal basis for processing
 
-`[REVIEW WITH A LAWYER]` This section is especially relevant if you have users in
-the European Union (GDPR) or other jurisdictions with similar frameworks. We
-process your data on the following bases:
+We process your data on the following bases (relevant, for example, under the
+EU GDPR or similar frameworks if you have users there):
 
-- **Performance of a contract**: to provide the service you asked for (create an
-  account, coordinate rides).
-- **Consent**: for optional things such as push notifications or saving your home
-  address.
-- **Legitimate interest**: for safety, abuse prevention, and service improvement,
-  always proportionately.
+- **Performance of a contract**: to provide the service you requested (create an
+  account, coordinate trips).
+- **Consent**: for optional things like push notifications or saving your home.
+- **Legitimate interest**: for security, abuse prevention, and improving the
+  service, always proportionately.
 - **Legal obligation**: when a rule requires us to keep or hand over information.
 
-You can withdraw consent at any time (for example, by turning off notifications
-or deleting your saved home address).
+You can withdraw your consent at any time (for example, by turning off
+notifications or deleting your saved home).
 
 ---
 
@@ -150,10 +135,10 @@ or deleting your saved home address).
 Convoyar is designed to share the bare minimum:
 
 - **Your exact home address is NEVER shown to other users.** When we coordinate a
-  trip, others see **computed (approximate) meeting points**, not your doorstep.
-- Other users can see: your **name/display name**, your **rating** and **trip
-  history**, your **bio** (if you added one), the **vehicle** details you offer
-  for a trip, and the **messages** you send in a chat.
+  trip, others see **computed meeting points** (approximate), not your doorstep.
+- Other users can see: your **name/alias**, your **rating** and **trip history**,
+  your **bio** (if you filled one in), the **vehicle** details you offer for a
+  trip, and the **messages** you send in a chat.
 - Your **email and password are never visible** to other users.
 
 ---
@@ -164,41 +149,35 @@ We share data only in these cases:
 
 - **With other users**, strictly what's needed to coordinate a trip (see section
   5).
-- **With service providers** that run the infrastructure on our behalf (see
-  section 7), under contract and only to provide the service.
+- **With service providers** that run the infrastructure for us (see section 7),
+  under contract and only to provide the service.
 - **With authorities**, if a valid law, court order, or legitimate request
-  requires it.
-- **In a potential business transfer** (merger, acquisition): we would notify you
-  and the successor would be bound by this policy. `[REVIEW WITH A LAWYER]`
+  compels us.
+- **In a possible business transfer** (merger, acquisition): we'd notify you and
+  the successor would be bound by this policy.
 
 We never sell or rent your data to third parties for commercial purposes.
 
 ---
 
-## 7. Service providers (subprocessors)
+## 7. Service providers (sub-processors)
 
-Convoyar relies on trusted third parties to operate:
+Convoyar relies on trusted third parties to work:
 
-| Provider | Purpose | Data involved |
+| Provider | For | Data involved |
 |---|---|---|
-| **Supabase** (Postgres + Auth, hosted by Supabase on AWS infrastructure) | Database and authentication | Account, profile, trips, chat, reviews |
-| **Firebase / FCM (Google)** *(if push/analytics are enabled)* | Sending notifications and, if enabled, basic analytics | Device token, usage events |
-
-`[REVIEW WITH A LAWYER]` Verify that these providers' policies are current, that
-you have data processing agreements (DPAs) where required, and add any other
-provider (maps, OSRM routing, web hosting, transactional email) that gets
-integrated.
+| **Supabase** (Postgres + Auth, hosted on AWS infrastructure) | Database and authentication | Account, profile, trips, chat, reviews |
+| **Cloudflare** (Pages) | Web hosting and content delivery | Technical connection data (IP, device type) |
+| **Firebase / FCM (Google)** *(only if you enable push notifications)* | Sending notifications to the device | Device token |
 
 ---
 
 ## 8. International transfers
 
 Our providers may store or process data on servers located **outside your
-country** (for example, in AWS data centers in the United States or other
-regions). `[REVIEW WITH A LAWYER]` If you have users in the EU, the UK, or other
-jurisdictions with international transfer rules, you may need to rely on Standard
-Contractual Clauses or other mechanisms, and to state the specific hosting
-region.
+country** (for example, AWS data centers in the United States or other regions).
+Where applicable, such transfers rely on the safeguards provided by applicable
+law.
 
 ---
 
@@ -206,12 +185,11 @@ region.
 
 - We keep your data **while your account is active**.
 - If you **delete your account**, we delete or anonymize your personal data (see
-  section 11).
-- Some content may persist in a limited way for legitimate reasons: for example,
-  a message another user received, or records needed to handle a safety report or
-  comply with a legal obligation. `[REVIEW WITH A LAWYER]` Define concrete
-  retention periods (e.g., logs X months, backups Y days) based on your
-  jurisdiction.
+  section 11) from our live systems immediately. **Security backups** that might
+  contain it are rotated and overwritten within a **maximum of 3 months**.
+- Certain content may persist in a limited way for legitimate reasons: for
+  example, a message another user received, or records needed to handle a
+  security report or comply with a legal obligation.
 
 ---
 
@@ -224,13 +202,12 @@ Depending on where you live, you may have the right to:
 - **Delete** your data ("right to be forgotten") — see section 11.
 - **Port** your data to another service.
 - **Object to** or **restrict** certain processing.
-- **Withdraw consent** where processing is based on it.
-- **Lodge a complaint** with your country's data protection authority.
-  `[REVIEW WITH A LAWYER]` Name the relevant authority (e.g., the ICO in the UK,
-  a state Attorney General in the US, the AAIP in Argentina).
+- **Withdraw your consent** where processing is based on it.
+- **Complain** to your country's data protection authority. In Argentina, the
+  **Agency for Access to Public Information (AAIP)**.
 
 To exercise them, write to **hola@convoyar.com**. We'll respond within a
-reasonable timeframe and in line with applicable law.
+reasonable time and in accordance with applicable law.
 
 ---
 
@@ -241,75 +218,69 @@ section) or by writing to **hola@convoyar.com**.
 
 When you delete your account:
 
-- We remove your profile, your email, your saved home address, your vehicles, and
-  your preferences.
+- We delete your profile, your email, your saved home, your vehicles, and your
+  preferences.
 - We anonymize or delete your associated content (trips, reviews, messages),
-  except what we must keep for safety or legal reasons.
+  except what we must keep for security or a legal obligation.
 
-The deletion option is directly available because it's a requirement of Google
-Play and the App Store, and because we think it's the right thing to do.
+Deletion is available directly because it's a requirement of Google Play and the
+App Store, and because we think it's the right thing to do.
 
 ---
 
 ## 12. Security
 
-- Passwords are stored hashed through our authentication provider; we never store
-  them in plain text.
+- Passwords are hashed by our authentication provider; we never store them in
+  plain text.
 - Communications with our servers travel **encrypted (HTTPS/TLS)**.
 - We apply access controls to the database.
 
-No system is 100% foolproof. We make a reasonable effort to protect your data, but
-we can't guarantee absolute security. `[REVIEW WITH A LAWYER]` If your
-jurisdiction requires breach notification within a set timeframe, state it here.
+No system is 100% foolproof. We make a reasonable effort to protect your data but
+can't guarantee absolute security. If we detect a security breach affecting your
+personal data, we will notify you —and the relevant authority— within a maximum
+of **30 days** of becoming aware of it.
 
-**Important note on identity:** for now we do **not** verify users' identity.
-Names, photos (if any), and reviews help build trust, but they are not equivalent
-to verification. Use the same caution you would when arranging a ride with
-someone you've just met.
+**About identity:** for now we **do not verify users' identity**. Name, photo (if
+any), and reviews help build trust but are not verification. Take the same care
+you would when coordinating a trip with someone you've just met.
 
 ---
 
 ## 13. Minors
 
-`[REVIEW WITH A LAWYER]` The minimum age is an important decision for an app where
-people share a vehicle. **By default we propose 18 years.**
+Convoyar is a service **for people aged 18 and over**.
 
-- You must be **18 or older** to use Convoyar on your own.
-- We don't target minors or knowingly collect their data. If we detect an
-  underage account without proper authorization, we'll remove it.
-- If you decide to allow use from a younger age (for example, 13 with a
-  parent/guardian's consent and supervision, common in school or club use), that
-  policy must be made explicit and comply with laws such as **COPPA** (US) or the
-  GDPR for minors. Adjust this section accordingly.
+- You must be **18 or older** to use Convoyar.
+- We do not direct the service to minors nor knowingly collect data from minors.
+  If we detect an account belonging to someone under 18, we will remove it.
 
 ---
 
 ## 14. Notifications and communications
 
-- We send **service notices** (for example, "you've been assigned a seat", "your
-  trip changed", "someone requested a seat on your trip").
+- We send you **service notices** (for example, "you got a seat", "your trip
+  changed", "someone requested a seat on your trip").
 - **Push notifications** are optional and require your permission; you can turn
   them off from your device or the app settings.
 - You can choose which types of notices to receive (assignments, requests, chat,
-  email summary) from your preferences.
+  email digest) from your preferences.
 
 ---
 
 ## 15. Cookies and local storage
 
-Convoyar stores information on your device (for example, in the browser's local
-storage) to remember your session, your language/theme preferences, and to let
-the app work offline. We do not use third-party advertising tracking cookies.
-`[REVIEW WITH A LAWYER]` If analytics or advertising are enabled, a cookie
-consent banner/manager may be required depending on your jurisdiction.
+**Convoyar does not use cookies.** For the app to work, we save some preferences
+in your device's **local storage** (your session, language, and light/dark
+theme). These are not cookies, do not track your activity, and are not shared
+with third parties for advertising.
 
 ---
 
 ## 16. Changes to this policy
 
 We may update this policy when the product or the law changes. If the change is
-significant, we'll let you know through the app or by email. The "last updated"
-date in the header always indicates the current version.
+significant, we'll notify you via the app or by email. The "last updated" date in
+the header always indicates the current version.
 
 ---
 
@@ -319,9 +290,3 @@ Questions about privacy, your data, or this policy?
 
 **Email:** hola@convoyar.com
 **Web:** convoyar.com
-
----
-
-*Convoyar is a free shared-ride coordination tool. This document describes our
-practices honestly and in plain language; it does not constitute legal advice.
-Items marked `[REVIEW WITH A LAWYER]` must be validated by a professional.*
