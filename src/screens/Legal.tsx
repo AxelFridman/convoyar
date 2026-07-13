@@ -6,23 +6,41 @@ import privacidadMd from "../../docs/legal/privacidad.md?raw";
 import terminosMd from "../../docs/legal/terminos.md?raw";
 import privacyMd from "../../docs/legal/privacy.md?raw";
 import termsMd from "../../docs/legal/terms.md?raw";
+import privacyPt from "../../docs/legal/privacy-pt.md?raw";
+import termsPt from "../../docs/legal/terms-pt.md?raw";
+import privacyDe from "../../docs/legal/privacy-de.md?raw";
+import termsDe from "../../docs/legal/terms-de.md?raw";
+import privacyIt from "../../docs/legal/privacy-it.md?raw";
+import termsIt from "../../docs/legal/terms-it.md?raw";
+import privacyFr from "../../docs/legal/privacy-fr.md?raw";
+import termsFr from "../../docs/legal/terms-fr.md?raw";
+import type { Lang } from "../i18n";
 
 export type LegalDoc = "privacidad" | "terminos";
+
+// La política y los términos existen en los 6 idiomas de la app; servimos el del
+// idioma activo (fallback a inglés si faltara alguno).
+const PRIVACY: Record<Lang, string> = {
+  es: privacidadMd, en: privacyMd, pt: privacyPt, de: privacyDe, it: privacyIt, fr: privacyFr
+};
+const TERMS: Record<Lang, string> = {
+  es: terminosMd, en: termsMd, pt: termsPt, de: termsDe, it: termsIt, fr: termsFr
+};
 
 /**
  * Página legal pública (Privacidad / Términos). Renderiza el .md correspondiente
  * con un mini-parser propio (encabezados, párrafos, listas, tablas, citas, hr,
- * y en línea: negritas, `código`, links). Elige ES o EN según el idioma del
- * usuario: `es` → castellano; el resto (en/pt/de/it/fr) → inglés, que sirve de
- * lengua franca. Es pública: no depende de sesión ni de Supabase (ver App.tsx).
+ * y en línea: negritas, `código`, links). Sirve el documento en el idioma activo
+ * del usuario (es/en/pt/de/it/fr), con fallback a inglés. Es pública: no depende
+ * de sesión ni de Supabase (ver App.tsx).
  */
 export default function Legal({ doc, navigate }: { doc: LegalDoc; navigate: (to: string) => void }) {
   const { state } = useStore();
   const T = useT();
-  const useEn = state.settings.lang !== "es";
+  const lang = state.settings.lang;
 
   const source =
-    doc === "privacidad" ? (useEn ? privacyMd : privacidadMd) : useEn ? termsMd : terminosMd;
+    doc === "privacidad" ? (PRIVACY[lang] ?? PRIVACY.en) : (TERMS[lang] ?? TERMS.en);
   const title = T(doc === "privacidad" ? "legal.privacyTitle" : "legal.termsTitle");
 
   const body = useMemo(() => renderMarkdown(source, navigate), [source, navigate]);
@@ -54,8 +72,10 @@ function slugify(text: string): string {
 
 /** Un link relativo a otro .md legal (ej. `privacidad.md`) → ruta interna. */
 function mdRoute(url: string): LegalDoc | null {
-  if (/privac(idad|y)\.md/i.test(url)) return "privacidad";
-  if (/(terminos|terms)\.md/i.test(url)) return "terminos";
+  // Acepta los nombres base y las variantes por idioma (privacy-pt.md, terms-fr.md…):
+  // el idioma se resuelve por state.settings.lang al renderizar, no por el nombre.
+  if (/privac(idad|y)(-[a-z]{2})?\.md/i.test(url)) return "privacidad";
+  if (/(terminos|terms)(-[a-z]{2})?\.md/i.test(url)) return "terminos";
   return null;
 }
 
