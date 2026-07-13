@@ -158,7 +158,9 @@ function toMember(row: MemberRow, home?: MemberHomeRow): Member {
     id: row.id,
     name: row.name,
     subgroup: row.subgroup ?? undefined,
-    home: home ? { lat: home.lat, lng: home.lng } : { lat: 0, lng: 0 },
+    // Sin fila member_home → sin casa (undefined). NUNCA {0,0}: cada viaje elige
+    // su propio origen y el motor jamás debe matchear contra la isla nula.
+    home: home ? { lat: home.lat, lng: home.lng } : undefined,
     vehicles: row.vehicles ?? [],
     defaults: row.defaults ?? undefined,
     joinedISO: row.joined_at,
@@ -385,20 +387,22 @@ function settingsToRow(memberId: string, s: Settings) {
 
 /* ============================ bootstrap del miembro ============================ */
 
-function homeFromMetadata(user: User): LatLng | null {
+/** Nombre del alta: user_metadata.name (lo setea signUpWithPassword) o, como
+ *  fallback, la parte local del email. */
+function nameFromUser(user: User): string {
   const meta = user.user_metadata as Record<string, unknown> | undefined;
-  if (!meta) return null;
-  const home = meta.home as { lat?: unknown; lng?: unknown } | undefined;
-  const lat = typeof meta.lat === "number" ? meta.lat : home && typeof home.lat === "number" ? home.lat : null;
-  const lng = typeof meta.lng === "number" ? meta.lng : home && typeof home.lng === "number" ? home.lng : null;
-  if (lat == null || lng == null) return null;
-  return { lat, lng };
+  const metaName = meta && typeof meta.name === "string" ? meta.name.trim() : "";
+  if (metaName) return metaName;
+  const email = user.email ?? "";
+  return email ? email.split("@")[0] : "Yo";
 }
 
 /**
- * Asegura que exista un `members` ligado a `auth_user_id = user.id`. Si no,
- * crea el miembro (id nuevo, nombre = parte local del email) y su home si el
- * user trae metadata. Devuelve el `meId`.
+ * Asegura que exista un `members` ligado a `auth_user_id = user.id`. Si no, crea
+ * el miembro (id nuevo, nombre del metadata/alta). NO inserta member_home: no hay
+ * casa al registrarse (cada viaje elige su origen). Además garantiza la fila
+ * `member_settings` con `onboarded: true`, para que el gate de onboarding no
+ * dispare nunca en cuentas reales. Devuelve el `meId`.
  */
 export async function bootstrapMember(user: User): Promise<string> {
   const client = db();
@@ -407,22 +411,33 @@ export async function bootstrapMember(user: User): Promise<string> {
     .select("id")
     .eq("auth_user_id", user.id)
     .maybeSingle();
-  if (existing && (existing as { id: string }).id) return (existing as { id: string }).id;
 
-  const meId = crypto.randomUUID();
-  const email = user.email ?? undefined;
-  const name = email ? email.split("@")[0] : "Yo";
-  await client.from("members").insert({
-    id: meId,
-    auth_user_id: user.id,
-    name,
-    email: email ?? null,
-    email_verified: true, // el email quedó verificado por el OTP
-    joined_at: new Date().toISOString(),
-    vehicles: []
-  });
-  const home = homeFromMetadata(user);
-  if (home) await client.from("member_home").insert({ member_id: meId, lat: home.lat, lng: home.lng });
+  let meId: string;
+  if (existing && (existing as { id: string }).id) {
+    meId = (existing as { id: string }).id;
+  } else {
+    meId = crypto.randomUUID();
+    const email = user.email ?? undefined;
+    await client.from("members").insert({
+      id: meId,
+      auth_user_id: user.id,
+      name: nameFromUser(user),
+      email: email ?? null,
+      email_verified: true, // el email de la cuenta ya está confirmado al llegar acá
+      joined_at: new Date().toISOString(),
+      vehicles: []
+    });
+  }
+
+  // member_settings con onboarded:true. ignoreDuplicates: NO pisa los ajustes de
+  // un usuario que vuelve; solo crea la fila si falta (cuenta nueva → sin wizard).
+  await client
+    .from("member_settings")
+    .upsert(settingsToRow(meId, { ...DEFAULT_SETTINGS, onboarded: true }), {
+      onConflict: "member_id",
+      ignoreDuplicates: true
+    });
+
   return meId;
 }
 
@@ -548,12 +563,18 @@ export async function writeAction(action: Action, stateBefore: AppState): Promis
         break;
       case "updateMember":
         await client.from("members").update(memberToRow(action.member)).eq("id", action.member.id);
-        await client
-          .from("member_home")
-          .upsert(
-            { member_id: action.member.id, lat: action.member.home.lat, lng: action.member.home.lng },
-            { onConflict: "member_id" }
-          );
+        // Casa opcional: si existe la guardamos; si el usuario la borró, quitamos
+        // la fila. Nunca escribimos {0,0}.
+        if (action.member.home) {
+          await client
+            .from("member_home")
+            .upsert(
+              { member_id: action.member.id, lat: action.member.home.lat, lng: action.member.home.lng },
+              { onConflict: "member_id" }
+            );
+        } else {
+          await client.from("member_home").delete().eq("member_id", action.member.id);
+        }
         break;
       case "setSettings":
         await client

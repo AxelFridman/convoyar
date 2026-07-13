@@ -7,6 +7,7 @@ import { memberSince, ratingOf, tripsOf } from "../state/reputation";
 import { profileCompletion } from "../state/achievements";
 import { blankVehicle, newVehicleId } from "../state/vehicles";
 import Settings from "./Settings";
+import MapPicker, { DEFAULT_CENTER } from "../components/MapPicker";
 import { IconChevronRight, IconSettings } from "../components/Icons";
 import type { Feature } from "../engine/types";
 import type { Vehicle } from "../state/model";
@@ -112,6 +113,29 @@ export default function Profile() {
       <div className="field">
         <span>{T("ach.title")}</span>
         <Badges memberId={me.id} />
+      </div>
+
+      {/* Casa OPCIONAL: atajo de origen para viajes nuevos. No se exige; cada
+          viaje elige su propio punto de salida. Se puede borrar. */}
+      <div className="field">
+        <span>{T("profile.home")}</span>
+        <p className="sub">{me.home ? T("profile.homeHint") : T("profile.noHome")}</p>
+        <MapPicker
+          center={me.home ?? DEFAULT_CENTER}
+          zoom={13}
+          markers={me.home ? [{ loc: me.home, kind: "origin" }] : []}
+          onTap={(loc) => dispatch({ type: "updateMember", member: { ...me, home: loc } })}
+          height={200}
+        />
+        {me.home && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => dispatch({ type: "updateMember", member: { ...me, home: undefined } })}
+          >
+            {T("profile.clearHome")}
+          </button>
+        )}
       </div>
 
       <div className="field">

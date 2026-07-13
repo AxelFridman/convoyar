@@ -1,53 +1,72 @@
 /**
- * Verificación de email — SIMULADA localmente (no hay backend todavía).
+ * Auth por email + contraseña contra Supabase Auth. Estas funciones SOLO se usan
+ * en modo Supabase (con backend real): la UI las llama desde la pantalla de
+ * cuentas (screens/Auth.tsx). En modo local/demo (hasSupabase=false) no hay
+ * login: la app arranca directo con la demo determinística (meId "m0").
  *
- * Contrato pensado para reemplazar por un backend real sin tocar la UI:
- *  - `sendCode(email)` hoy genera un código de 6 dígitos, lo guarda en memoria y
- *    lo DEVUELVE para que la demo lo muestre. En producción esto sería un POST
- *    que dispara un email/SMS con el OTP (o un magic link) y NO devuelve el código.
- *  - `verifyCode(email, code)` hoy compara contra lo guardado; en producción
- *    sería un POST que valida server-side y devuelve una sesión/token.
- *
- * Puntos de integración sugeridos (ver docs/DATABASE.md y docs/ROADMAP.md):
- *   Supabase Auth (OTP por email), Auth0, Clerk, o un endpoint propio.
+ * Al crear/iniciar sesión, Supabase persiste la sesión; el bootstrap del
+ * `member` (fila ligada a auth.uid()) lo hace el store al detectar la sesión
+ * vía onAuthStateChange.
  */
+import { supabase } from "./supabaseClient";
 
-export interface AuthProvider {
-  sendCode(email: string): Promise<{ ok: boolean; demoCode?: string; message?: string }>;
-  verifyCode(email: string, code: string): Promise<boolean>;
+export interface AuthResult {
+  ok: boolean;
+  /** true cuando el proyecto exige confirmar el email antes de tener sesión. */
+  needsConfirm?: boolean;
+  /** Mensaje crudo del backend (para debug / fallback); la UI localiza el texto. */
+  message?: string;
 }
 
-/** Implementación local para la demo (un solo dispositivo, sin red). */
-export class LocalAuthProvider implements AuthProvider {
-  private pending = new Map<string, string>();
-
-  async sendCode(email: string) {
-    const e = normalize(email);
-    if (!isValidEmail(e)) return { ok: false, message: "invalid_email" };
-    // Código de 6 dígitos. Math.random es aceptable en runtime de la app
-    // (el determinismo solo aplica al motor/seed/tests).
-    const code = String(100000 + Math.floor(Math.random() * 900000));
-    this.pending.set(e, code);
-    return { ok: true, demoCode: code };
-  }
-
-  async verifyCode(email: string, code: string) {
-    return this.pending.get(normalize(email)) === code.trim();
-  }
+/** Alta con nombre + email + contraseña. El nombre viaja en user_metadata.name. */
+export async function signUpWithPassword(
+  name: string,
+  email: string,
+  password: string
+): Promise<AuthResult> {
+  if (!supabase) return { ok: false, message: "no_backend" };
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim().toLowerCase(),
+    password,
+    options: { data: { name: name.trim() } }
+  });
+  if (error) return { ok: false, message: error.message };
+  // Con confirmación de email activada, signUp no devuelve sesión: el usuario
+  // debe confirmar y luego iniciar sesión. Sin confirmación, ya hay sesión y el
+  // store hidrata solo.
+  if (!data.session) return { ok: true, needsConfirm: true };
+  return { ok: true };
 }
 
-import { hasSupabase } from "./supabaseClient";
-import { SupabaseAuthProvider } from "./authSupabase";
+/** Iniciar sesión con email + contraseña. */
+export async function signInWithPassword(email: string, password: string): Promise<AuthResult> {
+  if (!supabase) return { ok: false, message: "no_backend" };
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.trim().toLowerCase(),
+    password
+  });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
 
-/** Backend real (OTP por email) si hay Supabase; si no, la demo local. */
-export const auth: AuthProvider = hasSupabase
-  ? new SupabaseAuthProvider()
-  : new LocalAuthProvider();
+/** Envía el email de "restablecer contraseña" (link de recovery). */
+export async function resetPassword(email: string): Promise<AuthResult> {
+  if (!supabase) return { ok: false, message: "no_backend" };
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    redirectTo: window.location.origin
+  });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
+
+/** Fija una nueva contraseña (usado en la pantalla de recovery). */
+export async function updatePassword(newPassword: string): Promise<AuthResult> {
+  if (!supabase) return { ok: false, message: "no_backend" };
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { ok: false, message: error.message };
+  return { ok: true };
+}
 
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-}
-
-function normalize(email: string): string {
-  return email.trim().toLowerCase();
 }

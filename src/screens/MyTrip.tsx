@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useStore, useT, useHhmm } from "../state/store";
 import { type TKey } from "../i18n";
 import { Segmented, Slider, Stepper, Chip, TimeInput } from "../components/UI";
-import MapPicker from "../components/MapPicker";
+import MapPicker, { DEFAULT_CENTER } from "../components/MapPicker";
 import { TimeWindowBar } from "../components/TimeWindowBar";
 import { walkRadiusMeters } from "../engine/geo";
 import { isParticipant, canAdminEvent } from "../state/reputation";
@@ -30,7 +30,9 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
     r === "driver" && !hasVehicle(me) ? null : r ?? null;
 
   const [role, setRole] = useState<Role | null>(seedRole(existing?.role ?? d.role));
-  const [origin, setOrigin] = useState<LatLng>(activeLeg?.origin ?? me.home);
+  // Origen del viaje: leg guardado → casa (atajo, si existe) → centro por defecto
+  // (CABA). La casa NO se exige; cada viaje elige su propio punto de salida.
+  const [origin, setOrigin] = useState<LatLng>(activeLeg?.origin ?? me.home ?? DEFAULT_CENTER);
   const [detour, setDetour] = useState(activeLeg?.maxDetourMin ?? d.maxDetourMin ?? 20);
   const [walk, setWalk] = useState(activeLeg?.maxWalkMin ?? d.maxWalkMin ?? 10);
   const [needs, setNeeds] = useState<Feature[]>(activeLeg?.needs ?? d.needs ?? []);
@@ -52,7 +54,7 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
     setWinEnd(activeLeg?.window.end ?? d.window?.end ?? 760);
     setPrefSmoke(activeLeg ? !!activeLeg.soft?.smokeFree : !!d.smokeFree);
     setPrefSub(!!activeLeg?.soft?.subgroup);
-    setOrigin(activeLeg?.origin ?? me.home);
+    setOrigin(activeLeg?.origin ?? me.home ?? DEFAULT_CENTER);
     setVehId(activeLeg?.vehicleId ?? primaryVehicle(me)?.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
@@ -166,6 +168,12 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
               height={190}
               walkRadius={role === "passenger" && walk > 0 ? { center: origin, meters: walkRadiusMeters(walk) } : undefined}
             />
+            {/* Atajo: si tenés casa guardada, la ofrecemos como origen (no obligatorio). */}
+            {me.home && (me.home.lat !== origin.lat || me.home.lng !== origin.lng) && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOrigin(me.home!)}>
+                {T("trip.useHome")}
+              </button>
+            )}
             {role === "passenger" && walk > 0 && (
               <p className="sub mapHint">{T("trip.walkRadiusHint")}</p>
             )}

@@ -22,6 +22,8 @@ export const hasSupabase: boolean =
 /** Cliente único (null en modo local/demo). */
 export const supabase: SupabaseClient | null = hasSupabase
   ? createClient(url as string, anon as string, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+      // detectSessionInUrl: true → necesario para el link de reset de contraseña
+      // (Supabase dispara PASSWORD_RECOVERY al detectar el token en la URL).
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     })
   : null;

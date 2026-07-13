@@ -7,14 +7,14 @@ import Results from "./screens/Results";
 import Admin from "./screens/Admin";
 import Profile from "./screens/Profile";
 import Onboarding from "./screens/Onboarding";
-import Login from "./screens/Login";
+import Auth from "./screens/Auth";
 import { hasSupabase } from "./services/supabaseClient";
 import { IconHome, IconCompass, IconCar, IconRoute, IconSettings, IconUser } from "./components/Icons";
 
 type Tab = "home" | "explore" | "trip" | "results" | "admin" | "profile";
 
 function Shell() {
-  const { state, session, hydrated } = useStore();
+  const { state, session, hydrated, recovery } = useStore();
   const T = useT();
   const [tab, setTab] = useState<Tab>("home");
   const [eventId, setEventId] = useState<string | null>(state.events[0]?.id ?? null);
@@ -24,9 +24,13 @@ function Shell() {
     setTab(target);
   };
 
+  // Link de reset de contraseña: pantalla de nueva contraseña, antes que nada
+  // (hay una sesión de recovery activa, pero no queremos entrar a la app aún).
+  if (hasSupabase && recovery) return <Auth recovery />;
+
   // Con backend real: loader mientras cargamos la sesión (undefined) o mientras
   // hidratamos el estado remoto (sesión activa pero aún sin hidratar) — así no se
-  // ve el seed demo un instante. Sin sesión, Login.
+  // ve el seed demo un instante. Sin sesión, pantalla de cuentas.
   // Sin backend (test/e2e/single) session es null pero hasSupabase es false → se saltea.
   if (hasSupabase && (session === undefined || (session && !hydrated)))
     return (
@@ -34,10 +38,11 @@ function Shell() {
         <div className="spinner" aria-label={T("app.name")} />
       </div>
     );
-  if (hasSupabase && session === null) return <Login />;
+  if (hasSupabase && session === null) return <Auth />;
 
-  // Usuario nuevo: wizard de bienvenida a pantalla completa antes de la app.
-  if (!state.settings.onboarded) return <Onboarding />;
+  // Onboarding SOLO en modo local/demo: las cuentas reales (Supabase) ya vienen
+  // onboarded desde el bootstrap, así que el wizard nunca dispara con backend.
+  if (!hasSupabase && !state.settings.onboarded) return <Onboarding />;
 
   return (
     <div className="app">

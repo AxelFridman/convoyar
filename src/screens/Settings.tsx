@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useStore, useT } from "../state/store";
 import { LANGS, type TKey, type Lang } from "../i18n";
 import { Chip, Segmented, TimeInput } from "../components/UI";
 import { PLANS, purchase, type PlanId } from "../services/billing";
 import { requestNotifPermission } from "../services/notify";
-import { auth, isValidEmail } from "../services/auth";
+import { isValidEmail } from "../services/auth";
 import { storageMode } from "../services/storage";
 import { IconChevronLeft } from "../components/Icons";
 import type { Feature } from "../engine/types";
@@ -26,11 +26,15 @@ export default function Settings({ onBack }: { onBack: () => void }) {
   const setPref = (k: keyof NotifPrefs, v: boolean) =>
     dispatch({ type: "setSettings", patch: { notifPrefs: { ...prefs, [k]: v } } });
 
-  // --- verificación de email (simulada, ver services/auth.ts) ---
+  // --- verificación de email (demo local, sin backend) ---
+  // Genera un código de 6 dígitos en memoria y lo muestra en pantalla: sirve para
+  // que el usuario "verifique" su email en el modo demo. Con backend real el email
+  // de la cuenta ya viene verificado desde el alta (ver services/repo bootstrap).
   const [email, setEmail] = useState(me.email ?? "");
   const [codeStage, setCodeStage] = useState(false);
   const [code, setCode] = useState("");
   const [authMsg, setAuthMsg] = useState("");
+  const pendingCode = useRef<string>("");
   const alreadyVerified = !!me.emailVerified && me.email === email.trim().toLowerCase();
   const [purchaseMsg, setPurchaseMsg] = useState("");
 
@@ -40,19 +44,18 @@ export default function Settings({ onBack }: { onBack: () => void }) {
     dispatch({ type: "updateMember", member: { ...me, defaults: { ...d, ...patch } } });
   const win = d.window ?? { start: 690, end: 760 };
 
-  const startVerify = async () => {
+  const startVerify = () => {
     if (!isValidEmail(email)) {
       setAuthMsg(T("account.invalidEmail"));
       return;
     }
-    const r = await auth.sendCode(email);
-    if (r.ok) {
-      setCodeStage(true);
-      setAuthMsg(T("account.codeSent", { code: r.demoCode ?? "······" }));
-    }
+    const demoCode = String(100000 + Math.floor(Math.random() * 900000));
+    pendingCode.current = demoCode;
+    setCodeStage(true);
+    setAuthMsg(T("account.codeSent", { code: demoCode }));
   };
-  const confirmCode = async () => {
-    if (await auth.verifyCode(email, code)) {
+  const confirmCode = () => {
+    if (pendingCode.current && code.trim() === pendingCode.current) {
       dispatch({ type: "updateMember", member: { ...me, email: email.trim().toLowerCase(), emailVerified: true } });
       setCodeStage(false);
       setCode("");

@@ -3,7 +3,7 @@ import { useStore, useT } from "../state/store";
 import { LANGS, type Lang } from "../i18n";
 import { Stepper } from "../components/UI";
 import { Confetti } from "../components/Celebration";
-import MapPicker from "../components/MapPicker";
+import MapPicker, { DEFAULT_CENTER } from "../components/MapPicker";
 import { requestNotifPermission } from "../services/notify";
 import { hasVehicle, primaryVehicle, blankVehicle, newVehicleId } from "../state/vehicles";
 import { IconCar, IconCheck, IconBell, IconPin, IconUser } from "../components/Icons";
@@ -29,7 +29,7 @@ export default function Onboarding() {
   const [name, setName] = useState(me.name === "Vos" ? "" : me.name);
   const [email, setEmail] = useState(me.email ?? "");
   const [lang, setLang] = useState<Lang>(state.settings.lang);
-  const [home, setHome] = useState<LatLng>(me.home);
+  const [home, setHome] = useState<LatLng>(me.home ?? DEFAULT_CENTER);
   const [hasCar, setHasCar] = useState<boolean | null>(hasVehicle(me) ? true : null);
   const [capacity, setCapacity] = useState(primaryVehicle(me)?.capacity ?? 3);
   const [notifOn, setNotifOn] = useState(state.settings.notifPermission);

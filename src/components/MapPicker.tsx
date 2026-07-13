@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { LatLng } from "../engine/types";
 
+/** Centro por defecto (CABA) cuando el usuario todavía no tiene casa/origen. */
+export const DEFAULT_CENTER: LatLng = { lat: -34.6037, lng: -58.3816 };
+
 export interface MapMarker {
   loc: LatLng;
   kind: "origin" | "destination" | "meeting" | "stop";

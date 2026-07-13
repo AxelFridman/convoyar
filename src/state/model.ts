@@ -33,7 +33,9 @@ export interface Member {
   id: string;
   name: string;
   subgroup?: string;
-  home: LatLng;
+  /** Casa/punto de partida por defecto. Opcional: no se fija en el alta; cada
+   *  viaje elige su propio origen. Si existe, se ofrece como atajo/predeterminado. */
+  home?: LatLng;
   /** Garage: 0..n vehículos. Una persona puede tener auto y moto y elegir por viaje. */
   vehicles: Vehicle[];
   /** Preferencias que precargan viajes nuevos (opcional). */

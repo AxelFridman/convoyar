@@ -127,7 +127,12 @@ export function buildMatchInput(s: AppState, eventId: string, legsOverride?: Leg
   for (const leg of legs) {
     const m = byId.get(leg.memberId);
     if (!m) continue;
+    // Origen del viaje: el del leg o, como atajo, la casa del miembro. Si no hay
+    // NINGUNO, el leg no tiene punto de salida: lo excluimos del cálculo (jamás
+    // matcheamos contra {0,0}). Los pasajeros sin origen se marcan "sin asignar"
+    // aparte (ver unlocatablePassengerLegIds + runMatch).
     const origin = leg.origin ?? m.home;
+    if (!origin) continue;
     // El vehículo del viaje: el elegido en el leg (PR-A2) o el primero del garage.
     const veh = leg.role === "driver" ? legVehicle(m, leg.vehicleId) : null;
     if (leg.role === "driver" && veh) {
@@ -162,6 +167,23 @@ export function buildMatchInput(s: AppState, eventId: string, legsOverride?: Leg
     meetingPoints: (org?.meetingPoints ?? []).map((mp) => ({ id: mp.id, name: mp.name, pos: mp.loc })),
     options: { doorToDoor: true }
   };
+}
+
+/**
+ * Legs de pasajero de un evento que NO tienen punto de salida (ni leg.origin ni
+ * casa del miembro). buildMatchInput los excluye del cálculo; acá los listamos
+ * para marcarlos "sin asignar" con el motivo existente más cercano (caminata:
+ * no hay punto de recogida alcanzable si no sabemos desde dónde salen).
+ */
+export function unlocatablePassengerLegIds(s: AppState, eventId: string, legsOverride?: Leg[]): string[] {
+  const byId = new Map(s.members.map((m) => [m.id, m]));
+  return (legsOverride ?? s.legs)
+    .filter((l) => l.eventId === eventId && l.role === "passenger")
+    .filter((l) => {
+      const m = byId.get(l.memberId);
+      return !!m && !(l.origin ?? m.home);
+    })
+    .map((l) => l.id);
 }
 
 /* ---------- diff de asignaciones → avisos ---------- */
@@ -253,6 +275,8 @@ export function defaultPassengerLeg(s: AppState, eventId: string, memberId: stri
     memberId,
     eventId,
     role: "passenger",
+    // Atajo: si el miembro tiene casa, la usamos como origen por defecto; si no,
+    // queda sin origin (el pasajero lo elige por viaje desde "Mi viaje").
     origin: m.home,
     // Ventana amplia alrededor de la hora del evento: en viajes interurbanos esa
     // hora suele ser la SALIDA del conductor, y la recogida puede caer después.
@@ -293,6 +317,11 @@ interface Store {
   authReady: boolean;
   /** true tras la primera hidratación remota exitosa (siempre false sin backend). */
   hydrated: boolean;
+  /** true cuando Supabase disparó PASSWORD_RECOVERY (link de reset): App muestra
+   *  la pantalla de nueva contraseña. Siempre false sin backend. */
+  recovery: boolean;
+  /** Limpia el flag de recovery (se llama tras actualizar la contraseña). */
+  clearRecovery: () => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -307,6 +336,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null | undefined>(hasSupabase ? undefined : null);
   // true tras la primera hidratación remota exitosa (siempre false sin backend).
   const [hydrated, setHydrated] = useState(false);
+  // true cuando llega el evento PASSWORD_RECOVERY (link de reset de contraseña).
+  const [recovery, setRecovery] = useState(false);
   const provider = useMemo(() => new MockRoutingProvider(), []);
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -370,7 +401,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         console.warn("[store] hidratación remota falló", e);
       }
     };
-    const { data: sub } = client.auth.onAuthStateChange((_event, s) => {
+    const { data: sub } = client.auth.onAuthStateChange((event, s) => {
+      // Link de reset de contraseña: Supabase abre una sesión de recovery y dispara
+      // este evento. Marcamos el flag para que App muestre "nueva contraseña".
+      if (event === "PASSWORD_RECOVERY") setRecovery(true);
       if (s) {
         void hydrateFor(s);
       } else {
@@ -431,6 +465,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }
         const result = await solveMatching(input, provider);
         const violations = await validateMatch(input, result, provider);
+        // Pasajeros sin punto de salida: excluidos del cálculo → los sumamos como
+        // "sin asignar" para que se enteren (motivo más cercano: caminata).
+        for (const legId of unlocatablePassengerLegIds(s, eventId, opts?.legsOverride)) {
+          if (!result.unassigned.some((u) => u.passengerLegId === legId))
+            result.unassigned.push({ passengerLegId: legId, reason: "caminata" });
+        }
         dispatch({
           type: "setAssignment",
           eventId,
@@ -702,6 +742,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "reset" });
   }, []);
 
+  const clearRecovery = useCallback(() => setRecovery(false), []);
+
   const signOut = useCallback(async () => {
     await supabase?.auth.signOut();
     // Además del branch SIGNED_OUT de onAuthStateChange: garantiza el limpiado
@@ -727,7 +769,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     session,
     signOut,
     authReady: !hasSupabase || session !== undefined,
-    hydrated
+    hydrated,
+    recovery,
+    clearRecovery
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
