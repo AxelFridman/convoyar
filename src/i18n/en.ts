@@ -361,5 +361,20 @@ export const en: Record<TKey, string> = {
   "a11y.plus": "more",
   "a11y.plate": "plate {plate}",
 
-  "ad.placeholder": "Ad space (off)"
+  "ad.placeholder": "Ad space (off)",
+
+  "login.title": "Sign in",
+  "login.subtitle": "We'll email you a code to sign in.",
+  "login.emailLabel": "Email",
+  "login.emailPlaceholder": "you@email.com",
+  "login.sendCode": "Send code",
+  "login.codeLabel": "Verification code",
+  "login.codePlaceholder": "6-digit code",
+  "login.verify": "Verify",
+  "login.sent": "We sent a code to your email. Check your inbox.",
+  "login.invalidEmail": "That email doesn't look valid.",
+  "login.wrongCode": "That code is wrong or expired. Request a new one.",
+  "login.genericError": "Something went wrong. Try again.",
+  "login.changeEmail": "Change email",
+  "login.resend": "Resend code"
 };

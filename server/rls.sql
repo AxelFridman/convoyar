@@ -89,14 +89,15 @@ create policy events_write_admin on public.events
   using (public.is_org_member(org_id))
   with check (public.is_org_member(org_id));
 
--- legs: el dueño edita el suyo; el admin del evento los ve todos
+-- legs: el dueño edita el suyo; el admin del evento los ve todos Y puede escribir/borrar
+-- los de su evento (aprobar pedidos crea el leg del aceptado; cancelar conductor lo borra).
 create policy legs_read on public.legs
   for select to authenticated
   using (member_id = public.current_member_id() or public.can_admin_event(event_id));
 create policy legs_write_self on public.legs
   for all to authenticated
-  using (member_id = public.current_member_id())
-  with check (member_id = public.current_member_id());
+  using (member_id = public.current_member_id() or public.can_admin_event(event_id))
+  with check (member_id = public.current_member_id() or public.can_admin_event(event_id));
 
 -- join_requests: las ve el solicitante y el admin del evento
 create policy jr_read on public.join_requests

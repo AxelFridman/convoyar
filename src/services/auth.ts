@@ -36,7 +36,13 @@ export class LocalAuthProvider implements AuthProvider {
   }
 }
 
-export const auth: AuthProvider = new LocalAuthProvider();
+import { hasSupabase } from "./supabaseClient";
+import { SupabaseAuthProvider } from "./authSupabase";
+
+/** Backend real (OTP por email) si hay Supabase; si no, la demo local. */
+export const auth: AuthProvider = hasSupabase
+  ? new SupabaseAuthProvider()
+  : new LocalAuthProvider();
 
 export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());

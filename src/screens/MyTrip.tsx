@@ -5,7 +5,8 @@ import { Segmented, Slider, Stepper, Chip, TimeInput } from "../components/UI";
 import MapPicker from "../components/MapPicker";
 import { TimeWindowBar } from "../components/TimeWindowBar";
 import { walkRadiusMeters } from "../engine/geo";
-import { isParticipant } from "../state/reputation";
+import { isParticipant, canAdminEvent } from "../state/reputation";
+import { hasSupabase } from "../services/supabaseClient";
 import { hasVehicle, primaryVehicle, vehicleLabel, vehicleById } from "../state/vehicles";
 import type { Feature, LatLng } from "../engine/types";
 import type { Role } from "../state/model";
@@ -111,9 +112,15 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
                 : undefined,
           };
     dispatch({ type: "setLeg", leg });
-    // Evento público ajeno ya calculado: el organizador (simulado) recalcula
-    // para que Resultados refleje tu cambio (incluye bajarte con "No voy").
-    if (ev.visibility === "public" && ev.createdBy !== state.meId && state.assignments[ev.id]) {
+    // Recalcular el matching escribe la asignación (setAssignment). Solo lo hace
+    // quien puede administrar el evento: con backend real, RLS (asg_write_admin)
+    // rechaza el write de un no-organizador. En modo local (demo, sin backend)
+    // mantenemos la simulación previa: el "organizador" recalcula un evento
+    // público ajeno para que Resultados refleje tu cambio (incluye "No voy").
+    const canRecompute = hasSupabase
+      ? canAdminEvent(state, ev.id, state.meId)
+      : ev.visibility === "public" && ev.createdBy !== state.meId;
+    if (canRecompute && state.assignments[ev.id]) {
       const rest = state.legs.filter((l) => !(l.memberId === me.id && l.eventId === ev.id));
       void runMatch(ev.id, { warmStart: true, legsOverride: [...rest, leg] });
     }

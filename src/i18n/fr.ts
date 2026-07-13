@@ -361,5 +361,20 @@ export const fr: Record<TKey, string> = {
   "a11y.plus": "plus",
   "a11y.plate": "plaque {plate}",
 
-  "ad.placeholder": "Espace pub (désactivé)"
+  "ad.placeholder": "Espace pub (désactivé)",
+
+  "login.title": "Se connecter",
+  "login.subtitle": "Nous vous envoyons un code par email pour vous connecter.",
+  "login.emailLabel": "Email",
+  "login.emailPlaceholder": "vous@email.com",
+  "login.sendCode": "Envoyer le code",
+  "login.codeLabel": "Code de vérification",
+  "login.codePlaceholder": "Code à 6 chiffres",
+  "login.verify": "Vérifier",
+  "login.sent": "Nous avons envoyé un code à votre email. Vérifiez votre boîte.",
+  "login.invalidEmail": "Cet email ne semble pas valide.",
+  "login.wrongCode": "Ce code est incorrect ou expiré. Demandez-en un nouveau.",
+  "login.genericError": "Une erreur s'est produite. Réessayez.",
+  "login.changeEmail": "Changer d'email",
+  "login.resend": "Renvoyer le code"
 };

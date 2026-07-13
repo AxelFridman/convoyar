@@ -21,6 +21,8 @@ export default defineConfig({
     command: "npm run dev -- --port 5199 --strictPort",
     url: "http://localhost:5199",
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000
+    timeout: 60_000,
+    // Modo local en e2e: fuerza hasSupabase=false aunque haya .env con credenciales.
+    env: { VITE_E2E: "1" }
   }
 });

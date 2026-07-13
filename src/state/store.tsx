@@ -30,8 +30,11 @@ import { systemNotify } from "../services/notify";
 import { participantsOf } from "./reputation";
 import { legVehicle } from "./vehicles";
 import { translate, type Lang, type TKey } from "../i18n";
+import { hasSupabase, supabase } from "../services/supabaseClient";
+import { bootstrapMember, loadRemote, subscribeRealtime, writeAction } from "../services/repo";
+import type { Session } from "@supabase/supabase-js";
 
-type Action =
+export type Action =
   | { type: "hydrate"; state: AppState }
   | { type: "setLeg"; leg: Leg }
   | { type: "removeLeg"; memberId: string; eventId: string }
@@ -281,19 +284,41 @@ interface Store {
   sendMessage: (eventId: string, body: string) => void;
   resetDemo: () => void;
   computing: boolean;
+  /** Sesión Supabase: undefined = cargando, null = sin sesión, Session = logueado.
+   *  Sin backend (test/e2e/single) siempre es null. */
+  session: Session | null | undefined;
+  /** Cierra la sesión Supabase (no-op sin backend). */
+  signOut: () => Promise<void>;
+  /** true cuando ya sabemos si hay sesión (siempre true sin backend). */
+  authReady: boolean;
+  /** true tras la primera hidratación remota exitosa (siempre false sin backend). */
+  hydrated: boolean;
 }
 
 const Ctx = createContext<Store | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, null as unknown as AppState, () => {
+  const [state, rawDispatch] = useReducer(reducer, null as unknown as AppState, () => {
     const loaded = loadState<AppState>();
     return loaded && loaded.version === 4 ? loaded : buildSeed();
   });
   const [computing, setComputing] = useState(false);
+  // undefined = todavía cargando la sesión (sólo con backend); null = sin sesión.
+  const [session, setSession] = useState<Session | null | undefined>(hasSupabase ? undefined : null);
+  // true tras la primera hidratación remota exitosa (siempre false sin backend).
+  const [hydrated, setHydrated] = useState(false);
   const provider = useMemo(() => new MockRoutingProvider(), []);
   const stateRef = useRef(state);
   stateRef.current = state;
+  const sessionRef = useRef<Session | null | undefined>(session);
+  sessionRef.current = session;
+
+  // dispatch envuelto: actualiza el estado local y, si hay backend + sesión,
+  // espeja la acción a Supabase. Todos los dispatch(...) de abajo lo usan.
+  const dispatch = useCallback((a: Action) => {
+    rawDispatch(a);
+    if (hasSupabase && sessionRef.current) void writeAction(a, stateRef.current);
+  }, []);
 
   // persistencia debounced
   useEffect(() => {
@@ -316,6 +341,82 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     mq?.addEventListener?.("change", apply);
     return () => mq?.removeEventListener?.("change", apply);
   }, [state.settings.theme]);
+
+  // Sesión Supabase (sólo con backend): confiamos SOLO en onAuthStateChange, que
+  // entrega la sesión inicial (INITIAL_SESSION) y los cambios posteriores. Una
+  // sola hidratación: al detectar sesión aseguramos el `member` (bootstrap) e
+  // hidratamos desde la base preservando lo local.
+  useEffect(() => {
+    if (!hasSupabase || !supabase) return;
+    const client = supabase;
+    let cancelled = false;
+    const hydrateFor = async (s: Session) => {
+      setSession(s);
+      try {
+        const meId = await bootstrapMember(s.user);
+        const remote = await loadRemote(meId);
+        if (cancelled) return;
+        // Preservamos lo local (avisos, org activa) igual que el refresh realtime.
+        rawDispatch({
+          type: "hydrate",
+          state: {
+            ...remote,
+            notifications: stateRef.current.notifications,
+            activeOrgId: stateRef.current.activeOrgId || remote.activeOrgId
+          }
+        });
+        setHydrated(true);
+      } catch (e) {
+        console.warn("[store] hidratación remota falló", e);
+      }
+    };
+    const { data: sub } = client.auth.onAuthStateChange((_event, s) => {
+      if (s) {
+        void hydrateFor(s);
+      } else {
+        // Sin sesión (logout o arranque sin login): limpiamos TODO para que un
+        // login posterior de OTRA cuenta no vea datos del usuario anterior.
+        clearState();
+        rawDispatch({ type: "reset" });
+        setSession(null);
+        setHydrated(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Realtime (sólo con backend + sesión): un cambio en la base recarga el estado
+  // con debounce, preservando avisos y org activa locales.
+  useEffect(() => {
+    if (!hasSupabase || !supabase || !session) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const cleanup = subscribeRealtime(() => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(async () => {
+        const local = stateRef.current;
+        try {
+          const remote = await loadRemote(local.meId);
+          rawDispatch({
+            type: "hydrate",
+            state: {
+              ...remote,
+              notifications: stateRef.current.notifications,
+              activeOrgId: stateRef.current.activeOrgId
+            }
+          });
+        } catch (e) {
+          console.warn("[store] refresh realtime falló", e);
+        }
+      }, 400);
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      cleanup();
+    };
+  }, [session]);
 
   const runMatch = useCallback(
     async (eventId: string, opts?: { warmStart?: boolean; legsOverride?: Leg[] }) => {
@@ -397,7 +498,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Demo local sin backend: el "organizador" de un evento ajeno contesta solo.
+  // Con backend real la respuesta llega del otro usuario → no simulamos nada.
   const scheduleSimulatedReply = useCallback((requestId: string, delayMs: number) => {
+    if (hasSupabase) return;
     const h = setTimeout(() => {
       const s = stateRef.current;
       const req = s.joinRequests.find((r) => r.id === requestId);
@@ -463,6 +566,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // Solicitudes mías que quedaron pendientes de otra sesión: el organizador
   // "contesta" al volver a abrir la app.
   useEffect(() => {
+    if (hasSupabase) return; // con backend, las respuestas son reales (realtime)
     const s = stateRef.current;
     for (const r of s.joinRequests) {
       if (r.memberId === s.meId && r.status === "pending") {
@@ -508,6 +612,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ]
       });
       if (!approve) return;
+      // Modo Supabase: NO creamos el leg del solicitante ni recalculamos acá.
+      // En nuestro device su `home` es {0,0} (member_home es self-only) y RLS
+      // rechaza escribir por él. El aceptado crea su propio leg (con su home real)
+      // tras hidratar —ver efecto abajo— y el organizador recalcula desde Admin.
+      // El status ya se espejó vía el dispatch de decideJoinRequest.
+      if (hasSupabase) return;
       const leg = defaultPassengerLeg(s, req.eventId, req.memberId);
       if (!leg) return;
       dispatch({ type: "setLeg", leg });
@@ -520,6 +630,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     [runMatch]
   );
+
+  // Modo Supabase: si me aprobaron una solicitud pero todavía no tengo un leg
+  // propio en ese evento, lo creo con MI home (real en mi device). RLS permite
+  // escribir mi propio leg; el organizador recalcula el matching desde Admin.
+  // Reemplaza el "auto-aparece el viaje" que antes hacía el organizador.
+  useEffect(() => {
+    if (!hasSupabase) return;
+    for (const r of state.joinRequests) {
+      if (r.memberId !== state.meId || r.status !== "approved") continue;
+      const hasLeg = state.legs.some((l) => l.eventId === r.eventId && l.memberId === state.meId);
+      if (hasLeg) continue;
+      const leg = defaultPassengerLeg(state, r.eventId, state.meId);
+      if (leg) dispatch({ type: "setLeg", leg });
+    }
+  }, [state.joinRequests, state.legs, state.meId, dispatch]);
 
   const rateMember = useCallback((toMemberId: string, stars: number, comment?: string) => {
     const s = stateRef.current;
@@ -543,6 +668,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       type: "addMessage",
       message: { id: `msg-${now.toString(36)}`, eventId, fromMemberId: s.meId, body: text, at: new Date().toISOString() }
     });
+    // Con backend real, el mensaje se espeja a la base y responde otro usuario.
+    if (hasSupabase) return;
     // Demo sin backend: otro participante del convoy contesta algo simple.
     const others = participantsOf(s, eventId).filter((id) => id !== s.meId);
     if (others.length === 0) return;
@@ -575,6 +702,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "reset" });
   }, []);
 
+  const signOut = useCallback(async () => {
+    await supabase?.auth.signOut();
+    // Además del branch SIGNED_OUT de onAuthStateChange: garantiza el limpiado
+    // aunque el evento no llegue (idempotente).
+    clearState();
+    rawDispatch({ type: "reset" });
+    setSession(null);
+    setHydrated(false);
+  }, []);
+
   const value: Store = {
     state,
     dispatch,
@@ -586,7 +723,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     rateMember,
     sendMessage,
     resetDemo,
-    computing
+    computing,
+    session,
+    signOut,
+    authReady: !hasSupabase || session !== undefined,
+    hydrated
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

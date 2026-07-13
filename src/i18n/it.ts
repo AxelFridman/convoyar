@@ -361,5 +361,20 @@ export const it: Record<TKey, string> = {
   "a11y.plus": "più",
   "a11y.plate": "targa {plate}",
 
-  "ad.placeholder": "Spazio pubblicitario (spento)"
+  "ad.placeholder": "Spazio pubblicitario (spento)",
+
+  "login.title": "Accedi",
+  "login.subtitle": "Ti inviamo un codice via email per accedere.",
+  "login.emailLabel": "Email",
+  "login.emailPlaceholder": "tu@email.com",
+  "login.sendCode": "Invia codice",
+  "login.codeLabel": "Codice di verifica",
+  "login.codePlaceholder": "Codice di 6 cifre",
+  "login.verify": "Verifica",
+  "login.sent": "Ti abbiamo inviato un codice via email. Controlla la casella.",
+  "login.invalidEmail": "Questa email non sembra valida.",
+  "login.wrongCode": "Il codice non è corretto o è scaduto. Richiedine uno nuovo.",
+  "login.genericError": "Qualcosa è andato storto. Riprova.",
+  "login.changeEmail": "Cambia email",
+  "login.resend": "Invia di nuovo il codice"
 };

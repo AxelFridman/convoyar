@@ -361,7 +361,22 @@ export const es = {
   "a11y.plus": "más",
   "a11y.plate": "patente {plate}",
 
-  "ad.placeholder": "Espacio publicitario (apagado)"
+  "ad.placeholder": "Espacio publicitario (apagado)",
+
+  "login.title": "Iniciá sesión",
+  "login.subtitle": "Te enviamos un código por email para entrar.",
+  "login.emailLabel": "Email",
+  "login.emailPlaceholder": "vos@email.com",
+  "login.sendCode": "Enviar código",
+  "login.codeLabel": "Código de verificación",
+  "login.codePlaceholder": "Código de 6 dígitos",
+  "login.verify": "Verificar",
+  "login.sent": "Te enviamos un código a tu email. Revisá tu casilla.",
+  "login.invalidEmail": "Ese email no parece válido.",
+  "login.wrongCode": "El código no es correcto o venció. Pedí uno nuevo.",
+  "login.genericError": "Algo salió mal. Intentá de nuevo.",
+  "login.changeEmail": "Cambiar email",
+  "login.resend": "Reenviar código"
 };
 
 export type TKey = keyof typeof es;
