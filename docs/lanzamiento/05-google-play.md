@@ -14,11 +14,23 @@ porque la app Android es **esa misma web** empaquetada. Ideal también tener el
 | 💰 Costo | **USD 25** pago único, de por vida |
 | 🧑 / 🤖 | El grueso es **VOS** (cuentas, firma, Console). Algún cambio de código menor es 🤖 |
 
-> ### 📍 Estado (2026-07-12): ⏳ pendiente — Fase 2
-> No empezaste esto todavía. **Hacelo recién cuando la Fase 1 funcione de verdad** (app conectada
-> a Supabase — [doc 03](03-conectar-la-app.md) — y andando en la web — [doc 04](04-deploy-web-pwa.md)),
-> porque la app de Android es esa misma web empaquetada. Acordate del calendario: hay **14 días de
-> testing obligatorio** (Paso 9) antes de poder publicar.
+> ### 📍 Estado (2026-07-13): 🏗️ scaffold listo — falta la parte tuya (cuenta + firma + Console)
+> El proyecto Android **ya está armado y compilando la web de PROD**. Lo que dejó hecho el agente:
+> - ✅ Deps de Capacitor 8 instaladas (`@capacitor/core` · `cli` · `android`, + `@capacitor/assets` en dev).
+> - ✅ Plataforma Android agregada (`npx cap add android`) y sincronizada (`npx cap sync android`) — carpeta `android/` en el repo.
+> - ✅ Web de producción compilada apuntando al Supabase de PROD (proyecto `qlcwluvhrbkwjkjigsog`).
+> - ✅ **Firma de release preconfigurada** en `android/app/build.gradle`: usa `android/keystore.properties` **si existe** (plantilla en `android/keystore.properties.example`). Sin ese archivo, el build debug sigue andando.
+> - ✅ **Versionado** listo: `versionCode 1`, `versionName "1.0.0"`.
+> - ✅ Íconos y splash generados desde `public/icon.svg` (`resources/icon.png` 1024×1024 + `resources/splash.png`, y todos los tamaños Android vía `capacitor-assets`).
+> - ✅ `.gitignore` ajustado: la keystore y los artefactos de build de Android NO se commitean.
+>
+> **Lo que falta es TUYO y no se puede automatizar** (necesita tu identidad y tus secretos):
+> generar y **respaldar la keystore** (Paso 6), abrir en Android Studio y **generar el `.aab` firmado**
+> (Paso 7), y toda la burocracia de Google (cuenta USD 25 + verificación, ficha, Data safety, y los
+> **14 días de testing cerrado** del Paso 9). **Hacelo cuando te verifiquen la cuenta de desarrollador.**
+>
+> ⚠️ El `.aab` **no** lo generó el agente a propósito: requiere tu keystore (secreta) y un entorno con
+> Android SDK. Se hace en tu máquina con Android Studio (Paso 7).
 
 > ✅ **Buena noticia para vos:** Android se desarrolla **en Windows** sin problema (a
 > diferencia de iOS, que necesita Mac — ver [doc 06](06-app-store-ios.md)). Con tu Windows 11 alcanza.
@@ -61,16 +73,23 @@ destinos) y contenido (mensajes, reseñas).
 
 ---
 
-## Paso 3 — Agregar la plataforma Android 🤖 ⏱️ 15 min
+## Paso 3 — Agregar la plataforma Android ✅ HECHO 🤖
 
-Desde la raíz del repo:
+Ya está hecho: las deps de Capacitor están instaladas, la carpeta `android/` existe en el repo y
+está sincronizada con la web de producción. Los comandos que se corrieron (para tu referencia):
 
 ```bash
-npm i @capacitor/core @capacitor/cli @capacitor/android
-npm run build            # genera dist/ con las env vars de producción
-npx cap add android      # crea la carpeta android/ (solo la primera vez)
-npx cap sync android     # copia dist/ + plugins al proyecto nativo
-npx cap open android     # abre Android Studio
+npm i @capacitor/core @capacitor/cli @capacitor/android   # ✅ hecho (Capacitor 8)
+npm i -D @capacitor/assets                                # ✅ hecho
+npm run build            # ✅ genera dist/ con las env vars de PROD (proyecto qlcwluvhrbkwjkjigsog)
+npx cap add android      # ✅ creó la carpeta android/ (solo la primera vez)
+npx cap sync android     # ✅ copió dist/ + plugins al proyecto nativo
+```
+
+Lo único que te queda de este paso es **abrir el proyecto en Android Studio** (después de instalarlo, Paso 0):
+
+```bash
+npx cap open android     # abre Android Studio con el proyecto android/
 ```
 
 `capacitor.config.json` ya tiene lo importante:
@@ -88,25 +107,34 @@ npx cap open android     # abre Android Studio
 
 ---
 
-## Paso 4 — Íconos y splash 🤖 ⏱️ 15 min
+## Paso 4 — Íconos y splash ✅ HECHO 🤖
+
+Ya están generados a partir de `public/icon.svg`:
+
+- `resources/icon.png` (1024×1024) y `resources/splash.png` (2732×2732) — las fuentes.
+- Todos los tamaños de mipmap (adaptive icons) y splash de Android, creados con:
 
 ```bash
-npm i -D @capacitor/assets
-# Poné un icon.png (1024×1024) y un splash.png (2732×2732) en una carpeta resources/
-npx capacitor-assets generate --android
+npx capacitor-assets generate --android   # ✅ hecho
 ```
 
-Esto genera todos los tamaños de ícono y splash que Android pide. Después `npx cap sync android`.
+> 💅 **Detalle de pulido (opcional):** como solo se dio `icon.png`, el fondo del *adaptive icon*
+> quedó blanco por defecto. Si querés un ícono más prolijo (fondo de marca + logo recortado en
+> la zona segura), poné un `resources/icon-foreground.png` y un `resources/icon-background.png`
+> y volvé a correr `npx capacitor-assets generate --android`. No es bloqueante para publicar.
+
+Si cambiás las fuentes de `resources/`, reejecutá el comando de arriba y después `npx cap sync android`.
 
 ---
 
-## Paso 5 — Versionado 🤖
+## Paso 5 — Versionado ✅ HECHO 🤖
 
-En `android/app/build.gradle`, dentro de `defaultConfig`:
+Ya está seteado en `android/app/build.gradle` (dentro de `defaultConfig`): **`versionCode 1`** y
+**`versionName "1.0.0"`**. Para las próximas subidas:
 
 - **`versionCode`** (entero): **subilo +1 en cada subida** a Play. Si repetís uno ya usado,
-  Play rechaza el `.aab`. Empezá en `1`.
-- **`versionName`** (texto, ej. `"1.0.0"`): lo que ve el usuario.
+  Play rechaza el `.aab`.
+- **`versionName`** (texto, ej. `"1.0.1"`): lo que ve el usuario.
 
 ---
 
@@ -120,7 +148,12 @@ keytool -genkey -v -keystore convoyar-upload.keystore \
   -alias convoyar -keyalg RSA -keysize 2048 -validity 10000
 ```
 
-Te pide una contraseña y unos datos. Al terminar tenés `convoyar-upload.keystore`.
+Te pide una contraseña y unos datos. Al terminar tenés `convoyar-upload.keystore`. Guardalo en
+la **raíz del repo** (junto a `package.json`) o donde prefieras — la ruta la definís vos abajo.
+
+> En Windows con Android Studio instalado, `keytool` vive en el JDK que trae Android Studio.
+> Si `keytool` "no se reconoce", usá la ruta completa, p. ej.:
+> `& "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -genkey -v -keystore ...`
 
 ⚠️ **Respaldá el archivo `.keystore` Y las contraseñas en al menos 2 lugares seguros**
 (gestor de contraseñas + un backup cifrado). Si lo perdés:
@@ -130,19 +163,34 @@ Te pide una contraseña y unos datos. Al terminar tenés `convoyar-upload.keysto
   puede **resetear** pidiéndolo a soporte de Google. Menos catastrófico que antes, pero igual
   un dolor de cabeza de días. **No lo pierdas.**
 
-### Configurar la firma en el proyecto (recomendado: archivo aparte)
+### Configurar la firma en el proyecto ✅ YA PRECONFIGURADO 🤖
 
-Creá `android/keystore.properties` (⚠️ **agregalo a `.gitignore`**, nunca lo commitees):
+`android/app/build.gradle` **ya tiene el `signingConfigs.release` armado**: lee
+`android/keystore.properties` **si ese archivo existe**. Si no existe (como ahora), el build
+debug sigue andando y el release queda sin firmar. **Vos solo tenés que crear ese archivo con
+tus secretos.** Hay una plantilla lista: **`android/keystore.properties.example`**.
 
-```
-storeFile=../convoyar-upload.keystore
-storePassword=TU_PASSWORD
-keyAlias=convoyar
-keyPassword=TU_PASSWORD
-```
+1. Copiá la plantilla:
 
-Y en `android/app/build.gradle` referenciá esas propiedades en un `signingConfigs`
-(Android Studio también te lo puede configurar solo en **Build → Generate Signed Bundle**).
+   ```bash
+   cp android/keystore.properties.example android/keystore.properties
+   ```
+
+2. Editá `android/keystore.properties` con tus datos reales (las rutas de `storeFile` son
+   **relativas a la carpeta `android/`**; `../` apunta a la raíz del repo):
+
+   ```
+   storeFile=../convoyar-upload.keystore
+   storePassword=TU_PASSWORD
+   keyAlias=convoyar
+   keyPassword=TU_PASSWORD
+   ```
+
+> ✅ `android/keystore.properties`, `*.keystore` y `*.jks` **ya están en `.gitignore`** — no se
+> commitean. Igual, revisá con `git status` antes de cualquier commit que no aparezcan.
+
+Con ese archivo en su lugar, `./gradlew bundleRelease` firma solo. Y si preferís la vía visual,
+Android Studio te firma igual desde **Build → Generate Signed Bundle** (Paso 7) sin tocar nada.
 
 ---
 
@@ -211,8 +259,12 @@ Google usa **tracks** (canales) de lanzamiento:
 
 ## Actualizar la app (releases futuros) 🔁
 
-1. Cambios en la web → `npm run build && npx cap sync android`.
-2. Subí `versionCode` (+1) y `versionName` en `build.gradle`.
+> 🔁 **Recordatorio clave: para actualizar la app Android, siempre corré primero**
+> **`npm run build && npx cap sync android`.** Eso recompila la web de PROD y la copia al
+> proyecto nativo. Si te olvidás, el `.aab` sale con la versión vieja de la web.
+
+1. Cambios en la web → **`npm run build && npx cap sync android`**.
+2. Subí `versionCode` (+1) y `versionName` en `android/app/build.gradle`.
 3. Generá el `.aab` firmado (misma keystore) → subilo a un track → producción.
 
 ---
@@ -227,14 +279,18 @@ Google usa **tracks** (canales) de lanzamiento:
 
 ## ✅ Checklist de este doc
 
+- [x] ✅ Plataforma Android agregada: `npx cap add android` + `sync` OK (carpeta `android/` en el repo)
+- [x] ✅ Íconos/splash generados (desde `public/icon.svg`)
+- [x] ✅ Firma preconfigurada por `keystore.properties` en `build.gradle` (+ plantilla `.example`)
+- [x] ✅ Versionado: `versionCode 1`, `versionName "1.0.0"`
+- [x] ✅ `keystore.properties`, `*.keystore`, `*.jks` y artefactos de build en `.gitignore`
 - [ ] Android Studio instalado y `npm run build` en verde
 - [ ] Política de privacidad publicada en una URL estable
 - [ ] Cuenta Play Console pagada (USD 25) y **identidad verificada**
-- [ ] `npx cap add android` + `sync` OK, abre en Android Studio
-- [ ] Íconos/splash generados
-- [ ] **Keystore generada y respaldada en 2 lugares + contraseñas guardadas** ⚠️
-- [ ] `keystore.properties` en `.gitignore`
-- [ ] `.aab` **firmado** generado (release)
+- [ ] Proyecto abierto en Android Studio (`npx cap open android`)
+- [ ] **Keystore generada y respaldada en 2 lugares + contraseñas guardadas** ⚠️ (Paso 6)
+- [ ] `android/keystore.properties` creado desde la plantilla y completado con tus datos
+- [ ] `.aab` **firmado** generado (release) en Android Studio
 - [ ] Ficha completa: descripciones, capturas, ícono, gráfico, clasificación
 - [ ] **Data safety** completado con la verdad (email, ubicación, contenido)
 - [ ] Usuario de prueba dado al revisor (la app pide login)

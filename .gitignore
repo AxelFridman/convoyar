@@ -28,3 +28,16 @@ GoogleService-Info.plist
 convoyar-*.json
 *-firebase-adminsdk-*.json
 *serviceaccount*.json
+
+# Android (Capacitor) — el proyecto android/ (fuentes) SÍ se commitea;
+# lo de abajo son secretos de firma y artefactos de build que NO van al repo.
+android/keystore.properties
+*.keystore
+*.jks
+android/app/release/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/app/src/main/assets/public/
