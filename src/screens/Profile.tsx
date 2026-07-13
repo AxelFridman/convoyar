@@ -36,15 +36,24 @@ export default function Profile() {
   const addVehicle = () => setVehicles([...me.vehicles, blankVehicle(newVehicleId())]);
   const removeVehicle = (id: string) => {
     const rest = me.vehicles.filter((x) => x.id !== id);
-    // Quitar el ÚLTIMO vehículo deja a la persona sin poder manejar: bajamos sus
-    // legs de conductor para que los contadores y el matching no queden colgados.
+    const myDriverLegs = state.legs.filter((l) => l.memberId === me.id && l.role === "driver");
+    // Toda salida donde manejo puede quedar con una asignación obsoleta al tocar el
+    // garage → la invalidamos (mejor "sin calcular" que un convoy corrupto).
+    const affectedEvents = myDriverLegs.map((l) => l.eventId);
+
     if (rest.length === 0) {
-      const driverLegs = state.legs.filter((l) => l.memberId === me.id && l.role === "driver");
-      if (driverLegs.length > 0) {
-        if (!confirm(T("profile.removeVehicleConfirm", { n: driverLegs.length }))) return;
-        for (const l of driverLegs) dispatch({ type: "removeLeg", memberId: me.id, eventId: l.eventId });
+      // Sin vehículos no puedo manejar: bajo mis legs de conductor.
+      if (myDriverLegs.length > 0) {
+        if (!confirm(T("profile.removeVehicleConfirm", { n: myDriverLegs.length }))) return;
+        for (const l of myDriverLegs) dispatch({ type: "removeLeg", memberId: me.id, eventId: l.eventId });
+      }
+    } else {
+      // Queda garage: los legs que ofrecían el vehículo borrado pasan al primero que quede.
+      for (const l of myDriverLegs.filter((l) => l.vehicleId === id)) {
+        dispatch({ type: "setLeg", leg: { ...l, vehicleId: rest[0].id } });
       }
     }
+    if (affectedEvents.length > 0) dispatch({ type: "invalidateAssignments", eventIds: affectedEvents });
     setVehicles(rest);
   };
 

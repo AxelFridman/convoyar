@@ -23,13 +23,13 @@ Demo de fábrica incluida: *La Banda del Asado* (26 personas, 8 autos, 5 puntos 
 ```bash
 npm install
 npm run dev        # abre http://localhost:5173
-npm test           # 69 tests (motor + integración + modo público + i18n + auth + smoke)
+npm test           # 94 tests (motor + integración + modo público + i18n + auth + smoke)
 ```
 
 Otros comandos:
 
 ```bash
-npm run test:e2e      # 19 flujos E2E con Playwright (levanta su server en :5199)
+npm run test:e2e      # 22 flujos E2E con Playwright (levanta su server en :5199)
 npm run typecheck     # tsc --noEmit
 npm run build         # → dist/         (deploy web / PWA / Capacitor)
 npm run build:single  # → dist-single/  (UN solo index.html autocontenido)
@@ -42,12 +42,15 @@ npm run preview       # sirve dist/ localmente
 
 - **Onboarding guiado**: wizard de bienvenida (idioma → nombre → email → tu casa → ¿auto? → notificaciones) para que un usuario nuevo entienda todo en un minuto.
 - **Roles por evento**: cada miembro elige conductor / pasajero / no voy, con ventana horaria.
+- **Garage**: cargá varios vehículos (con alias tipo "el Gol"/"la moto") y elegí **con cuál llevás en cada salida** — el motor toma la capacidad del vehículo elegido.
 - **Restricciones duras** (nunca se violan): capacidad del auto, desvío máximo del conductor, radio de caminata del pasajero, ventanas horarias, necesidades (♿ silla de ruedas, 🐕 mascotas, 👶 sillita).
 - **Configurable en el espacio Y el tiempo**: el **radio de caminata** se dibuja en vivo como un círculo en el mapa; la **ventana horaria** como un timeline con la hora del evento marcada. Ambos se mueven con sliders.
 - **Preferencias blandas** (solo desempatan, jamás descartan): mismo subgrupo, auto libre de humo.
 - **Puntos de encuentro**: si al pasajero le conviene caminar a una parada conocida (estación, plaza), el motor lo propone con minutos de caminata.
 - **Salidas públicas o privadas (tipo BlaBlaCar)**: un evento privado es solo de la org; uno público aparece en **Explorar** (con filtros por fecha: hoy / este finde / próximos 7 días) para toda la comunidad. Pedís lugar con un tap; el organizador ve tu **puntuación ★, cuántos viajes hiciste, hace cuánto te uniste, tus reseñas y tu mensaje**, y te acepta o rechaza. Al aceptarte, entrás al cálculo automáticamente.
-- **Reputación**: reseñas de 1–5 estrellas con comentario, historial por miembro, perfil público con antigüedad.
+- **Reputación y logros**: reseñas de 1–5 estrellas, historial, perfil público con antigüedad, **insignias** (primer viaje, cinco estrellas, garage…) y barra de "completá tu perfil".
+- **Aporte de nafta sugerido** (informativo, sin cobros): estima cuánto acercarle al conductor, para arreglar entre las personas.
+- **Simple por fuera, potente por dentro**: lo core siempre visible; la configuración avanzada (cuenta, idioma, tema, formato de hora, preferencias de viaje por defecto, aporte de nafta) vive en **Ajustes**, a un tap.
 - **Cuenta y comunicaciones**: verificación de email por código, **chat por convoy** entre participantes, y preferencias de aviso por tipo (asignaciones / solicitudes / chat / email).
 - **Admin**: armar/rearmar convoys, mover pasajeros a mano (con aviso si rompe una restricción), aceptar/rechazar solicitudes, cancelar conductor (recálculo incremental con `warmStart`), métricas (asignados, autos, desvío, CO₂) y export CSV/JSON.
 - **Celebraciones tipo Duolingo**: confetti al conseguir convoy y al armarlos, micro-interacciones, empty states ilustrados.
@@ -63,7 +66,7 @@ npm run preview       # sirve dist/ localmente
 | Mapas | **Real**: Leaflet + tiles de OpenStreetMap (atribución incluida, obligatoria). |
 | Chat del convoy | **Real** (UI + estado). La respuesta del otro participante es simulada (demo sin backend), igual que el organizador ajeno. |
 | Verificación de email | **Simulada** (`services/auth.ts`: código de 6 dígitos que la demo muestra en pantalla). Contrato `AuthProvider` listo para Supabase Auth / propio. |
-| Persistencia | localStorage (clave `convoyar:v3`) con fallback en memoria. Un dispositivo. |
+| Persistencia | localStorage (clave `convoyar:v4`) con fallback en memoria. Un dispositivo. |
 | Multi-dispositivo / auth / push | **Stubs, pero con el camino listo.** Schema Postgres + RLS ya escritos en [server/](server/); guía de conexión en [docs/lanzamiento/](docs/lanzamiento/). El motor se muda respetando el contrato `MatchInput → MatchResult`. |
 | Monetización | **Cableada y apagada** (ver abajo). |
 
@@ -76,13 +79,13 @@ src/
     matching.ts   solveMatching / validateMatch / applyManualMove (warmStart incremental)
     routing.ts    interfaz RoutingProvider + Mock + OSRM (una llamada matrix() por evento)
     geo.ts        haversine, caminata, RNG determinístico
-  state/        store (context + useReducer), modelo v2, reputación, persistencia debounced
+  state/        store (context + useReducer), modelo v4, reputación, garage, logros, persistencia debounced
   screens/      Inicio · Explorar (público) · Mi viaje · Resultados · Admin · Perfil
   components/   People (avatar/estrellas/perfil), MapPicker (Leaflet), RideCard, UI kit, íconos
   services/     storage · billing · notify · export
   i18n.ts       es/en con interpolación {var} y plurales (_one)
   seed.ts       demo determinística: org privada + comunidad pública (Buenos Aires)
-e2e/            Playwright: 13 flujos reales + generador de capturas
+e2e/            Playwright: 22 flujos reales + generador de capturas
 docs/           ARCHITECTURE.md · ROADMAP.md · screenshots/
 ```
 

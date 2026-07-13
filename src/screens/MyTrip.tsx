@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useStore, useT } from "../state/store";
+import { useStore, useT, useHhmm } from "../state/store";
 import { type TKey } from "../i18n";
 import { Segmented, Slider, Stepper, Chip, TimeInput } from "../components/UI";
 import MapPicker from "../components/MapPicker";
 import { TimeWindowBar } from "../components/TimeWindowBar";
-import { walkRadiusMeters, minutesToHHMM } from "../engine/geo";
+import { walkRadiusMeters } from "../engine/geo";
 import { isParticipant } from "../state/reputation";
 import { hasVehicle, primaryVehicle, vehicleLabel, vehicleById } from "../state/vehicles";
 import type { Feature, LatLng } from "../engine/types";
@@ -15,6 +15,8 @@ const FEATURES: Feature[] = ["wheelchair", "pets", "big_trunk", "bikes", "child_
 export default function MyTrip({ eventId }: { eventId: string | null }) {
   const { state, dispatch, runMatch } = useStore();
   const T = useT();
+  const hhmm = useHhmm();
+  const hour12 = !!state.settings.hour12;
   const ev = state.events.find((e) => e.id === eventId);
   const me = state.members.find((m) => m.id === state.meId)!;
   const existing = state.legs.find((l) => l.eventId === eventId && l.memberId === state.meId);
@@ -22,8 +24,11 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
   const activeLeg = existing && existing.role !== "skip" ? existing : undefined;
   // Precedencia de los valores del form: leg existente → defaults del perfil → fallback.
   const d = me.defaults ?? {};
+  // Un rol "driver" precargado (de defaults) no vale si no hay vehículo en el garage.
+  const seedRole = (r?: Role | null): Role | null =>
+    r === "driver" && !hasVehicle(me) ? null : r ?? null;
 
-  const [role, setRole] = useState<Role | null>(existing?.role ?? d.role ?? null);
+  const [role, setRole] = useState<Role | null>(seedRole(existing?.role ?? d.role));
   const [origin, setOrigin] = useState<LatLng>(activeLeg?.origin ?? me.home);
   const [detour, setDetour] = useState(activeLeg?.maxDetourMin ?? d.maxDetourMin ?? 20);
   const [walk, setWalk] = useState(activeLeg?.maxWalkMin ?? d.maxWalkMin ?? 10);
@@ -38,7 +43,7 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
 
   // resync al cambiar de evento (misma precedencia que arriba)
   useEffect(() => {
-    setRole(existing?.role ?? d.role ?? null);
+    setRole(seedRole(existing?.role ?? d.role));
     setDetour(activeLeg?.maxDetourMin ?? d.maxDetourMin ?? 20);
     setWalk(activeLeg?.maxWalkMin ?? d.maxWalkMin ?? 10);
     setNeeds(activeLeg?.needs ?? d.needs ?? []);
@@ -82,7 +87,8 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
 
   const canDrive = hasVehicle(me);
   const save = () => {
-    if (!role) return;
+    // No se puede guardar un leg de conductor sin vehículo (evita "conductor fantasma").
+    if (!role || (role === "driver" && !canDrive)) return;
     // Conservar el id del leg: los assignments referencian legs por id.
     const legId = existing?.id ?? `leg-${me.id}-${ev.id}`;
     const leg =
@@ -256,8 +262,8 @@ export default function MyTrip({ eventId }: { eventId: string | null }) {
                 <TimeInput minutes={winEnd} onChange={(m) => setWinEnd(Math.max(m, winStart + 5))} />
               </label>
             </div>
-            <TimeWindowBar start={winStart} end={winEnd} eventMin={eventMin} labelEvent={ev.title} />
-            <p className="sub mapHint">{T("trip.windowHint", { time: minutesToHHMM(eventMin) })}</p>
+            <TimeWindowBar start={winStart} end={winEnd} eventMin={eventMin} labelEvent={ev.title} hour12={hour12} />
+            <p className="sub mapHint">{T("trip.windowHint", { time: hhmm(eventMin) })}</p>
           </div>
         </>
       )}
