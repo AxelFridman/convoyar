@@ -13,6 +13,15 @@
 | 💰 Costo | USD 0 |
 | 🧑 / 🤖 | **Mayormente CÓDIGO** (esto lo puede hacer Claude en una PR). Vos ponés las env vars y decidís el alcance. |
 
+> ### 📍 Estado (2026-07-12): ❌ ESTE ES EL PASO QUE FALTA
+> Verifiqué el repo: **no hay `@supabase/supabase-js` ni `supabaseClient.ts`**. O sea, la app
+> **todavía es 100% local** — no habla con la base de Supabase que ya creaste. Todo lo demás
+> (login real, ver lo mismo en dos teléfonos, borrar la simulación) **depende de esta PR**.
+> Es código, lo puedo hacer yo: decime "dale con el doc 03" y lo armo (branch → PR → verde).
+>
+> **Ya te dejé listo:** en [`.env`](../../.env) están los aliases `VITE_SUPABASE_URL` y
+> `VITE_SUPABASE_ANON_KEY` (= tu `sb_publishable_...`) que el cliente de abajo va a leer.
+
 > 🧩 **Nota sobre la PR7 (`feat/server-skeleton`).** El plan original tenía un servidor
 > propio con Postgres. Con Supabase **no lo necesitás**: el "adaptador remoto" que este doc
 > describe habla directo con la DB vía RLS. El server Fastify queda para cuando quieras
@@ -53,8 +62,14 @@ Los valores salen del [doc 01](01-supabase-base-de-datos.md) (Project URL + anon
 
 ```
 VITE_SUPABASE_URL=https://TU-PROYECTO.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGci...LA-ANON-KEY
+VITE_SUPABASE_ANON_KEY=sb_publishable_...
 ```
+
+> ✅ **Ya está en tu `.env`.** Te agregué esas dos líneas (apuntando a **dev** para local) más
+> `VITE_SENTRY_DSN`. Recordá: el "anon key" en el formato nuevo es tu **`sb_publishable_...`**,
+> NO el `sb_secret_...`. Vite lee tanto `.env` como `.env.local`, así que no hace falta que
+> muevas nada. Para producción, las mismas dos variables van en Cloudflare con los valores
+> **prod** (ver [doc 04](04-deploy-web-pwa.md)).
 
 2. ⚠️ **Confirmá que `.env*` esté en `.gitignore`** (nunca commitees claves, aunque la anon
    sea pública, es buena higiene). Si no está, agregá una línea `.env*` (dejando afuera un

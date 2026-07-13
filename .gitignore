@@ -21,3 +21,10 @@ server/.env
 .DS_Store
 Thumbs.db
 *.log
+
+# Firebase / Google — secretos que NUNCA van al repo
+google-services.json
+GoogleService-Info.plist
+convoyar-*.json
+*-firebase-adminsdk-*.json
+*serviceaccount*.json

@@ -10,11 +10,29 @@
 El código que hoy simula esto está en [`src/services/auth.ts`](../../src/services/auth.ts)
 (la interfaz `AuthProvider` ya está lista para este reemplazo — así lo dejó la PR5).
 
-| | |
-|---|---|
-| ⏱️ Tiempo | ~40 min |
-| 💰 Costo | USD 0 (Supabase Free + Resend Free) |
-| 🧑 / 🤖 | Config en el dashboard = **VOS**; el swap del provider = **CÓDIGO** (se activa en el doc 03) |
+|             |                                                                                                          |
+| ----------- | -------------------------------------------------------------------------------------------------------- |
+| ⏱️ Tiempo | ~40 min                                                                                                  |
+| 💰 Costo    | USD 0 para testear · dominio ~USD 10/año para producción                                              |
+| 🧑 / 🤖     | Config en el dashboard =**VOS**; el swap del provider = **CÓDIGO** (se activa en el doc 03) |
+
+> ### 📍 Estado (2026-07-12) y qué corregí de este doc
+>
+> Probaste con Resend + `convoyar.com`, y te trabaste. Dos cosas que este doc no te había
+> dicho bien y ya corregí:
+>
+> 1. **No podés editar las plantillas de email sin SMTP propio** (Supabase te lo dice:
+>    *"Set up custom SMTP to edit their subject and body"*). Reordené: SMTP **antes** que templates.
+> 2. **La plataforma es multi-idioma** (es/en/pt/de/it/fr), y las plantillas de Supabase son
+>    **una sola** (no cambian por idioma). Agregué cómo resolverlo (Paso 2, nuevo).
+> 3. **Envío ≠ recepción.** El registro "Enable Receiving" (MX en la raíz) es para **recibir**
+>    correos — Convoyar no los recibe. No lo actives. Los que importan son los 3 de **envío**,
+>    que ya tenés OK. Detalle en el Paso 3B.
+>
+> **Lo que ya hiciste:** ✅ Email provider ON · ✅ dominio `convoyar.com` en Cloudflare (activo) ·
+> ✅ registros de **envío** de Resend publicados (DKIM/SPF/return-path).
+> **Lo que falta:** en Resend tocar "Verify" (envío) · conectar Custom SMTP en Supabase ·
+> testear el login (podés hacerlo YA con el SMTP default, sin depender de Resend).
 
 ---
 
@@ -52,64 +70,133 @@ En el dashboard de Supabase → **Authentication → Providers → Email**:
 
 ---
 
-## Paso 2 — Traducir los emails al español 🧑 ⏱️ 10 min
+## Paso 2 — Los emails: idioma y plantillas 🧑 ⏱️ 10 min
 
-**Authentication → Email Templates**. Por defecto vienen en inglés. Editá al menos el de
-**"Magic Link"** (que es el que trae el OTP). Poné algo tuyo, en rioplatense, con la marca:
+⚠️ **Ojo con dos cosas que descubriste vos:**
+
+**(a) Para editar las plantillas necesitás SMTP propio primero.** Con el SMTP default,
+Supabase te muestra: *"Emails will be sent using the default templates. Set up custom SMTP to
+edit their subject and body."* O sea: **hasta que no conectes SMTP (Paso 3) no podés editar el
+texto.** Igual, para **testear el login**, las plantillas default (en inglés) **funcionan** —
+mandan el código igual. Editás el texto después, cuando tengas SMTP.
+
+**(b) Convoyar es multi-idioma (es/en/pt/de/it/fr), y las plantillas de Supabase son UNA sola.**
+El sistema de templates de Supabase **no cambia el idioma por usuario**. Tenés dos caminos:
+
+| Camino                                                           | Cuándo        | Cómo                                                                                                                                                                                                                |
+| ---------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Plantilla neutra / bilingüe** (recomendado para lanzar) | Ya             | Una sola plantilla corta ES + EN. Como el contenido es casi solo el código, alcanza. Ver abajo.                                                                                                                     |
+| **Email 100% localizado** (los 6 idiomas de verdad)        | Cuando importe | **Auth Hooks → "Send Email Hook"**: registrás una Edge Function que Supabase llama en vez de mandar su propio mail; tu función lee el idioma del usuario y arma el texto en su idioma con la API de Resend. |
+
+**Plantilla bilingüe para arrancar** (pegala cuando tengas SMTP, en **Authentication → Email
+Templates → Magic Link**, que es la que trae el OTP):
 
 ```
-Asunto: Tu código para entrar a Convoyar
+Asunto: Tu código Convoyar / Your Convoyar code
 
-Hola 👋
-Tu código para entrar es: {{ .Token }}
+Tu código para entrar es / Your login code is:  {{ .Token }}
 
 Vence en unos minutos. Si no fuiste vos, ignorá este mail.
-— El equipo de Convoyar
+It expires in a few minutes. If this wasn't you, ignore this email.
+— Convoyar
 ```
 
-⚠️ Dejá la variable **`{{ .Token }}`** tal cual: es la que Supabase reemplaza por el código.
-Si preferís magic link, usá `{{ .ConfirmationURL }}` en su lugar (y configurá deep links después).
+⚠️ Dejá **`{{ .Token }}`** tal cual: es la variable que Supabase reemplaza por el código.
+
+> 💡 **Para el camino localizado (después):** guardás el idioma del usuario al mandar el OTP
+> (`signInWithOtp({ email, options: { data: { lang: "pt" } } })`), y el **Send Email Hook** lo
+> lee de la metadata para elegir el texto. Las traducciones ya existen en
+> [`src/i18n/`](../../src/i18n/), así que el copy no lo escribís de cero. Es la misma idea que
+> el `send-push` del [doc 07](07-push-notifications.md): una Edge Function que arma el mensaje.
 
 ---
 
-## Paso 3 — SMTP propio para no caer en spam ⚠️ 🧑 ⏱️ 15 min
+## Paso 3 — Enviar los emails: testear YA vs. producción 🧑
 
-⚠️ **Esto no es opcional para producción.** El SMTP que trae Supabase gratis está pensado
-solo para pruebas: **limita a unos pocos mails por hora** y los envía desde un dominio
-compartido → **caen en spam** o directamente no llegan. Con eso, nadie puede loguearse.
+Acá está lo que te trabó. Separá dos momentos:
 
-Solución free y rápida: **[Resend](https://resend.com)** (3.000 emails/mes, 100/día gratis).
+### 3A — Para TESTEAR el login ahora (sin dominio, sin Resend) ✅ ⏱️ 0 min
 
-1. Creá cuenta en Resend 🧑.
-2. **Domains → Add domain**: idealmente tu dominio propio (ej. `convoyar.app`, ver
-   [doc 04](04-deploy-web-pwa.md)). Resend te da unos registros **DNS** (SPF/DKIM) para
-   pegar en tu proveedor de dominio; eso es lo que hace que el mail sea "legítimo" y no spam.
-   - ¿No tenés dominio todavía? Podés probar con el dominio de sandbox de Resend, pero para
-     lanzar en serio conseguí uno (son ~USD 12/año) y verificalo.
-3. **API Keys / SMTP**: Resend te da credenciales SMTP (host `smtp.resend.com`, puerto 465,
-   usuario `resend`, y la API key como password).
-4. En Supabase → **Project Settings → Authentication → SMTP Settings → Enable Custom SMTP**:
-   pegá host, puerto, usuario, password, y el **Sender email** (ej. `hola@convoyar.app`) y
-   **Sender name** (`Convoyar`).
-5. Mandate un mail de prueba (registrate con tu propio email) y confirmá que llega a la bandeja
-   de entrada, no a spam.
+**No necesitás Resend ni dominio para probar que el login anda.** El SMTP **default** de
+Supabase manda el código a **cualquier** email (con un límite de ~2–4 por hora y a veces cae
+en spam la primera vez). Para vos y 1–2 cuentas de prueba, alcanza perfecto:
 
-> Alternativas equivalentes a Resend: Brevo, Mailgun, Amazon SES, Postmark. Resend es la más
-> simple para arrancar.
+- **No enciendas** Custom SMTP todavía. Dejá el default.
+- Registrate con tu email real → mirá la bandeja (y spam) → entra el código de 6 dígitos.
+- Con eso validás el flujo completo. Resend y el dominio son para **producción/volumen**, no para probar.
+
+> 🧪 Otra opción de prueba: el **sandbox de Resend** (`onboarding@resend.dev`) envía **sin
+> dominio**, pero **solo a tu propio email** (el de tu cuenta Resend). Sirve para ver que la
+> integración con Resend anda; para mandarle a otra gente sí o sí necesitás dominio (3B).
+
+### 3B — Para PRODUCCIÓN: por qué se te trabó y cómo destrabarlo ⚠️ 🧑 ⏱️ 30 min + propagación DNS
+
+El SMTP default no sirve para usuarios reales (rate limit + spam) → ahí entra **Resend**
+(3.000 emails/mes gratis). Necesita un dominio propio (para publicar sus registros de envío).
+
+> ✅ **Estado (2026-07-12): ya lo resolviste.** `convoyar.com` es tuyo, está **activo en
+> Cloudflare** con sus nameservers, y los **3 registros de ENVÍO ya están publicados** (los
+> verifiqué por DNS): DKIM (`resend._domainkey`), SPF (`send.convoyar.com`) y el MX de
+> return-path (`send.convoyar.com` → `feedback-smtp.sa-east-1.amazonses.com`). En Resend tocá
+> **"Verify DNS Records"** y el dominio queda verificado para enviar.
+
+⚠️ **ENVÍO ≠ RECEPCIÓN (esto te confundió).** Resend tiene un botón **"Enable Receiving"** que
+agrega un MX en la **raíz** (`convoyar.com` → `inbound-smtp…amazonaws.com`). Eso es para
+**recibir** correos entrantes, algo que **Convoyar NO hace** (solo manda el código de login).
+**No lo actives / borralo.** Que quede "pending" es irrelevante.
+
+|                                      | Registros                         | ¿Convoyar los necesita?      |
+| ------------------------------------ | --------------------------------- | ----------------------------- |
+| **Envío** (mandar el código) | DKIM + SPF + MX en`send.`       | **SÍ** — ya están ✅ |
+| **Recepción** (recibir mails) | MX en la raíz (`inbound-smtp`) | **NO** — borralo       |
+
+**Cómo se armó (referencia, ya lo hiciste):**
+
+1. **Comprá un dominio (recomendado, ~USD 10/año).** Como ya tenés **Cloudflare**, compralo ahí
+   (**Cloudflare → Domain Registration**, lo vende al costo) — así el DNS ya está en Cloudflare
+   y agregar los registros de Resend es un clic. Fijate si `convoyar.com` está libre; si no,
+   `convoyar.app` / `convoyar.ar` / `.com.ar` sirven igual. Ese mismo dominio te sirve para la
+   web ([doc 04](04-deploy-web-pwa.md)) y el email.
+2. **Verificá el dominio en Resend:** Domains → Add domain → te da 3 registros (DKIM, SPF, y uno
+   de retorno). **En Cloudflare → DNS** agregás esos 3 (Resend tiene integración directa con
+   Cloudflare que los pone solos). En minutos verifica.
+   - Los registros que ya tenés en `.env` (`RESEND_DOMAIN_DKIM_CONTENT`, etc.) son los de
+     `convoyar.com`; si comprás **otro** dominio, Resend regenera los suyos. Usá los del dominio real.
+3. **Conectá el SMTP en Supabase:** Project Settings → Authentication → **SMTP Settings →
+   Enable Custom SMTP**: host `smtp.resend.com`, puerto `465`, usuario `resend`, password = tu
+   `RESEND_API_KEY`, Sender `hola@tudominio` y nombre `Convoyar`. Recién ahí podés **editar las
+   plantillas** (Paso 2).
+
+> ❓ **"¿Puedo usar la URL `...workers.dev` de Cloudflare para el SMTP?"** — **No.** Esa es la
+> URL de tu **sitio web** (HTTP), no tiene nada que ver con enviar emails. El SMTP necesita un
+> **dominio de correo** con registros DNS (DKIM/SPF) que controles; un `workers.dev`/`pages.dev`
+> no te deja ponerlos. Sitio web y envío de email son cosas separadas.
+
+> Alternativas equivalentes a Resend: Brevo, Mailgun, Amazon SES, Postmark. Todas necesitan
+> dominio igual. Resend es la más simple. (Dominio gratis para email: en la práctica no hay uno
+> bueno — `eu.org` es gratis pero tarda días en aprobar; conviene pagar los ~USD 10.)
 
 ---
 
 ## Paso 4 — URLs permitidas 🧑 ⏱️ 3 min
 
+**Qué es esto (para que no marees):** el "Site URL" y las "Redirect URLs" **solo importan para
+flujos que REDIRIGEN el navegador** — o sea magic links y "entrar con Google/Apple". Con el
+flujo de **código OTP que usás vos (escribís los 6 dígitos en la app) NO hay redirect**, así que
+esta sección es casi irrelevante hoy. Configurá lo mínimo y seguí:
+
 **Authentication → URL Configuration**:
 
-- **Site URL:** tu URL de producción (la del [doc 04](04-deploy-web-pwa.md), ej.
-  `https://convoyar.app`). Mientras no la tengas, poné `http://localhost:5173`.
-- **Redirect URLs (allow list):** agregá `http://localhost:5173`, tu URL de prod, y —para la
-  app móvil— el scheme de Capacitor `app.convoyar://` (lo vas a necesitar en los docs
-  [05](05-google-play.md)/[06](06-app-store-ios.md) si algún día usás magic link en móvil).
+- **Site URL:** tu URL pública. Poné **`https://convoyar.com`** (o, por ahora,
+  `https://convoyar-web.pages.dev`). Para desarrollo local sirve `http://localhost:5173`.
+- **Redirect URLs (allow list):** agregá `http://localhost:5173` y tu URL pública. Con eso alcanza.
 
-Con OTP puro (código) esto importa poco, pero dejarlo listo ahora te ahorra un dolor después.
+> ⚠️ **Lo de `app.convoyar://` — por qué te da "Please provide a valid URL" y por qué NO lo
+> necesitás ahora.** Ese es el *deep link* de la app **móvil** (un scheme propio). Supabase
+> rechaza el `app.convoyar://` "pelado" porque le falta una ruta; iría como
+> **`app.convoyar://auth-callback`**. Pero **saltealo por completo hoy**: solo hace falta si en
+> las apps nativas ([05](05-google-play.md)/[06](06-app-store-ios.md)) usás **magic link** (y vos
+> usás código OTP). Agregalo recién cuando hagas mobile. Dejá solo localhost + tu URL web.
 
 ---
 
@@ -211,10 +298,13 @@ Capacitor Preferences — lo ve el doc 03). O sea: el usuario se loguea una vez 
 
 ## ✅ Checklist de este doc
 
-- [ ] Email provider habilitado con OTP
-- [ ] Plantilla de email traducida al español (con `{{ .Token }}`)
-- [ ] SMTP propio (Resend) conectado y **mail de prueba llega a la bandeja, no a spam**
-- [ ] Site URL y Redirect URLs configuradas
+- [X] Email provider habilitado con OTP
+- [ ] **Testeado el login con SMTP default** (código llega a tu email) ← hacé esto primero
+- [ ] Site URL y Redirect URLs configuradas (podés poner tu URL `...workers.dev` como Site URL)
+- [X] **(Producción)** Dominio `convoyar.com` propio + registros de **envío** publicados (DKIM/SPF/return-path)
+- [ ] **(Producción)** En Resend: "Verify DNS Records" (envío) OK · **NO** activar "Enable Receiving"
+- [ ] **(Producción)** Custom SMTP (Resend) conectado en Supabase → recién ahí editás plantillas
+- [ ] Plantilla bilingüe pegada (con `{{ .Token }}`); email localizado 6 idiomas = después (Send Email Hook)
 - [ ] `authSupabase.ts` creado y `auth.ts` elige provider según `hasSupabase` (se activa en doc 03)
 - [ ] Cartel de `demoCode` en la UI mostrándose solo si existe
 

@@ -15,6 +15,17 @@
 | 💰 Costo    | USD 0 (Free tier)                                                               |
 | 🧑 / 🤖     | Casi todo**VOS** (dashboard + SQL). El código de conexión es el doc 03. |
 
+> ### 📍 Estado (2026-07-12): ✅ casi todo hecho
+> - ✅ Proyectos **`convoyar-prod`** (`qlcwluvhrbkwjkjigsog`) y **`convoyar-dev`** creados.
+> - ✅ **Schema aplicado en prod** — lo verifiqué contra la API REST: las tablas existen y responden.
+> - ✅ Claves guardadas en `.env` (en el formato **nuevo** de Supabase — ver Paso 2).
+> - ⏳ **Falta que confirmes que RLS quedó activado** (Paso 4 tiene cómo chequearlo).
+>
+> El schema canónico ya vive en [`server/schema.sql`](../../server/schema.sql) + la seguridad
+> en [`server/rls.sql`](../../server/rls.sql) (PR7 los dejó como archivos ejecutables, idénticos
+> a los bloques de abajo). Si tenés que re-correr algo, usá **esos archivos** para no mantener
+> dos copias que se desincronizan.
+
 ---
 
 ## ¿Por qué Supabase y no un servidor propio?
@@ -62,6 +73,20 @@ En el dashboard: **Project Settings → API**. Vas a ver:
 
 **Copiá `Project URL` y `anon key`**; las usás en el doc 03. La `service_role` guardala
 aparte y no la toques todavía.
+
+> ⚠️ **Formato NUEVO de claves (lo que tenés en tu `.env`).** Supabase renombró las claves.
+> El mapeo es directo — es lo mismo con otro nombre:
+>
+> | Nombre viejo (en estos docs) | Nombre nuevo (en tu `.env`) | Dónde va |
+> |---|---|---|
+> | Project URL | `SUPABASE_LINK_PROD` | front + hosting (pública) |
+> | **anon key** | **`sb_publishable_...`** (`SUPABASE_PUBLISHABLE_KEY_PROD`) | front + hosting (pública) |
+> | **service_role key** | **`sb_secret_...`** (`SUPABASE_SECRET_KEY_PROD`) | ⚠️ SOLO server/Edge Function, NUNCA en el front |
+>
+> Cuando en cualquier doc leas "anon key", usá tu **`sb_publishable_...`**. Cuando leas
+> "service_role", es tu **`sb_secret_...`**. En [`.env`](../../.env) ya dejé además los
+> aliases `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (= publishable) que es lo que lee el
+> front — ver [doc 03](03-conectar-la-app.md) y [doc 04](04-deploy-web-pwa.md).
 
 ---
 
@@ -407,6 +432,26 @@ create policy tokens_all_self on public.device_tokens
 > los invariantes de privacidad del proyecto. Antes de tener datos sensibles de miles de
 > usuarios, corré una revisión de seguridad dedicada (el proyecto ya tiene el comando
 > `/security-review`, y el doc [10](10-analytics-y-monitoreo.md) habla de esto).
+
+### ✅ Verificá que RLS quedó activado (hacelo ahora) 🧑 ⏱️ 2 min
+
+Es el único pendiente real de este doc. Dos formas:
+
+- **En el dashboard (rápido):** Table Editor → entrá a cualquier tabla (ej. `members`) → arriba
+  a la derecha tiene que decir **"RLS enabled"** con el candado verde. Si alguna dice
+  "RLS disabled" / candado rojo, esa tabla está **abierta a cualquiera** → re-corré
+  [`server/rls.sql`](../../server/rls.sql).
+- **Con SQL (definitivo):** SQL Editor → Run:
+  ```sql
+  select tablename, rowsecurity
+  from pg_tables where schemaname = 'public'
+  order by rowsecurity, tablename;
+  ```
+  **Todas** tienen que tener `rowsecurity = true`. Cualquiera en `false` es un agujero.
+
+> 💡 Verifiqué desde afuera (sin login) que `GET /rest/v1/members` y `/orgs` devuelven `[]`
+> con la clave pública, que es consistente con "RLS prendido". Pero el chequeo de arriba es
+> el que te da la certeza tabla por tabla.
 
 > 💡 **Unirse a una org por `joinCode`** conviene hacerlo con una **función RPC**
 > (`security definer`) que valida el código e inserta en `org_members`, en vez de una

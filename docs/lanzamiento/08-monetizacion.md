@@ -15,6 +15,10 @@
 | 💰 Costo | Comisiones sobre lo que cobres (ver tabla). Integrar es gratis |
 | 🧑 / 🤖 | Mitad **VOS** (cuentas Stripe/RevenueCat, precios, tiendas) y mitad 🤖 (enganchar `purchase()` y `AdSlot`) |
 
+> ### 📍 Estado (2026-07-12): ⏳ pendiente — Fase 3 (a propósito)
+> No hay nada que hacer acá todavía, y está bien: monetizar antes de tener usuarios es perder
+> tiempo. Volvé cuando haya tracción. Sigue todo **cableado y apagado** en `services/billing.ts`.
+
 > ⚠️ **Esto es FASE 3: "cuando tengas usuarios y/o plata".** Convoyar **no necesita nada de
 > esto para lanzar**. Monetizar antes de tener uso real es perder tiempo (y espantar gente).
 > Volvé a este doc cuando haya tracción; hasta entonces, dejalo apagado y seguí con lo demás.

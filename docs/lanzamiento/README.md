@@ -15,6 +15,31 @@
 
 ---
 
+## 📍 Estado actual (verificado el 2026-07-12)
+
+Esto es lo que **realmente** está hecho a hoy (lo probé contra tus servicios, no es una suposición):
+
+| Pieza | Estado | Detalle verificado |
+|---|---|---|
+| Proyectos Supabase (prod + dev) | ✅ **hecho** | `convoyar-prod` y `convoyar-dev` creados; claves en `.env` |
+| Schema en la base (prod) | ✅ **hecho** | Probé la API: las tablas `members`, `orgs`, etc. existen y responden |
+| RLS (seguridad) | ⏳ **verificá vos** | No lo pude confirmar desde afuera; instrucciones en el [doc 01](01-supabase-base-de-datos.md) |
+| Auth por email | 🟡 **a medias / trabado** | Falta SMTP (necesita dominio) y multi-idioma → ver [doc 02](02-auth-real.md), reescrito |
+| **App conectada a Supabase** | ❌ **NO hecho** | No hay `@supabase/supabase-js` ni cliente. **La app todavía NO usa la base.** Es el paso crítico → [doc 03](03-conectar-la-app.md) |
+| Deploy web (Cloudflare) | ✅ **LIVE** | Deployado en **https://convoyar-web.pages.dev** (Cloudflare **Pages**, no Worker). Falta apuntar `convoyar.com` → [doc 04](04-deploy-web-pwa.md) |
+| Resend / dominio | ❌ **trabado** | `convoyar.com` no resuelve (no lo controlás) → Resend nunca verifica. Alternativas en [doc 02](02-auth-real.md) |
+| Sentry | 🟡 **a medias** | Proyecto creado, DSN en `.env`; falta cablearlo bien (y con cuidado de privacidad) → [doc 10](10-analytics-y-monitoreo.md) |
+
+> **En una frase:** tenés la base de datos lista y las cuentas creadas, pero **la app sigue
+> siendo local** (no habla con Supabase todavía). El próximo paso que desbloquea todo es el
+> **[doc 03](03-conectar-la-app.md)** — eso es código, lo puedo hacer yo en una PR. Después,
+> deploy con las env vars correctas y probar con dos dispositivos.
+
+**Tu ruta más corta a "funciona de verdad":** doc 03 (conectar, 🤖 yo) → doc 04 (2 env vars
+en Cloudflare, 🧑 vos) → probar login con SMTP default de Supabase (sin depender de Resend/dominio).
+
+---
+
 ## 🧭 Cómo leer esta guía
 
 Cada paso está etiquetado para que sepas al toque de quién es la pelota:
@@ -114,12 +139,13 @@ El resto (Cloudflare, FCM) escala gratis muchísimo. Detalle en cada doc.
 Copiá esto y andá tildando. El detalle de cada ítem está en el doc que se linkea.
 
 **Fase 1 — Backend + web**
-- [ ] 🧑 Cuenta de Supabase creada y proyecto `convoyar-prod` levantado → [01](01-supabase-base-de-datos.md)
-- [ ] 🧑 Schema SQL corrido y RLS activado → [01](01-supabase-base-de-datos.md)
-- [ ] 🧑 Auth por email configurado + plantilla de email en español → [02](02-auth-real.md)
-- [ ] 🧑 SMTP propio (Resend) conectado para que los mails no caigan en spam → [02](02-auth-real.md)
-- [ ] 🤖 App conectada a Supabase (`.env`, cliente, repo remoto, mocks borrados) → [03](03-conectar-la-app.md)
-- [ ] 🧑 Web deployada en Cloudflare Pages con las env vars de producción → [04](04-deploy-web-pwa.md)
+- [x] 🧑 Cuenta de Supabase creada y proyectos `convoyar-prod` + `convoyar-dev` levantados → [01](01-supabase-base-de-datos.md)
+- [x] 🧑 Schema SQL corrido (verificado: las tablas existen en prod) → [01](01-supabase-base-de-datos.md)
+- [ ] 🧑 **Verificar que RLS quedó activado** (no lo pude confirmar desde afuera) → [01](01-supabase-base-de-datos.md)
+- [ ] 🧑 Auth por email configurado (para **testear ya**, usá el SMTP default de Supabase; Resend/dominio es para producción) → [02](02-auth-real.md)
+- [ ] 🧑 SMTP propio + multi-idioma → **trabado por falta de dominio** (alternativas en [02](02-auth-real.md))
+- [ ] 🤖 **App conectada a Supabase** (`@supabase/supabase-js`, cliente, repo remoto, mocks borrados) → [03](03-conectar-la-app.md) ← **PASO CRÍTICO, todavía NO hecho**
+- [ ] 🧑 Web deployada con las env vars `VITE_SUPABASE_*` (hoy da 404, faltan vars) → [04](04-deploy-web-pwa.md)
 - [ ] 🧑 (Opcional) Dominio propio apuntando a la web → [04](04-deploy-web-pwa.md)
 - [ ] 🧑 **Probado con dos dispositivos distintos** que ven la misma salida ✅
 

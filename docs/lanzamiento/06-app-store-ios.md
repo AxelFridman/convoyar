@@ -14,6 +14,11 @@ acá va lo específico de iOS.
 | 💰 Costo | **USD 99 / año** (Apple Developer Program) + eventualmente una Mac |
 | 🧑 / 🤖 | Casi todo **VOS** (en una Mac). Un cambio de código obligatorio: borrar cuenta 🤖 |
 
+> ### 📍 Estado (2026-07-12): ⏳ pendiente — Fase 2
+> No empezaste esto. **Necesitás una Mac** (Paso 0) y el Apple Developer Program (USD 99/año).
+> Va después de la Fase 1. Si querés llegar a usuarios rápido y barato, arrancá por Web + Android
+> y dejá iOS para cuando tengas la Mac resuelta.
+
 ---
 
 ## ⚠️ Paso 0 — El problema de la Mac (estás en Windows) 🧑

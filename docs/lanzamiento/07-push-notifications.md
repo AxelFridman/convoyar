@@ -14,6 +14,19 @@ tener las apps nativas armadas (docs [05](05-google-play.md)/[06](06-app-store-i
 | 💰 Costo | USD 0 (FCM y APNs son gratis) |
 | 🧑 / 🤖 | Firebase/Apple = **VOS**; el código del plugin y el sender = **CÓDIGO** |
 
+> ### 📍 Estado (2026-07-13): 🟡 credenciales listas, falta el código
+> **Ya tenés el proyecto Firebase `convoyar-940ec` creado** y sus credenciales en
+> [`.env`](../../.env): `firebaseConfig` web completo (`VITE_FIREBASE_*`), VAPID (web push),
+> `google-services.json` (Android) y el **service account admin** (sender). La tabla
+> `device_tokens` ya existe en la base ([doc 01](01-supabase-base-de-datos.md) ✅).
+> **Lo que falta es 100% código** (Pasos 4–5: plugin + `registerPush` + Edge Function
+> `send-push`), y conviene hacerlo **después del [doc 03](03-conectar-la-app.md)** (el push se
+> apoya en el login/`meId` real). El push real solo se puede *probar* con la app corriendo en
+> un dispositivo — no antes.
+>
+> ⚠️ El service account (`convoyar-940ec-df257ecbfdb6.json`) es **admin total**: está
+> gitignoreado; su lugar final son los *secrets* de la Edge Function de Supabase, no el repo.
+
 ---
 
 ## Cómo funciona el push (el modelo mental)

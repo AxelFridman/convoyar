@@ -14,6 +14,12 @@ porque la app Android es **esa misma web** empaquetada. Ideal también tener el
 | 💰 Costo | **USD 25** pago único, de por vida |
 | 🧑 / 🤖 | El grueso es **VOS** (cuentas, firma, Console). Algún cambio de código menor es 🤖 |
 
+> ### 📍 Estado (2026-07-12): ⏳ pendiente — Fase 2
+> No empezaste esto todavía. **Hacelo recién cuando la Fase 1 funcione de verdad** (app conectada
+> a Supabase — [doc 03](03-conectar-la-app.md) — y andando en la web — [doc 04](04-deploy-web-pwa.md)),
+> porque la app de Android es esa misma web empaquetada. Acordate del calendario: hay **14 días de
+> testing obligatorio** (Paso 9) antes de poder publicar.
+
 > ✅ **Buena noticia para vos:** Android se desarrolla **en Windows** sin problema (a
 > diferencia de iOS, que necesita Mac — ver [doc 06](06-app-store-ios.md)). Con tu Windows 11 alcanza.
 

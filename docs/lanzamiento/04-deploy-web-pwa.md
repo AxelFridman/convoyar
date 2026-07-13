@@ -19,6 +19,36 @@ de [01 · Supabase](01-supabase-base-de-datos.md) (de donde salen las claves que
 | 💰 Costo | USD 0 (Free tier) · dominio propio opcional ~USD 12/año |
 | 🧑 / 🤖 | Casi todo **VOS** (dashboard de Cloudflare). Un solo archivo nuevo en el repo (🤖). |
 
+> ### 📍 Estado (2026-07-12): ✅ LIVE en https://convoyar-web.pages.dev
+> Ya está deployado y sirviendo la app (lo verifiqué: HTTP 200). Cómo se resolvió:
+> - El intento inicial era un **Worker** (deploy con `npx wrangler deploy`) y fallaba con
+>   *"Vite 5.4.21 cannot be automatically configured, update to 6.0.0"*. **No actualizamos Vite**
+>   (rompería los tests): se hizo con **Cloudflare Pages**, que sirve `dist/` sin wrangler ni Vite 6.
+> - Se creó el proyecto **`convoyar-web`** y se subió por CLI (**direct upload**):
+>   ```bash
+>   npm run build
+>   npx wrangler pages deploy dist --project-name convoyar-web --branch main
+>   ```
+>   (con `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID` del `.env`). Repetí esos 2 comandos
+>   para re-deployar cuando cambies algo.
+>
+> **Lo que falta:** (a) apuntar `convoyar.com` a este proyecto Pages (ver Paso 6, y borrar el
+> Worker viejo que hoy muestra "Hello world"); (b) cuando exista el cliente Supabase
+> ([doc 03](03-conectar-la-app.md)), **rebuildear** con las env vars **prod** — en este flujo
+> por CLI las `VITE_*` se hornean **en tu máquina al buildear** (desde `.env`), no en el panel.
+>
+> 💡 Si preferís **auto-deploy en cada push**, en el dashboard podés crear un Pages con
+> **Connect to Git** (repo `AxelFridman/convoyar`, build `npm run build`, output `dist`) — ahí
+> sí las env vars van en el panel. El CLI de arriba es el atajo manual que ya te dejó la web viva.
+
+> ### ⚠️ Worker vs Pages (por qué el 404)
+> Cloudflare tiene dos productos que se confunden. Para este proyecto querés **Pages**:
+> **Workers & Pages → Create → Pages → Connect to Git**. Si lo que creaste fue un **Worker**
+> (te quedó una URL `*.workers.dev`), lo más limpio es **borrarlo y crear un Pages** apuntando
+> al repo `AxelFridman/convoyar` con Build `npm run build` y output `dist`. El `*.pages.dev`
+> resultante sí sirve tu app. (Los Workers también pueden servir estáticos, pero es más
+> vueltero; no te compliques.)
+
 ---
 
 ## ¿Por qué Cloudflare Pages?
@@ -94,10 +124,16 @@ build va a fallar al no encontrar las claves de Supabase.
 El código del [doc 03](03-conectar-la-app.md) lee dos variables para conectarse a Supabase.
 En Cloudflare: **Settings → Environment variables → Production → Add variable**:
 
-| Variable | Valor | De dónde sale |
+| Variable | Valor (de tu `.env`, PROD) | Nombre en tu `.env` |
 |---|---|---|
-| `VITE_SUPABASE_URL` | `https://xxxx.supabase.co` | Doc 01 · "Project URL" |
-| `VITE_SUPABASE_ANON_KEY` | la clave **anon / public** | Doc 01 · "anon key" |
+| `VITE_SUPABASE_URL` | `https://qlcwluvhrbkwjkjigsog.supabase.co` | `SUPABASE_LINK_PROD` |
+| `VITE_SUPABASE_ANON_KEY` | tu `sb_publishable_...` (empieza así) | `SUPABASE_PUBLISHABLE_KEY_PROD` |
+
+> ⚠️ **Los nombres NO coinciden con tu `.env` a propósito.** Tu `.env` los tiene como
+> `SUPABASE_LINK_PROD` / `SUPABASE_PUBLISHABLE_KEY_PROD` (útiles para tooling), pero **Vite solo
+> expone al navegador las que empiezan con `VITE_`**. Por eso en Cloudflare creás las variables
+> con el nombre **`VITE_SUPABASE_URL`** y **`VITE_SUPABASE_ANON_KEY`** y les pegás esos valores.
+> Y **jamás** pongas el `sb_secret_...` acá (bypassa RLS).
 
 Puntos que **tenés que** entender:
 

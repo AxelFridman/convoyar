@@ -14,6 +14,13 @@
 | 💰 Costo | USD 0 (free tier de las tres) |
 | 🧑 / 🤖 | Mitad y mitad: las cuentas y dashboards **VOS**; la integración en el front la hace Claude en una PR 🤖 |
 
+> ### 📍 Estado (2026-07-12): 🟡 empezaste Sentry
+> ✅ Creaste el proyecto Sentry y el **DSN ya está en tu `.env`** (te lo dejé también como
+> `VITE_SENTRY_DSN`). ⏳ Falta cablearlo en el código — pero **NO copies el snippet que te dio
+> el asistente de Sentry tal cual**: trae cosas que rompen la privacidad de Convoyar y no matchea
+> este proyecto. Usá la config de la **Parte 1** de abajo y leé el recuadro "⚠️ Sobre el snippet
+> del asistente". (Recordá: esto es opcional/Fase 3; no bloquea el lanzamiento.)
+
 ---
 
 ## ⏱️ Hacelo TEMPRANO (aunque figure en Fase 3)
@@ -64,6 +71,23 @@ if (import.meta.env.VITE_SENTRY_DSN) {
   <App />
 </Sentry.ErrorBoundary>
 ```
+
+> ### ⚠️ Sobre el snippet que te dio el asistente de Sentry
+> El asistente te tiró un bloque más grande. **No lo uses tal cual** — corregí esto:
+> - 🔴 **`Sentry.replayIntegration()` + `replaysSessionSampleRate`**: **Session Replay graba
+>   la pantalla del usuario**, y en Convoyar eso incluye **el mapa con su domicilio** → viola el
+>   invariante de privacidad #6. **Sacá el replay** (o, si algún día lo querés, hay que enmascarar
+>   todo y aun así el mapa es delicado). Para lanzar: sin replay.
+> - 🟠 **`tracesSampleRate: 1.0`** (100%): quema el free tier y agrega overhead. Dejalo en **`0.1`**.
+> - 🟠 **`getElementById("app")`**: en este proyecto el root es **`#root`** (mirá `index.html`).
+>   Y **no reemplaces tu `src/main.tsx`** con el render del asistente: tu `main.tsx` ya monta
+>   `<App/>` en `StrictMode`. Solo agregá `Sentry.init(...)` **arriba** de tu render actual.
+> - 🟠 **`tracePropagationTargets: [..., /yourserver\.io/]`**: es un placeholder. Sacalo o poné
+>   tu dominio real / la URL de Supabase.
+> - 🟢 **No hardcodees el DSN**: leelo de `import.meta.env.VITE_SENTRY_DSN` (ya está en tu `.env`).
+>
+> En resumen: quedate con el `Sentry.init({ dsn, environment, sendDefaultPii: false,
+> tracesSampleRate: 0.1 })` de arriba, sin replay. Es más chico, más barato y respeta la privacidad.
 
 > 💡 **Apps nativas (Capacitor).** Para los crashes de Android/iOS hay
 > [`@sentry/capacitor`](https://docs.sentry.io/platforms/javascript/guides/capacitor/),

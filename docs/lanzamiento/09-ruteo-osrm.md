@@ -20,6 +20,10 @@ adaptador ya escrito en [`src/engine/routing.ts`](../../src/engine/routing.ts).
 | 💰 Costo | USD 0 a ~USD 5/mes según opción (ver tabla) |
 | 🧑 / 🤖 | Casi todo **VOS** (levantar VM + Docker). El código es **1 línea** 🤖 |
 
+> ### 📍 Estado (2026-07-12): ⏳ pendiente — Fase 3 (opcional)
+> No hace falta tocar nada. La app usa el mock (haversine) y **alcanza para lanzar**. Volvé
+> solo si los desvíos por calle real empiezan a importar.
+
 ---
 
 ## Qué mejora OSRM (y qué no)
