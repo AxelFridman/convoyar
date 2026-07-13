@@ -375,3 +375,61 @@ test.describe("Mi viaje", () => {
     await expect(laPlata.getByText("Solicitud enviada")).toBeVisible();
   });
 });
+
+test.describe("Grupos (organizaciones)", () => {
+  test("crear un grupo lo deja activo y aparece el selector", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Crear grupo" }).click();
+    await page.getByPlaceholder("Los del asado").fill("Equipo de vóley");
+    await page.getByRole("button", { name: "Crear", exact: true }).click();
+    // el grupo nuevo pasa a ser el activo (título del header)
+    await expect(page.getByRole("heading", { name: "Equipo de vóley" })).toBeVisible();
+    // con 2+ grupos aparece el selector para volver al anterior
+    await expect(page.getByRole("tab", { name: "La Banda del Asado" })).toBeVisible();
+  });
+
+  test("unirse con un código inválido muestra el error", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Unirse con un código" }).click();
+    await page.getByPlaceholder("Ej: ABC123").fill("ZZZZZZ");
+    await page.getByRole("button", { name: "Unirme" }).click();
+    await expect(page.getByText("Código inválido o link deshabilitado.")).toBeVisible();
+  });
+
+  test("panel de invitar: código, toggle de link y compartir (admin)", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Invitar" }).click();
+    const sheet = page.locator(".inviteSheet");
+    await expect(sheet.getByText("ASADO-2611")).toBeVisible();
+    await expect(sheet.getByText("Compartir por link")).toBeVisible();
+    await expect(sheet.getByRole("button", { name: "Compartir link" })).toBeVisible();
+    // el padrón del grupo aparece en el panel
+    await expect(sheet.getByText(/Miembros \(\d+\)/)).toBeVisible();
+  });
+});
+
+test.describe("Moderación (reportar / bloquear)", () => {
+  test("reportar a un organizador desde su perfil queda en revisión", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("tab", { name: "Explorar" }).click();
+    await page.getByRole("button", { name: /Valen R\./ }).first().click();
+    await page.getByRole("button", { name: "Reportar" }).click();
+    await page.getByPlaceholder("Contanos qué pasó").fill("Prueba de reporte");
+    await page.getByRole("button", { name: "Enviar reporte" }).click();
+    await expect(page.getByText("queda en revisión")).toBeVisible();
+  });
+
+  test("bloquear a un organizador oculta sus salidas públicas", async ({ page }) => {
+    page.on("dialog", (d) => d.accept());
+    await page.goto("/");
+    await page.getByRole("tab", { name: "Explorar" }).click();
+    await expect(page.getByText("Finde en Mar del Plata")).toBeVisible();
+    // Valen organiza esa salida; la bloqueo desde su perfil
+    await page.getByRole("button", { name: /Valen R\./ }).first().click();
+    await page.getByRole("button", { name: "Bloquear" }).click();
+    await expect(page.getByText("no ves su contenido")).toBeVisible();
+    await page.locator(".sheetBack").click({ position: { x: 10, y: 10 } });
+    // su salida pública ya no aparece en Explorar
+    await expect(page.getByText("Finde en Mar del Plata")).toHaveCount(0);
+  });
+});

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useStore, useT } from "../state/store";
 import { localeOf } from "../i18n";
+import { isBlocked } from "../state/reputation";
 import { Avatar } from "./People";
 
 /**
@@ -15,7 +16,7 @@ export function Chat({ eventId }: { eventId: string }) {
   const hour12 = !!state.settings.hour12;
 
   const msgs = state.messages
-    .filter((m) => m.eventId === eventId)
+    .filter((m) => m.eventId === eventId && !isBlocked(state, m.fromMemberId))
     .sort((a, b) => a.at.localeCompare(b.at));
   const nameOf = (id: string) => state.members.find((m) => m.id === id)?.name ?? "?";
 

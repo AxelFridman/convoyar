@@ -9,6 +9,8 @@ import Profile from "./screens/Profile";
 import Onboarding from "./screens/Onboarding";
 import Auth from "./screens/Auth";
 import { hasSupabase } from "./services/supabaseClient";
+import { Sheet } from "./components/UI";
+import { iAmPaused } from "./state/reputation";
 import { IconHome, IconCompass, IconCar, IconRoute, IconSettings, IconUser } from "./components/Icons";
 
 type Tab = "home" | "explore" | "trip" | "results" | "admin" | "profile";
@@ -40,12 +42,17 @@ function Shell() {
     );
   if (hasSupabase && session === null) return <Auth />;
 
+  // Cuenta reportada/en revisión: el server bloquea las escrituras; la UI lo
+  // refleja amablemente y no deja operar. Sólo con backend (en local nadie se pausa).
+  if (hasSupabase && iAmPaused(state)) return <PausedGate />;
+
   // Onboarding SOLO en modo local/demo: las cuentas reales (Supabase) ya vienen
   // onboarded desde el bootstrap, así que el wizard nunca dispara con backend.
   if (!hasSupabase && !state.settings.onboarded) return <Onboarding />;
 
   return (
     <div className="app">
+      <JoinDeepLink />
       <main className="main">
         {tab === "home" && <Home onOpenEvent={openEvent} onExplore={() => setTab("explore")} />}
         {tab === "explore" && <Explore onOpenEvent={openEvent} />}
@@ -75,6 +82,77 @@ function Shell() {
         </TabBtn>
       </nav>
     </div>
+  );
+}
+
+/** Pantalla de cuenta pausada (reportada, en revisión humana). */
+function PausedGate() {
+  const T = useT();
+  return (
+    <div className="app">
+      <div className="emptyState pausedGate">
+        <div className="emptyArt" aria-hidden="true">⏳</div>
+        <h1>{T("paused.title")}</h1>
+        <p className="sub center">{T("paused.body")}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Si la URL trae `?join=CODIGO`, ofrece unirse a ese grupo (deep link de invitación). */
+function JoinDeepLink() {
+  const { state, joinOrgByCode } = useStore();
+  const T = useT();
+  const [code, setCode] = useState<string | null>(() =>
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("join") : null
+  );
+  const [err, setErr] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const dismiss = () => {
+    setCode(null);
+    if (typeof window !== "undefined" && window.history?.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("join");
+      window.history.replaceState({}, "", url.toString());
+    }
+  };
+
+  if (!code) return null;
+  // Ya soy miembro de ese grupo → no molesto con el prompt.
+  const already = state.orgs.some(
+    (o) => o.joinCode.toUpperCase() === code.toUpperCase() && o.memberIds.includes(state.meId)
+  );
+  if (already) return null;
+
+  const accept = async () => {
+    setBusy(true);
+    setErr(false);
+    try {
+      await joinOrgByCode(code);
+      dismiss();
+    } catch {
+      setErr(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Sheet open onClose={dismiss} title={T("join.title")}>
+      <div className="form">
+        <p className="sub">{T("join.body", { code })}</p>
+        {err && <p className="sub errorText">{T("home.joinError")}</p>}
+        <div className="row gap">
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={accept}>
+            {T("join.accept")}
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={dismiss}>
+            {T("join.dismiss")}
+          </button>
+        </div>
+      </div>
+    </Sheet>
   );
 }
 

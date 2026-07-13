@@ -1907,3 +1907,61 @@ button:focus-visible {
   .screen > * { opacity: 1 !important; transform: none !important; }
   .obStep { opacity: 1 !important; transform: none !important; }
 }
+
+/* ---- grupos (organizaciones): acciones, selector, invitación ---- */
+.groupActions {
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+/* Selector de grupo cuando pertenezco a 2+ (chips scrollables). */
+.orgTabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.orgTabs::-webkit-scrollbar { display: none; }
+.orgTab {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 99px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+.orgTab-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+/* codeRow "estático" dentro del sheet de invitar (no es un botón que copia). */
+.codeRow.static {
+  cursor: default;
+}
+.inviteSheet .prefRow { border-bottom: 0; }
+
+/* ---- moderación (reportar / bloquear) en el perfil ---- */
+.modBox {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.modActions {
+  flex-wrap: wrap;
+}
+
+/* mensajes de estado inline reutilizables */
+.errorText { color: var(--danger, #d64545); font-weight: 600; }
+.okText { color: var(--ok); font-weight: 600; }
+
+.pausedGate {
+  min-height: 60vh;
+  justify-content: center;
+}

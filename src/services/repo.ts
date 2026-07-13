@@ -54,6 +54,7 @@ interface MemberRow {
   bio: string | null;
   email: string | null;
   email_verified: boolean | null;
+  status: "active" | "paused" | null;
   auth_user_id: string | null;
 }
 interface MemberHomeRow {
@@ -65,6 +66,7 @@ interface OrgRow {
   id: string;
   name: string;
   join_code: string;
+  link_enabled: boolean | null;
   meeting_points: { id: string; name: string; lat: number; lng: number }[] | null;
 }
 interface OrgMemberRow {
@@ -166,7 +168,8 @@ function toMember(row: MemberRow, home?: MemberHomeRow): Member {
     joinedISO: row.joined_at,
     bio: row.bio ?? undefined,
     email: row.email ?? undefined,
-    emailVerified: row.email_verified ?? undefined
+    emailVerified: row.email_verified ?? undefined,
+    status: row.status === "paused" ? "paused" : "active"
   };
 }
 
@@ -181,6 +184,7 @@ function toOrg(row: OrgRow, orgMembers: OrgMemberRow[]): Org {
     id: row.id,
     name: row.name,
     joinCode: row.join_code,
+    linkEnabled: row.link_enabled ?? false,
     memberIds: mine.map((om) => om.member_id),
     adminIds: mine.filter((om) => om.is_admin).map((om) => om.member_id),
     meetingPoints
@@ -458,6 +462,7 @@ export async function loadRemote(meId: string): Promise<AppState> {
     messagesRes,
     assignmentsRes,
     tripHistRes,
+    blocksRes,
     settingsRes
   ] = await Promise.all([
     client.from("members").select("*"),
@@ -471,6 +476,8 @@ export async function loadRemote(meId: string): Promise<AppState> {
     client.from("messages").select("*"),
     client.from("assignments").select("*"),
     client.from("trip_history").select("*"),
+    // RLS: member_blocks es self-only → sólo trae a quién bloqueé yo.
+    client.from("member_blocks").select("blocked_id").eq("blocker_id", meId),
     client.from("member_settings").select("*").eq("member_id", meId).maybeSingle()
   ]);
 
@@ -489,6 +496,8 @@ export async function loadRemote(meId: string): Promise<AppState> {
   const assignments: Record<string, Assignment> = {};
   for (const a of (assignmentsRes.data ?? []) as AssignmentRow[]) assignments[a.event_id] = toAssignment(a);
 
+  const blockedIds = ((blocksRes.data ?? []) as { blocked_id: string }[]).map((b) => b.blocked_id);
+
   const settingsRow = settingsRes.data as SettingsRow | null;
   const settings = settingsRow ? toSettings(settingsRow) : { ...DEFAULT_SETTINGS };
 
@@ -506,7 +515,8 @@ export async function loadRemote(meId: string): Promise<AppState> {
     tripHistory,
     messages,
     settings,
-    activeOrgId: orgs[0]?.id ?? ""
+    activeOrgId: orgs[0]?.id ?? "",
+    blockedIds
   };
 }
 
@@ -590,6 +600,48 @@ export async function writeAction(action: Action, stateBefore: AppState): Promis
   } catch (e) {
     console.warn("[repo] writeAction falló", action.type, e);
   }
+}
+
+/* ============================ RPCs: orgs y moderación ============================ */
+/**
+ * Envoltorios finos de las funciones `security definer` del server
+ * (server/migrate-orgs.sql + migrate-moderation.sql). Sólo se invocan con
+ * `hasSupabase`. Propagan el error de Postgres para que la UI muestre el motivo
+ * (código inválido, link deshabilitado, email inexistente, no-admin…).
+ */
+export async function rpcCreateOrg(name: string): Promise<string> {
+  const { data, error } = await db().rpc("create_org", { p_name: name });
+  if (error) throw error;
+  return data as string;
+}
+export async function rpcJoinOrgByCode(code: string): Promise<string> {
+  const { data, error } = await db().rpc("join_org_by_code", { p_code: code });
+  if (error) throw error;
+  return data as string;
+}
+export async function rpcAddMemberByEmail(orgId: string, email: string): Promise<void> {
+  const { error } = await db().rpc("add_member_by_email", { p_org: orgId, p_email: email });
+  if (error) throw error;
+}
+export async function rpcSetOrgLink(orgId: string, enabled: boolean): Promise<void> {
+  const { error } = await db().rpc("set_org_link", { p_org: orgId, p_enabled: enabled });
+  if (error) throw error;
+}
+export async function rpcLeaveOrg(orgId: string): Promise<void> {
+  const { error } = await db().rpc("leave_org", { p_org: orgId });
+  if (error) throw error;
+}
+export async function rpcReportMember(memberId: string, reason: string): Promise<void> {
+  const { error } = await db().rpc("report_member", { p_reported: memberId, p_reason: reason || null });
+  if (error) throw error;
+}
+export async function rpcBlockMember(memberId: string): Promise<void> {
+  const { error } = await db().rpc("block_member", { p_blocked: memberId });
+  if (error) throw error;
+}
+export async function rpcUnblockMember(memberId: string): Promise<void> {
+  const { error } = await db().rpc("unblock_member", { p_blocked: memberId });
+  if (error) throw error;
 }
 
 /* ============================ realtime ============================ */

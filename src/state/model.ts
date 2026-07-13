@@ -46,6 +46,9 @@ export interface Member {
   /** Email de contacto/cuenta (opcional). La verificación real llega en PR5. */
   email?: string;
   emailVerified?: boolean;
+  /** Estado de moderación. 'paused' = reportado, en revisión humana: no puede
+   *  operar (el server bloquea las escrituras; la UI lo refleja). Ausente = activo. */
+  status?: "active" | "paused";
 }
 
 /** Reseña post-viaje de un miembro a otro (1–5 estrellas). */
@@ -84,6 +87,9 @@ export interface Org {
   /** Quiénes pueden administrar eventos de la org (calcular, mover, aceptar solicitudes). */
   adminIds: string[];
   meetingPoints: MeetingPointDoc[];
+  /** Link/código self-serve (tipo Google Drive): ON = cualquiera con el código se
+   *  une solo; OFF = solo el admin agrega a mano por email. Ausente = OFF. */
+  linkEnabled?: boolean;
 }
 
 /** private = solo la org. public = descubrible en Explorar; se entra pidiendo lugar. */
@@ -199,4 +205,7 @@ export interface AppState {
   messages: ChatMessage[];
   settings: Settings;
   activeOrgId: string;
+  /** A quién bloqueé (moderación personal): no veo su contenido. Cross-user en
+   *  Supabase viene de `member_blocks`; en local se maneja por reducer. */
+  blockedIds: string[];
 }

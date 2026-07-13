@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useStore, useT } from "../state/store";
-import { isParticipant, myRequestFor, pendingRequestsFor } from "../state/reputation";
+import { isBlocked, isParticipant, myRequestFor, pendingRequestsFor } from "../state/reputation";
 import { MemberProfile, PersonLine } from "../components/People";
 import { Sheet } from "../components/UI";
 import { IconCar, IconCheck, IconGlobe, IconPin, IconUsers } from "../components/Icons";
@@ -51,7 +51,8 @@ export default function Explore({
   const now = useMemo(() => new Date(), []);
 
   const allPublic = state.events
-    .filter((e) => e.visibility === "public")
+    // No mostramos salidas públicas de organizadores que bloqueé.
+    .filter((e) => e.visibility === "public" && !isBlocked(state, e.createdBy))
     .sort((a, b) => a.dateISO.localeCompare(b.dateISO));
   const events = allPublic.filter((e) => inRange(e.dateISO, range, now));
 

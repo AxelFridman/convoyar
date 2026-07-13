@@ -143,3 +143,15 @@ export function hueOf(id: string): number {
 export function memberById(state: Pick<AppState, "members">, id: string): Member | undefined {
   return state.members.find((m) => m.id === id);
 }
+
+/* ---------- moderación (bloquear / cuenta pausada) ---------- */
+
+/** ¿Bloqueé a este miembro? (bloqueo personal: dejo de ver su contenido). */
+export function isBlocked(state: Pick<AppState, "blockedIds">, memberId: string): boolean {
+  return (state.blockedIds ?? []).includes(memberId);
+}
+
+/** ¿Mi propia cuenta está pausada (reportada, en revisión humana)? */
+export function iAmPaused(state: Pick<AppState, "members" | "meId">): boolean {
+  return state.members.find((m) => m.id === state.meId)?.status === "paused";
+}

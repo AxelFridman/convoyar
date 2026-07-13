@@ -442,6 +442,7 @@ export function buildSeed(): AppState {
       fuelPricePerL: 1000
     },
     activeOrgId: "org1",
+    blockedIds: [],
   };
 }
 

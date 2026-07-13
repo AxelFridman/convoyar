@@ -3,6 +3,7 @@ import { useStore, useT } from "../state/store";
 import {
   hueOf,
   initialsOf,
+  isBlocked,
   memberSince,
   ratingOf,
   reviewsOf,
@@ -112,19 +113,26 @@ export function PersonLine({
  * `allowRate` muestra el formulario para dejar una reseña (demo: siempre desde meId).
  */
 export function MemberProfile({ memberId, allowRate }: { memberId: string; allowRate?: boolean }) {
-  const { state, rateMember } = useStore();
+  const { state, rateMember, blockMember, unblockMember, reportMember } = useStore();
   const T = useT();
   const lang = state.settings.lang;
   const m = state.members.find((x) => x.id === memberId);
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
   const [sent, setSent] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [reported, setReported] = useState(false);
   if (!m) return null;
 
   const rating = ratingOf(state, m.id);
   const trips = tripCountOf(state, m.id);
   const recent = tripsOf(state, m.id).slice(0, 4);
-  const reviews = reviewsOf(state, m.id).slice(0, 3);
+  // No mostramos reseñas escritas por gente que bloqueé.
+  const reviews = reviewsOf(state, m.id)
+    .filter((r) => !isBlocked(state, r.fromMemberId))
+    .slice(0, 3);
+  const blocked = isBlocked(state, m.id);
   const nameOf = (id: string) => state.members.find((x) => x.id === id)?.name ?? "?";
 
   return (
@@ -219,6 +227,62 @@ export function MemberProfile({ memberId, allowRate }: { memberId: string; allow
                 {T("profile.rateSend")}
               </button>
             </>
+          )}
+        </div>
+      )}
+
+      {/* Moderación: reportar (pausa server-side) / bloquear (personal). No propia. */}
+      {m.id !== state.meId && (
+        <div className="modBox">
+          {blocked ? (
+            <>
+              <p className="sub">{T("mod.blockedNote")}</p>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => void unblockMember(m.id)}>
+                {T("mod.unblock")}
+              </button>
+            </>
+          ) : reported ? (
+            <p className="sub okText">{T("mod.reportDone")}</p>
+          ) : reportOpen ? (
+            <div className="field">
+              <h4 className="eyebrow">{T("mod.reportTitle", { name: m.name })}</h4>
+              <input
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder={T("mod.reportPlaceholder")}
+              />
+              <div className="row gap">
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm danger"
+                  onClick={async () => {
+                    await reportMember(m.id, reason);
+                    setReported(true);
+                    setReportOpen(false);
+                  }}
+                >
+                  {T("mod.reportSend")}
+                </button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReportOpen(false)}>
+                  {T("common.cancel")}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="row gap modActions">
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReportOpen(true)}>
+                {T("mod.report")}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm danger"
+                onClick={() => {
+                  if (confirm(T("mod.blockConfirm", { name: m.name }))) void blockMember(m.id);
+                }}
+              >
+                {T("mod.block")}
+              </button>
+            </div>
           )}
         </div>
       )}

@@ -13,9 +13,10 @@ import {
   IconCompass
 } from "../components/Icons";
 import { AdSlot, Segmented, Sheet } from "../components/UI";
+import { PersonLine } from "../components/People";
 import MapPicker from "../components/MapPicker";
 import type { LatLng } from "../engine/types";
-import type { EventVisibility } from "../state/model";
+import type { EventVisibility, Org } from "../state/model";
 import { pendingRequestsFor } from "../state/reputation";
 import { localeOf } from "../i18n";
 
@@ -33,11 +34,14 @@ export default function Home({
   const T = useT();
   const [notifOpen, setNotifOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Una cuenta nueva/vacía puede no tener org activa (0 orgs): NUNCA asumir que
   // existe. Sin org mostramos un empty state amable en vez de crashear.
   const org = state.orgs.find((o) => o.id === state.activeOrgId);
+  // Grupos a los que pertenezco (para el selector de grupo del header).
+  const myOrgs = state.orgs.filter((o) => o.memberIds.includes(state.meId));
   const unread = state.notifications.filter((n) => n.memberId === state.meId && !n.read).length;
 
   if (!org) {
@@ -56,8 +60,9 @@ export default function Home({
         <div className="emptyState">
           <div className="emptyArt" aria-hidden="true">🚗</div>
           <p className="sub center">{T("home.noOrgBody")}</p>
+          <GroupActions />
           {onExplore && (
-            <button type="button" className="btn btn-primary" onClick={onExplore}>
+            <button type="button" className="btn btn-ghost" onClick={onExplore}>
               <IconCompass size={16} /> {T("home.noOrgCta")}
             </button>
           )}
@@ -68,6 +73,8 @@ export default function Home({
       </div>
     );
   }
+
+  const isAdmin = org.adminIds.includes(state.meId);
 
   const events = state.events
     .filter((e) => e.orgId === org.id)
@@ -93,11 +100,33 @@ export default function Home({
             {org.memberIds.length} {T("home.members", { n: "" }).trim()}
           </div>
         </div>
-        <button type="button" className="iconBtn" onClick={() => setNotifOpen(true)} aria-label={T("notif.title")}>
-          <IconBell />
-          {unread > 0 && <span className="badge num">{unread}</span>}
-        </button>
+        <div className="row gap">
+          <button type="button" className="iconBtn" onClick={() => setInviteOpen(true)} aria-label={T("home.invite")}>
+            <IconUsers />
+          </button>
+          <button type="button" className="iconBtn" onClick={() => setNotifOpen(true)} aria-label={T("notif.title")}>
+            <IconBell />
+            {unread > 0 && <span className="badge num">{unread}</span>}
+          </button>
+        </div>
       </header>
+
+      {myOrgs.length >= 2 && (
+        <div className="orgTabs" role="tablist" aria-label={T("home.switchGroup")}>
+          {myOrgs.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="tab"
+              aria-selected={o.id === org.id}
+              className={`orgTab ${o.id === org.id ? "orgTab-on" : ""}`}
+              onClick={() => dispatch({ type: "setActiveOrg", orgId: o.id })}
+            >
+              {o.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       <button type="button" className="codeRow" onClick={copyCode}>
         <span className="codeLabel">{T("home.inviteCode")}</span>
@@ -166,6 +195,11 @@ export default function Home({
 
       <AdSlot />
 
+      {/* Grupos ilimitados: siempre podés crear otro o sumarte a uno con un código. */}
+      <div className="groupActionsFooter">
+        <GroupActions />
+      </div>
+
       <Sheet open={notifOpen} onClose={() => setNotifOpen(false)} title={T("notif.title")}>
         <NotifList onAllRead={() => dispatch({ type: "markNotifsRead" })} />
       </Sheet>
@@ -178,6 +212,228 @@ export default function Home({
           }}
         />
       </Sheet>
+
+      <Sheet open={inviteOpen} onClose={() => setInviteOpen(false)} title={T("invite.title")}>
+        <InvitePanel org={org} isAdmin={isAdmin} onLeft={() => setInviteOpen(false)} />
+      </Sheet>
+    </div>
+  );
+}
+
+/** Botones "Crear grupo" y "Unirse con un código" + sus sheets. Autónomo:
+ *  se usa en el empty state de Home y en cualquier lugar que ofrezca grupos. */
+function GroupActions() {
+  const { createOrg, joinOrgByCode } = useStore();
+  const T = useT();
+  const [mode, setMode] = useState<null | "create" | "join">(null);
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const doCreate = async () => {
+    if (!name.trim() || busy) return;
+    setBusy(true);
+    try {
+      await createOrg(name.trim());
+      setName("");
+      setMode(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const doJoin = async () => {
+    if (!code.trim() || busy) return;
+    setBusy(true);
+    setErr(false);
+    try {
+      await joinOrgByCode(code.trim());
+      setCode("");
+      setMode(null);
+    } catch {
+      setErr(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="row gap groupActions">
+        <button type="button" className="btn btn-primary" onClick={() => setMode("create")}>
+          <IconPlus size={16} /> {T("home.createGroup")}
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={() => setMode("join")}>
+          {T("home.joinGroup")}
+        </button>
+      </div>
+
+      <Sheet open={mode === "create"} onClose={() => setMode(null)} title={T("home.createGroupTitle")}>
+        <div className="form">
+          <label className="field">
+            <span>{T("home.groupName")}</span>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={T("home.groupNamePlaceholder")} />
+          </label>
+          <button type="button" className="btn btn-primary btn-block" disabled={!name.trim() || busy} onClick={doCreate}>
+            {T("home.createGroupBtn")}
+          </button>
+        </div>
+      </Sheet>
+
+      <Sheet
+        open={mode === "join"}
+        onClose={() => {
+          setMode(null);
+          setErr(false);
+        }}
+        title={T("home.joinGroupTitle")}
+      >
+        <div className="form">
+          <label className="field">
+            <span>{T("home.joinCode")}</span>
+            <input
+              className="num"
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value);
+                setErr(false);
+              }}
+              placeholder={T("home.joinCodePlaceholder")}
+            />
+          </label>
+          {err && <p className="sub errorText">{T("home.joinError")}</p>}
+          <button type="button" className="btn btn-primary btn-block" disabled={!code.trim() || busy} onClick={doJoin}>
+            {T("home.joinGroupBtn")}
+          </button>
+        </div>
+      </Sheet>
+    </>
+  );
+}
+
+/** Panel de invitación: código, toggle de link, compartir, agregar por email
+ *  (admin), padrón y salir del grupo. */
+function InvitePanel({ org, isAdmin, onLeft }: { org: Org; isAdmin: boolean; onLeft: () => void }) {
+  const { state, addMemberByEmail, setOrgLink, leaveOrg } = useStore();
+  const T = useT();
+  const [email, setEmail] = useState("");
+  const [addMsg, setAddMsg] = useState<null | "ok" | "err">(null);
+  const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const joinUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}?join=${encodeURIComponent(org.joinCode)}`
+      : `?join=${encodeURIComponent(org.joinCode)}`;
+
+  const share = async () => {
+    const text = T("invite.shareText", { org: org.name });
+    const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> };
+    if (nav.share) {
+      try {
+        await nav.share({ title: "Convoyar", text, url: joinUrl });
+        return;
+      } catch {
+        /* el usuario canceló el share nativo: caemos a copiar */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(joinUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard puede fallar en iframes */
+    }
+  };
+
+  const doAdd = async () => {
+    if (!email.trim() || busy) return;
+    setBusy(true);
+    setAddMsg(null);
+    try {
+      await addMemberByEmail(org.id, email.trim());
+      setAddMsg("ok");
+      setEmail("");
+    } catch {
+      setAddMsg("err");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const members = org.memberIds
+    .map((id) => state.members.find((m) => m.id === id))
+    .filter((m): m is NonNullable<typeof m> => !!m);
+
+  return (
+    <div className="form inviteSheet">
+      <div className="codeRow static">
+        <span className="codeLabel">{T("invite.code")}</span>
+        <span className="code num">{org.joinCode}</span>
+      </div>
+
+      <button type="button" className="btn btn-primary btn-block" onClick={share}>
+        <IconCopy size={16} /> {copied ? T("invite.linkCopied") : T("invite.share")}
+      </button>
+
+      {isAdmin && (
+        <>
+          <div className="prefRow">
+            <span>{T("invite.shareLink")}</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!!org.linkEnabled}
+              aria-label={T("invite.shareLink")}
+              className={`toggle ${org.linkEnabled ? "toggle-on" : ""}`}
+              onClick={() => setOrgLink(org.id, !org.linkEnabled)}
+            >
+              <span className="toggleKnob" />
+            </button>
+          </div>
+          <p className="sub">{T("invite.shareLinkHint")}</p>
+
+          <div className="field">
+            <span>{T("invite.addByEmail")}</span>
+            <div className="row gap">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setAddMsg(null);
+                }}
+                placeholder={T("invite.emailPlaceholder")}
+              />
+              <button type="button" className="btn btn-ghost" disabled={!email.trim() || busy} onClick={doAdd}>
+                {T("invite.add")}
+              </button>
+            </div>
+            {addMsg === "ok" && <p className="sub okText">{T("invite.addOk")}</p>}
+            {addMsg === "err" && <p className="sub errorText">{T("invite.addError")}</p>}
+          </div>
+        </>
+      )}
+
+      <div className="field">
+        <span>{T("invite.members", { n: members.length })}</span>
+        {members.slice(0, 30).map((m) => (
+          <PersonLine key={m.id} memberId={m.id} />
+        ))}
+      </div>
+
+      <button
+        type="button"
+        className="btn btn-ghost danger btn-block"
+        onClick={() => {
+          if (confirm(T("invite.leaveConfirm", { org: org.name }))) {
+            void leaveOrg(org.id);
+            onLeft();
+          }
+        }}
+      >
+        {T("invite.leave")}
+      </button>
     </div>
   );
 }

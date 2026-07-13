@@ -401,7 +401,55 @@ export const es = {
   "profile.home": "Tu casa (opcional)",
   "profile.homeHint": "Punto de partida por defecto. Podés elegir otro en cada viaje.",
   "profile.noHome": "Sin casa guardada. Tocá el mapa para agregar una.",
-  "profile.clearHome": "Borrar mi casa"
+  "profile.clearHome": "Borrar mi casa",
+
+  "home.createGroup": "Crear grupo",
+  "home.createGroupTitle": "Nuevo grupo",
+  "home.groupName": "Nombre del grupo",
+  "home.groupNamePlaceholder": "Los del asado, la oficina, el club…",
+  "home.createGroupBtn": "Crear",
+  "home.joinGroup": "Unirse con un código",
+  "home.joinGroupTitle": "Unirse a un grupo",
+  "home.joinCode": "Código del grupo",
+  "home.joinCodePlaceholder": "Ej: ABC123",
+  "home.joinError": "Código inválido o link deshabilitado.",
+  "home.joinGroupBtn": "Unirme",
+  "home.switchGroup": "Cambiar de grupo",
+  "home.invite": "Invitar",
+
+  "invite.title": "Invitar al grupo",
+  "invite.code": "Código del grupo",
+  "invite.shareLink": "Compartir por link",
+  "invite.shareLinkHint": "Con el link activado, cualquiera con el código se suma solo. Apagado, solo vos agregás por email.",
+  "invite.share": "Compartir link",
+  "invite.shareText": "Sumate a {org} en Convoyar",
+  "invite.linkCopied": "Link copiado",
+  "invite.addByEmail": "Agregar por email",
+  "invite.emailPlaceholder": "persona@email.com",
+  "invite.add": "Agregar",
+  "invite.addOk": "Listo, sumamos a esa persona al grupo.",
+  "invite.addError": "No encontramos a nadie con ese email.",
+  "invite.members": "Miembros ({n})",
+  "invite.leave": "Salir del grupo",
+  "invite.leaveConfirm": "¿Seguro que querés salir de {org}?",
+
+  "join.title": "Te invitaron a un grupo",
+  "join.body": "Alguien te compartió un grupo con el código {code}. ¿Querés unirte?",
+  "join.accept": "Unirme al grupo",
+  "join.dismiss": "Ahora no",
+
+  "mod.report": "Reportar",
+  "mod.reportTitle": "Reportar a {name}",
+  "mod.reportPlaceholder": "Contanos qué pasó (opcional)",
+  "mod.reportSend": "Enviar reporte",
+  "mod.reportDone": "Gracias. Tu reporte queda en revisión de nuestro equipo.",
+  "mod.block": "Bloquear",
+  "mod.unblock": "Desbloquear",
+  "mod.blockConfirm": "¿Bloquear a {name}? Vas a dejar de ver su contenido.",
+  "mod.blockedNote": "Bloqueaste a esta persona: no ves su contenido.",
+
+  "paused.title": "Tu cuenta está en revisión",
+  "paused.body": "Recibimos un reporte y nuestro equipo lo está mirando. Mientras tanto no podés crear ni editar viajes. Te avisamos apenas se resuelva."
 };
 
 export type TKey = keyof typeof es;

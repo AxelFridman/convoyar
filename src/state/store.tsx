@@ -17,6 +17,7 @@ import type {
   Leg,
   Member,
   Notification,
+  Org,
   Review,
   Settings
 } from "./model";
@@ -31,7 +32,20 @@ import { participantsOf } from "./reputation";
 import { legVehicle } from "./vehicles";
 import { translate, type Lang, type TKey } from "../i18n";
 import { hasSupabase, supabase } from "../services/supabaseClient";
-import { bootstrapMember, loadRemote, subscribeRealtime, writeAction } from "../services/repo";
+import {
+  bootstrapMember,
+  loadRemote,
+  rpcAddMemberByEmail,
+  rpcBlockMember,
+  rpcCreateOrg,
+  rpcJoinOrgByCode,
+  rpcLeaveOrg,
+  rpcReportMember,
+  rpcSetOrgLink,
+  rpcUnblockMember,
+  subscribeRealtime,
+  writeAction
+} from "../services/repo";
 import type { Session } from "@supabase/supabase-js";
 
 export type Action =
@@ -50,6 +64,10 @@ export type Action =
   | { type: "addMessage"; message: ChatMessage }
   | { type: "setSettings"; patch: Partial<Settings> }
   | { type: "setActiveOrg"; orgId: string }
+  | { type: "addOrg"; org: Org }
+  | { type: "updateOrg"; org: Org }
+  | { type: "blockMember"; memberId: string }
+  | { type: "unblockMember"; memberId: string }
   | { type: "reset" };
 
 function reducer(s: AppState, a: Action): AppState {
@@ -108,6 +126,16 @@ function reducer(s: AppState, a: Action): AppState {
       return { ...s, settings: { ...s.settings, ...a.patch } };
     case "setActiveOrg":
       return { ...s, activeOrgId: a.orgId };
+    case "addOrg":
+      return { ...s, orgs: [...s.orgs, a.org] };
+    case "updateOrg":
+      return { ...s, orgs: s.orgs.map((o) => (o.id === a.org.id ? a.org : o)) };
+    case "blockMember":
+      return s.blockedIds.includes(a.memberId)
+        ? s
+        : { ...s, blockedIds: [...s.blockedIds, a.memberId] };
+    case "unblockMember":
+      return { ...s, blockedIds: s.blockedIds.filter((id) => id !== a.memberId) };
     case "reset":
       return buildSeed();
     default:
@@ -287,6 +315,15 @@ export function defaultPassengerLeg(s: AppState, eventId: string, memberId: stri
   };
 }
 
+/** Código de invitación local (modo demo): 6 chars sin ambigüedades (0/O, 1/I).
+ *  Con backend real el código lo genera `create_org` en Postgres. */
+function genJoinCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < 6; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
 /* ---------- contexto ---------- */
 interface Store {
   state: AppState;
@@ -306,6 +343,22 @@ interface Store {
   rateMember: (toMemberId: string, stars: number, comment?: string) => void;
   /** Publica un mensaje en el chat de un convoy (demo: alguien responde solo). */
   sendMessage: (eventId: string, body: string) => void;
+  /** Crea un grupo nuevo (quedás admin) y lo deja activo. */
+  createOrg: (name: string) => Promise<void>;
+  /** Se une a un grupo por código/link; tira si el código no existe o el link
+   *  está deshabilitado (la UI muestra "código inválido / link deshabilitado"). */
+  joinOrgByCode: (code: string) => Promise<void>;
+  /** Admin agrega a alguien por email; tira si no existe ese usuario. */
+  addMemberByEmail: (orgId: string, email: string) => Promise<void>;
+  /** Admin habilita/deshabilita el link/código self-serve del grupo. */
+  setOrgLink: (orgId: string, enabled: boolean) => Promise<void>;
+  /** Salir de un grupo. */
+  leaveOrg: (orgId: string) => Promise<void>;
+  /** Reporta a un miembro (server-side lo pausa hasta revisión humana). */
+  reportMember: (memberId: string, reason: string) => Promise<void>;
+  /** Bloqueo personal: dejo de ver el contenido del bloqueado. */
+  blockMember: (memberId: string) => Promise<void>;
+  unblockMember: (memberId: string) => Promise<void>;
   resetDemo: () => void;
   computing: boolean;
   /** Sesión Supabase: undefined = cargando, null = sin sesión, Session = logueado.
@@ -329,7 +382,10 @@ const Ctx = createContext<Store | null>(null);
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, rawDispatch] = useReducer(reducer, null as unknown as AppState, () => {
     const loaded = loadState<AppState>();
-    return loaded && loaded.version === 4 ? loaded : buildSeed();
+    // Estado v4 previo a moderación puede no tener `blockedIds`: lo rellenamos
+    // acá (sin bump de versión) para no romper cuentas demo ya guardadas.
+    if (loaded && loaded.version === 4) return { ...loaded, blockedIds: loaded.blockedIds ?? [] };
+    return buildSeed();
   });
   const [computing, setComputing] = useState(false);
   // undefined = todavía cargando la sesión (sólo con backend); null = sin sesión.
@@ -747,6 +803,166 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     timersRef.current.push(h);
   }, []);
 
+  /* ---- organizaciones (grupos) + moderación ---- */
+
+  // Rehidrata desde la base tras una RPC (crear/unirse/salir/invitar). Deja activo
+  // `preferOrgId` si sigo perteneciendo; si no, la primera org mía (o vacío).
+  const refreshRemote = useCallback(async (preferOrgId?: string) => {
+    if (!supabase) return;
+    try {
+      const remote = await loadRemote(stateRef.current.meId);
+      const prev = preferOrgId ?? stateRef.current.activeOrgId;
+      const active = remote.orgs.some((o) => o.id === prev) ? prev : remote.orgs[0]?.id ?? "";
+      rawDispatch({
+        type: "hydrate",
+        state: { ...remote, notifications: stateRef.current.notifications, activeOrgId: active }
+      });
+    } catch (e) {
+      console.warn("[store] refreshRemote falló", e);
+    }
+  }, []);
+
+  const createOrg = useCallback(
+    async (name: string) => {
+      const clean = name.trim() || "Mi grupo";
+      if (hasSupabase && supabase) {
+        const orgId = await rpcCreateOrg(clean);
+        await refreshRemote(orgId);
+      } else {
+        const meId = stateRef.current.meId;
+        const org: Org = {
+          id: `org-${Date.now().toString(36)}`,
+          name: clean,
+          joinCode: genJoinCode(),
+          memberIds: [meId],
+          adminIds: [meId],
+          meetingPoints: [],
+          linkEnabled: false
+        };
+        dispatch({ type: "addOrg", org });
+        dispatch({ type: "setActiveOrg", orgId: org.id });
+      }
+    },
+    [refreshRemote]
+  );
+
+  const joinOrgByCode = useCallback(
+    async (code: string) => {
+      const clean = code.trim();
+      if (!clean) throw new Error("codigo invalido");
+      if (hasSupabase && supabase) {
+        const orgId = await rpcJoinOrgByCode(clean);
+        await refreshRemote(orgId);
+      } else {
+        const s = stateRef.current;
+        const org = s.orgs.find((o) => o.joinCode.toUpperCase() === clean.toUpperCase());
+        if (!org) throw new Error("codigo invalido");
+        // Igual que la RPC: sin link habilitado, nadie se une solo.
+        if (!org.linkEnabled) throw new Error("link deshabilitado");
+        if (!org.memberIds.includes(s.meId)) {
+          dispatch({ type: "updateOrg", org: { ...org, memberIds: [...org.memberIds, s.meId] } });
+        }
+        dispatch({ type: "setActiveOrg", orgId: org.id });
+      }
+    },
+    [refreshRemote]
+  );
+
+  const addMemberByEmail = useCallback(
+    async (orgId: string, email: string) => {
+      const clean = email.trim();
+      if (!clean) throw new Error("email invalido");
+      if (hasSupabase && supabase) {
+        await rpcAddMemberByEmail(orgId, clean);
+        await refreshRemote(orgId);
+      } else {
+        const s = stateRef.current;
+        const org = s.orgs.find((o) => o.id === orgId);
+        const target = s.members.find((m) => (m.email ?? "").toLowerCase() === clean.toLowerCase());
+        if (!org) throw new Error("org inexistente");
+        if (!target) throw new Error("no existe usuario con ese email");
+        if (!org.memberIds.includes(target.id)) {
+          dispatch({ type: "updateOrg", org: { ...org, memberIds: [...org.memberIds, target.id] } });
+        }
+      }
+    },
+    [refreshRemote]
+  );
+
+  const setOrgLink = useCallback(
+    async (orgId: string, enabled: boolean) => {
+      if (hasSupabase && supabase) {
+        await rpcSetOrgLink(orgId, enabled);
+        await refreshRemote(orgId);
+      } else {
+        const org = stateRef.current.orgs.find((o) => o.id === orgId);
+        if (org) dispatch({ type: "updateOrg", org: { ...org, linkEnabled: enabled } });
+      }
+    },
+    [refreshRemote]
+  );
+
+  const leaveOrg = useCallback(
+    async (orgId: string) => {
+      if (hasSupabase && supabase) {
+        await rpcLeaveOrg(orgId);
+        await refreshRemote(); // ya no pertenezco → refreshRemote elige otra org mía
+      } else {
+        const s = stateRef.current;
+        const org = s.orgs.find((o) => o.id === orgId);
+        if (org) {
+          dispatch({
+            type: "updateOrg",
+            org: {
+              ...org,
+              memberIds: org.memberIds.filter((id) => id !== s.meId),
+              adminIds: org.adminIds.filter((id) => id !== s.meId)
+            }
+          });
+        }
+        if (s.activeOrgId === orgId) {
+          const next = s.orgs.find((o) => o.id !== orgId && o.memberIds.includes(s.meId));
+          dispatch({ type: "setActiveOrg", orgId: next?.id ?? "" });
+        }
+      }
+    },
+    [refreshRemote]
+  );
+
+  const reportMember = useCallback(async (memberId: string, reason: string) => {
+    if (hasSupabase && supabase) {
+      // El server pausa al reportado; realtime (tabla members) refleja el cambio.
+      await rpcReportMember(memberId, reason.trim());
+    } else {
+      const s = stateRef.current;
+      const m = s.members.find((x) => x.id === memberId);
+      if (m) dispatch({ type: "updateMember", member: { ...m, status: "paused" } });
+    }
+  }, []);
+
+  const blockMember = useCallback(async (memberId: string) => {
+    // Optimista en ambos modos: el filtro de contenido usa state.blockedIds.
+    dispatch({ type: "blockMember", memberId });
+    if (hasSupabase && supabase) {
+      try {
+        await rpcBlockMember(memberId);
+      } catch (e) {
+        console.warn("[store] block_member falló", e);
+      }
+    }
+  }, []);
+
+  const unblockMember = useCallback(async (memberId: string) => {
+    dispatch({ type: "unblockMember", memberId });
+    if (hasSupabase && supabase) {
+      try {
+        await rpcUnblockMember(memberId);
+      } catch (e) {
+        console.warn("[store] unblock_member falló", e);
+      }
+    }
+  }, []);
+
   const resetDemo = useCallback(() => {
     clearState();
     dispatch({ type: "reset" });
@@ -774,6 +990,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     decideRequest,
     rateMember,
     sendMessage,
+    createOrg,
+    joinOrgByCode,
+    addMemberByEmail,
+    setOrgLink,
+    leaveOrg,
+    reportMember,
+    blockMember,
+    unblockMember,
     resetDemo,
     computing,
     session,

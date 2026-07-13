@@ -6,6 +6,7 @@ import { Sheet } from "../components/UI";
 import { Avatar, MemberProfile, Stars } from "../components/People";
 import {
   canAdminEvent,
+  isBlocked,
   memberSince,
   pendingRequestsFor,
   ratingOf,
@@ -321,7 +322,8 @@ function RequestsPanel({
   const { state } = useStore();
   const T = useT();
   const lang = state.settings.lang;
-  const pending = pendingRequestsFor(state, eventId);
+  // No mostramos solicitudes de gente que bloqueé.
+  const pending = pendingRequestsFor(state, eventId).filter((r) => !isBlocked(state, r.memberId));
 
   return (
     <section className="requestsPanel">
