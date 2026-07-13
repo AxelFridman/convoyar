@@ -369,7 +369,7 @@ export const en: Record<TKey, string> = {
   "login.emailPlaceholder": "you@email.com",
   "login.sendCode": "Send code",
   "login.codeLabel": "Verification code",
-  "login.codePlaceholder": "6-digit code",
+  "login.codePlaceholder": "Code from your email",
   "login.verify": "Verify",
   "login.sent": "We sent a code to your email. Check your inbox.",
   "login.invalidEmail": "That email doesn't look valid.",

@@ -369,7 +369,7 @@ export const es = {
   "login.emailPlaceholder": "vos@email.com",
   "login.sendCode": "Enviar código",
   "login.codeLabel": "Código de verificación",
-  "login.codePlaceholder": "Código de 6 dígitos",
+  "login.codePlaceholder": "El código del email",
   "login.verify": "Verificar",
   "login.sent": "Te enviamos un código a tu email. Revisá tu casilla.",
   "login.invalidEmail": "Ese email no parece válido.",

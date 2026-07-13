@@ -24,11 +24,15 @@ export class SupabaseAuthProvider implements AuthProvider {
 
   async verifyCode(email: string, code: string) {
     if (!supabase) return false;
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token: code.trim(),
-      type: "email"
-    });
-    return !error && !!data.session;
+    const e = email.trim().toLowerCase();
+    const token = code.trim();
+    // Un usuario nuevo recibe un OTP de "signup"; uno existente, de "email"/"magiclink".
+    // La app no sabe cuál es, así que probamos en orden hasta que uno cree la sesión.
+    const types = ["email", "signup"] as const;
+    for (const type of types) {
+      const { data, error } = await supabase.auth.verifyOtp({ email: e, token, type });
+      if (!error && data.session) return true;
+    }
+    return false;
   }
 }

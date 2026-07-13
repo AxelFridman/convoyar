@@ -90,8 +90,9 @@ export default function Login() {
               <input
                 className="obInput num"
                 inputMode="numeric"
+                autoComplete="one-time-code"
                 autoFocus
-                maxLength={6}
+                maxLength={12}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                 onKeyDown={(e) => e.key === "Enter" && void verify()}
