@@ -312,6 +312,11 @@ export const de: Record<TKey, string> = {
   "account.verifyOk": "E-Mail verifiziert! ✅",
   "account.verifyFail": "Der Code stimmt nicht. Versuch's nochmal.",
   "account.invalidEmail": "Gib zuerst eine gültige E-Mail ein.",
+  "account.signOut": "Abmelden",
+  "account.delete": "Mein Konto löschen",
+  "account.deleting": "Wird gelöscht…",
+  "account.deleteConfirm": "Das löscht dein Konto und alle deine Daten (Fahrten, Bewertungen, Nachrichten, Fahrzeuge) endgültig. Das lässt sich nicht rückgängig machen. Sicher?",
+  "account.deleteError": "Wir konnten dein Konto nicht löschen. Versuch es noch mal oder schreib uns an hola@convoyar.com.",
 
   "prefs.title": "Welche Hinweise du willst",
   "prefs.assignments": "Zuteilungen und Änderungen deiner Fahrt",

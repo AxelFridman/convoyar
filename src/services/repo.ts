@@ -643,6 +643,12 @@ export async function rpcUnblockMember(memberId: string): Promise<void> {
   const { error } = await db().rpc("unblock_member", { p_blocked: memberId });
   if (error) throw error;
 }
+/** Borra la cuenta del usuario actual: sus datos (cascade) + su usuario de auth
+ *  (ver server/migrate-account-deletion.sql). Tras esto la sesión ya no sirve. */
+export async function rpcDeleteAccount(): Promise<void> {
+  const { error } = await db().rpc("delete_my_account");
+  if (error) throw error;
+}
 
 /* ============================ realtime ============================ */
 

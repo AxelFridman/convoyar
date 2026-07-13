@@ -312,6 +312,11 @@ export const en: Record<TKey, string> = {
   "account.verifyOk": "Email verified! ✅",
   "account.verifyFail": "That code doesn't match. Try again.",
   "account.invalidEmail": "Enter a valid email first.",
+  "account.signOut": "Sign out",
+  "account.delete": "Delete my account",
+  "account.deleting": "Deleting…",
+  "account.deleteConfirm": "This permanently deletes your account and all your data (trips, reviews, messages, vehicles). This can't be undone. Are you sure?",
+  "account.deleteError": "We couldn't delete your account. Try again or email us at hola@convoyar.com.",
 
   "prefs.title": "Which alerts you want",
   "prefs.assignments": "Assignments and changes to your ride",

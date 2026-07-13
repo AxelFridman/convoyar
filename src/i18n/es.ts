@@ -312,6 +312,11 @@ export const es = {
   "account.verifyOk": "¡Email verificado! ✅",
   "account.verifyFail": "El código no coincide. Probá de nuevo.",
   "account.invalidEmail": "Escribí un email válido primero.",
+  "account.signOut": "Cerrar sesión",
+  "account.delete": "Borrar mi cuenta",
+  "account.deleting": "Borrando…",
+  "account.deleteConfirm": "Esto borra tu cuenta y todos tus datos (viajes, reseñas, mensajes, vehículos) de forma permanente. No se puede deshacer. ¿Seguro?",
+  "account.deleteError": "No pudimos borrar tu cuenta. Probá de nuevo o escribinos a hola@convoyar.com.",
 
   "prefs.title": "Qué avisos querés recibir",
   "prefs.assignments": "Asignaciones y cambios de tu viaje",

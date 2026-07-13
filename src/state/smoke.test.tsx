@@ -52,6 +52,14 @@ describe("smoke render", () => {
   it("Settings (ajustes)", () => {
     expect(wrap(<Settings onBack={() => {}} />).length).toBeGreaterThan(100);
   });
+  it("Ajustes: en modo demo (sin backend) ofrece reinicio, NO borrar cuenta", () => {
+    // Borrar cuenta / cerrar sesión son sólo para cuentas reales (hasSupabase).
+    // En test hasSupabase=false → debe verse el reinicio de demo y ocultarse el
+    // borrado de cuenta (que sin backend no tendría a qué apuntar).
+    const html = wrap(<Settings onBack={() => {}} />);
+    expect(html).toContain("Reiniciar demo");
+    expect(html).not.toContain("Borrar mi cuenta");
+  });
   it("Onboarding (bienvenida)", () => {
     expect(wrap(<Onboarding />)).toContain("Convoyar");
   });

@@ -6,6 +6,7 @@ import { PLANS, purchase, type PlanId } from "../services/billing";
 import { requestNotifPermission } from "../services/notify";
 import { isValidEmail } from "../services/auth";
 import { storageMode } from "../services/storage";
+import { hasSupabase } from "../services/supabaseClient";
 import { IconChevronLeft } from "../components/Icons";
 import type { Feature } from "../engine/types";
 import type { Member, NotifPrefs, TripDefaults } from "../state/model";
@@ -21,10 +22,11 @@ const EMPTY_MEMBER: Member = { id: "", name: "", vehicles: [], joinedISO: "" };
  * acá vive lo que se toca de vez en cuando. Cada bloque es autónomo.
  */
 export default function Settings({ onBack }: { onBack: () => void }) {
-  const { state, dispatch, resetDemo } = useStore();
+  const { state, dispatch, resetDemo, signOut, deleteAccount } = useStore();
   const T = useT();
   const lang = state.settings.lang;
   const me = state.members.find((m) => m.id === state.meId) ?? EMPTY_MEMBER;
+  const [deleting, setDeleting] = useState(false);
   const prefs = state.settings.notifPrefs;
   const setPref = (k: keyof NotifPrefs, v: boolean) =>
     dispatch({ type: "setSettings", patch: { notifPrefs: { ...prefs, [k]: v } } });
@@ -285,22 +287,53 @@ export default function Settings({ onBack }: { onBack: () => void }) {
 
       {/* Datos y ayuda */}
       <h2 className="eyebrow">{T("settings.data")}</h2>
-      <button
-        type="button"
-        className="btn btn-ghost btn-block"
-        onClick={() => dispatch({ type: "setSettings", patch: { onboarded: false } })}
-      >
-        {T("profile.replayOnboarding")}
-      </button>
-      <button
-        type="button"
-        className="btn btn-ghost danger btn-block"
-        onClick={() => {
-          if (confirm(T("profile.resetConfirm"))) resetDemo();
-        }}
-      >
-        {T("profile.reset")}
-      </button>
+      {/* Demo/local: reintroducción + reinicio de datos de ejemplo (sin cuenta real). */}
+      {!hasSupabase && (
+        <>
+          <button
+            type="button"
+            className="btn btn-ghost btn-block"
+            onClick={() => dispatch({ type: "setSettings", patch: { onboarded: false } })}
+          >
+            {T("profile.replayOnboarding")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost danger btn-block"
+            onClick={() => {
+              if (confirm(T("profile.resetConfirm"))) resetDemo();
+            }}
+          >
+            {T("profile.reset")}
+          </button>
+        </>
+      )}
+      {/* Con backend real: cerrar sesión + borrar cuenta (derecho al olvido /
+          requisito de las tiendas; ver Política de Privacidad §11). */}
+      {hasSupabase && (
+        <>
+          <button type="button" className="btn btn-ghost btn-block" onClick={() => void signOut()}>
+            {T("account.signOut")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost danger btn-block"
+            disabled={deleting}
+            onClick={async () => {
+              if (!confirm(T("account.deleteConfirm"))) return;
+              setDeleting(true);
+              try {
+                await deleteAccount();
+              } catch {
+                setDeleting(false);
+                alert(T("account.deleteError"));
+              }
+            }}
+          >
+            {deleting ? T("account.deleting") : T("account.delete")}
+          </button>
+        </>
+      )}
 
       <p className="sub about">
         {T("profile.about", { mode: storageMode })}

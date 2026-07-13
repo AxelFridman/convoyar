@@ -312,6 +312,11 @@ export const pt: Record<TKey, string> = {
   "account.verifyOk": "E-mail verificado! ✅",
   "account.verifyFail": "O código não confere. Tente de novo.",
   "account.invalidEmail": "Escreva um e-mail válido primeiro.",
+  "account.signOut": "Sair",
+  "account.delete": "Excluir minha conta",
+  "account.deleting": "Excluindo…",
+  "account.deleteConfirm": "Isto exclui sua conta e todos os seus dados (viagens, avaliações, mensagens, veículos) de forma permanente. Não dá para desfazer. Tem certeza?",
+  "account.deleteError": "Não foi possível excluir sua conta. Tente de novo ou escreva para hola@convoyar.com.",
 
   "prefs.title": "Quais avisos você quer",
   "prefs.assignments": "Atribuições e mudanças na sua viagem",

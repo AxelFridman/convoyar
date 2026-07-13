@@ -19,6 +19,9 @@
 > - ✅ Proyectos **`convoyar-prod`** (`qlcwluvhrbkwjkjigsog`) y **`convoyar-dev`** creados.
 > - ✅ **Schema + migraciones aplicados en prod Y dev**: `schema.sql` + `migrate-v3-to-v4`
 >   (garage v4 + realtime), `migrate-personal-org`, `migrate-orgs`, `migrate-moderation`.
+> - ⬜ **Pendiente de correr (prod Y dev):** `server/migrate-account-deletion.sql` — RPC
+>   `delete_my_account()` para el borrado de cuenta (lo pide la Política de Privacidad §11 y
+>   es requisito de Google Play / App Store). Idempotente; corré el archivo en el SQL Editor.
 > - ✅ **RLS activo** en todas las tablas y **Realtime habilitado** (publicación `supabase_realtime`).
 > - ✅ Claves guardadas en `.env` (formato **nuevo** de Supabase — ver Paso 2).
 >

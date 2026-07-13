@@ -38,6 +38,7 @@ import {
   rpcAddMemberByEmail,
   rpcBlockMember,
   rpcCreateOrg,
+  rpcDeleteAccount,
   rpcJoinOrgByCode,
   rpcLeaveOrg,
   rpcReportMember,
@@ -366,6 +367,9 @@ interface Store {
   session: Session | null | undefined;
   /** Cierra la sesión Supabase (no-op sin backend). */
   signOut: () => Promise<void>;
+  /** Borra la cuenta del usuario y todos sus datos (derecho al olvido). Con
+   *  backend: RPC delete_my_account + signOut. Sin backend: limpia lo local. */
+  deleteAccount: () => Promise<void>;
   /** true cuando ya sabemos si hay sesión (siempre true sin backend). */
   authReady: boolean;
   /** true tras la primera hidratación remota exitosa (siempre false sin backend). */
@@ -980,6 +984,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setHydrated(false);
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    if (hasSupabase && supabase) {
+      // El borrado real (datos + usuario de auth) es esto: si falla, propaga el
+      // error para que la UI avise. La cuenta ya no existe después de acá.
+      await rpcDeleteAccount();
+      // Cerramos la sesión (ya inválida) como best-effort: un fallo del round-trip
+      // de logout NO debe enmascarar que el borrado sí funcionó.
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        /* la sesión ya no sirve; igual limpiamos lo local abajo */
+      }
+      clearState();
+      rawDispatch({ type: "reset" });
+      setSession(null);
+      setHydrated(false);
+    } else {
+      // Demo/local: no hay cuenta real, sólo datos locales → los limpiamos.
+      clearState();
+      rawDispatch({ type: "reset" });
+    }
+  }, []);
+
   const value: Store = {
     state,
     dispatch,
@@ -1002,6 +1029,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     computing,
     session,
     signOut,
+    deleteAccount,
     authReady: !hasSupabase || session !== undefined,
     hydrated,
     recovery,
