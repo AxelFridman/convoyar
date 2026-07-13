@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none" role="img" aria-labelledby="t">
+  <title id="t">Todavia no estas en ningun grupo</title>
+  <!-- Usa currentColor para la linea (hereda el color del texto: se adapta a claro/oscuro).
+       Los acentos usan los colores de marca (naranja origen, verde destino). -->
+  <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <!-- suelo -->
+    <path d="M36 170 Q160 180 284 170" stroke-width="4" opacity="0.18"/>
+    <!-- ruta que se abre camino -->
+    <path d="M56 172 C 120 156 150 122 246 102" stroke-width="5" opacity="0.35" stroke-dasharray="1 15"/>
+    <!-- poste de la senal -->
+    <path d="M214 170 L214 108" stroke-width="6"/>
+    <!-- tablero de la senal (vacio) -->
+    <rect x="168" y="64" width="92" height="46" rx="11" stroke-width="5"/>
+    <path d="M186 87 L232 87" stroke-width="5" opacity="0.4"/>
+  </g>
+  <!-- tu, sin convoy todavia -->
+  <circle cx="90" cy="153" r="14" fill="none" stroke="currentColor" stroke-width="3" opacity="0.3"/>
+  <circle cx="90" cy="153" r="7.5" fill="#ffb53f"/>
+  <!-- insignia + : sumar / crear grupo -->
+  <circle cx="256" cy="66" r="15" fill="#ffb53f"/>
+  <g stroke="#1a1204" stroke-width="4.5" stroke-linecap="round">
+    <path d="M248 66 L264 66"/>
+    <path d="M256 58 L256 74"/>
+  </g>
+</svg>

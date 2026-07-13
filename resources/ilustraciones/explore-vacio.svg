@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none" role="img" aria-labelledby="t">
+  <title id="t">No hay viajes publicos para explorar</title>
+  <!-- mapa tenue de fondo (currentColor, se adapta a claro/oscuro) -->
+  <g stroke="currentColor" stroke-linecap="round" fill="none">
+    <path d="M18 58 C 90 40 150 92 306 64" stroke-width="4" opacity="0.14" stroke-dasharray="1 13"/>
+    <path d="M22 150 C 110 122 210 162 300 128" stroke-width="4" opacity="0.14" stroke-dasharray="1 13"/>
+    <path d="M232 18 C 250 80 250 120 236 188" stroke-width="4" opacity="0.12" stroke-dasharray="1 13"/>
+  </g>
+  <!-- brujula -->
+  <circle cx="150" cy="100" r="58" stroke="currentColor" stroke-width="5" opacity="0.85"/>
+  <circle cx="150" cy="100" r="47" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+  <!-- marcas N E S O -->
+  <g stroke="currentColor" stroke-width="4" stroke-linecap="round" opacity="0.6">
+    <path d="M150 48 L150 40"/>
+    <path d="M150 152 L150 160"/>
+    <path d="M98 100 L90 100"/>
+    <path d="M202 100 L210 100"/>
+  </g>
+  <!-- aguja: norte naranja, sur tenue -->
+  <path d="M150 58 L138 102 L162 102 Z" fill="#ffb53f"/>
+  <path d="M150 142 L138 98 L162 98 Z" fill="currentColor" opacity="0.4"/>
+  <circle cx="150" cy="100" r="6" fill="currentColor"/>
+</svg>

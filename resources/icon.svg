@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Convoyar">
+  <defs>
+    <linearGradient id="cvBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a1f26"/>
+      <stop offset="1" stop-color="#14181d"/>
+    </linearGradient>
+  </defs>
+  <!-- Fondo a sangre (sin redondear): capacitor-assets aplica la mascara por plataforma.
+       El motivo vive dentro de la zona segura central (~66%) para sobrevivir el recorte adaptativo. -->
+  <rect width="1024" height="1024" fill="url(#cvBg)"/>
+  <path d="M300 720 C 430 600 410 430 720 300" fill="none" stroke="#232b35" stroke-width="120" stroke-linecap="round"/>
+  <path d="M300 720 C 430 600 410 430 720 300" fill="none" stroke="#5b6675" stroke-width="15" stroke-linecap="round" stroke-dasharray="4 58"/>
+  <circle cx="300" cy="720" r="66" fill="#ffb53f"/>
+  <circle cx="443" cy="514" r="45" fill="#edf1f4"/>
+  <rect x="660" y="240" width="120" height="120" rx="28" fill="#46b878"/>
+</svg>
