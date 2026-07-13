@@ -1,0 +1,38 @@
+name: Deploy web (Cloudflare Pages)
+
+# Auto-deploy: cada push a main buildea la web y la publica en producción
+# (Cloudflare Pages, proyecto convoyar-web → convoyar.com). También corre a mano
+# desde la pestaña Actions (workflow_dispatch).
+#
+# 🧑 Requiere estos Secrets en GitHub (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN      (token con permiso Cloudflare Pages: Edit)
+#   CLOUDFLARE_ACCOUNT_ID
+#   VITE_SUPABASE_URL         (el de PROD: https://qlcwluvhrbkwjkjigsog.supabase.co)
+#   VITE_SUPABASE_ANON_KEY    (el sb_publishable_... de PROD)
+# (Son claves públicas por diseño salvo el token de Cloudflare; NUNCA pongas el sb_secret_.)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Build (env de producción)
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      - name: Deploy a Cloudflare Pages (producción)
+        run: npx --yes wrangler@4 pages deploy dist --project-name convoyar-web --branch main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
