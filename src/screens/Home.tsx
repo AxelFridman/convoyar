@@ -472,6 +472,9 @@ function CreateEvent({ onDone }: { onDone: (eventId: string) => void }) {
   const [dest, setDest] = useState<LatLng | null>(null);
   const [destName, setDestName] = useState("");
   const [visibility, setVisibility] = useState<EventVisibility>("private");
+  // Id de la salida recién creada: pasa a la pantalla de confirmación (así el
+  // usuario sabe que quedó guardada y decide ir a su viaje o crear otra).
+  const [createdId, setCreatedId] = useState<string | null>(null);
   const center = useMemo(() => state.members.find((m) => m.id === state.meId)?.home ?? { lat: -34.6, lng: -58.45 }, [state]);
 
   const create = () => {
@@ -491,8 +494,34 @@ function CreateEvent({ onDone }: { onDone: (eventId: string) => void }) {
         createdBy: state.meId,
       },
     });
-    onDone(id);
+    setCreatedId(id);
   };
+
+  const resetForm = () => {
+    setTitle("");
+    setDest(null);
+    setDestName("");
+    setVisibility("private");
+    setCreatedId(null);
+  };
+
+  // Confirmación explícita post-creación: la salida YA está guardada; le decimos
+  // que quedó lista y qué sigue, para no dejarlo en el mismo formulario sin señal.
+  if (createdId) {
+    return (
+      <div className="form createdOk">
+        <div className="createdArt" aria-hidden="true">✅</div>
+        <h3 className="createdTitle">{T("home.eventCreated")}</h3>
+        <p className="sub center">{T("home.eventCreatedHint")}</p>
+        <button type="button" className="btn btn-primary btn-block" onClick={() => onDone(createdId)}>
+          {T("home.goToTrip")}
+        </button>
+        <button type="button" className="btn btn-ghost btn-block" onClick={resetForm}>
+          {T("home.createAnother")}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="form">
@@ -503,6 +532,8 @@ function CreateEvent({ onDone }: { onDone: (eventId: string) => void }) {
       <label className="field">
         <span>{T("home.eventDate")}</span>
         <input type="datetime-local" className="num" value={when} onChange={(e) => setWhen(e.target.value)} />
+        {/* La hora de la salida es la hora de LLEGADA al destino: todos parten antes. */}
+        <p className="sub">{T("home.eventDateHint")}</p>
       </label>
       <label className="field">
         <span>{T("home.destinationName")}</span>

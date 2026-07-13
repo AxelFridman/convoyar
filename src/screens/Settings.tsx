@@ -1,17 +1,13 @@
 import React, { useRef, useState } from "react";
 import { useStore, useT } from "../state/store";
-import { LANGS, type TKey, type Lang } from "../i18n";
-import { Chip, Segmented, TimeInput } from "../components/UI";
-import { PLANS, purchase, type PlanId } from "../services/billing";
+import { LANGS } from "../i18n";
+import { Segmented } from "../components/UI";
 import { requestNotifPermission } from "../services/notify";
 import { isValidEmail } from "../services/auth";
 import { storageMode } from "../services/storage";
 import { hasSupabase } from "../services/supabaseClient";
 import { IconChevronLeft } from "../components/Icons";
-import type { Feature } from "../engine/types";
 import type { Member, NotifPrefs, TripDefaults } from "../state/model";
-
-const FEATURES: Feature[] = ["wheelchair", "pets", "big_trunk", "bikes", "child_seat"];
 
 // Fallback defensivo: una cuenta vacía/rota nunca debe crashear Ajustes.
 const EMPTY_MEMBER: Member = { id: "", name: "", vehicles: [], joinedISO: "" };
@@ -41,13 +37,11 @@ export default function Settings({ onBack }: { onBack: () => void }) {
   const [authMsg, setAuthMsg] = useState("");
   const pendingCode = useRef<string>("");
   const alreadyVerified = !!me.emailVerified && me.email === email.trim().toLowerCase();
-  const [purchaseMsg, setPurchaseMsg] = useState("");
 
-  // --- preferencias de viaje por defecto (PR-B2): precargan viajes nuevos ---
+  // --- preferencia por defecto de rol (PR-B2): precarga el rol en viajes nuevos ---
   const d = me.defaults ?? {};
   const setDefaults = (patch: Partial<TripDefaults>) =>
     dispatch({ type: "updateMember", member: { ...me, defaults: { ...d, ...patch } } });
-  const win = d.window ?? { start: 690, end: 760 };
 
   const startVerify = () => {
     if (!isValidEmail(email)) {
@@ -193,48 +187,8 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         />
       </div>
 
-      {/* Aporte de nafta sugerido (informativo, PR-C2) */}
-      <div className="field">
-        <span>{T("fare.title")}</span>
-        <p className="sub">{T("fare.settingHint")}</p>
-        <label className="field row spread">
-          <span>{T("fare.pricePerL")}</span>
-          <input
-            className="num fuelInput"
-            inputMode="numeric"
-            value={state.settings.fuelPricePerL ?? 0}
-            onChange={(e) => {
-              const n = Number(e.target.value.replace(/\D/g, ""));
-              dispatch({ type: "setSettings", patch: { fuelPricePerL: Number.isFinite(n) ? n : 0 } });
-            }}
-          />
-        </label>
-      </div>
-
-      {/* Plan */}
-      <div className="field">
-        <span>{T("profile.plan")}</span>
-        <div className="planRow">
-          {(Object.keys(PLANS) as PlanId[]).map((pid) => (
-            <button
-              key={pid}
-              type="button"
-              className={`planCard ${state.settings.plan === pid ? "planCard-on" : ""}`}
-              onClick={async () => {
-                await purchase(pid);
-                setPurchaseMsg(T("profile.purchaseStub"));
-                dispatch({ type: "setSettings", patch: { plan: pid } });
-              }}
-            >
-              <b>{T(`plan.${pid}` as TKey)}</b>
-              <span className="sub num">{T(`plan.price.${pid}` as TKey)}</span>
-            </button>
-          ))}
-        </div>
-        {purchaseMsg && <p className="sub">{purchaseMsg}</p>}
-      </div>
-
-      {/* Preferencias de viaje por defecto — precargan cada salida nueva */}
+      {/* Preferencia por defecto: "suelo ir" de conductor/pasajero (o preguntar).
+          La ventana horaria y las necesidades se piden SIEMPRE por viaje (no acá). */}
       <h2 className="eyebrow">{T("defaults.title")}</h2>
       <p className="sub">{T("defaults.hint")}</p>
       <div className="field row spread">
@@ -248,41 +202,6 @@ export default function Settings({ onBack }: { onBack: () => void }) {
             { value: "ask", label: T("defaults.ask") },
           ]}
         />
-      </div>
-      <div className="field">
-        <span>{T("trip.window")}</span>
-        <div className="row gap winRow">
-          <label className="winLbl">
-            {T("trip.from")}
-            <TimeInput minutes={win.start} onChange={(m) => setDefaults({ window: { start: Math.min(m, win.end - 5), end: win.end } })} />
-          </label>
-          <label className="winLbl">
-            {T("trip.to")}
-            <TimeInput minutes={win.end} onChange={(m) => setDefaults({ window: { start: win.start, end: Math.max(m, win.start + 5) } })} />
-          </label>
-        </div>
-      </div>
-      <div className="field">
-        <span>{T("trip.needs")}</span>
-        <div className="chips">
-          {FEATURES.map((f) => {
-            const on = (d.needs ?? []).includes(f);
-            return (
-              <Chip
-                key={f}
-                active={on}
-                onClick={() =>
-                  setDefaults({ needs: on ? (d.needs ?? []).filter((x) => x !== f) : [...(d.needs ?? []), f] })
-                }
-              >
-                {T(`feature.${f}` as TKey)}
-              </Chip>
-            );
-          })}
-          <Chip active={!!d.smokeFree} onClick={() => setDefaults({ smokeFree: !d.smokeFree })}>
-            {T("trip.prefSmokeFree")}
-          </Chip>
-        </div>
       </div>
 
       {/* Datos y ayuda */}

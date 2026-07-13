@@ -25,7 +25,9 @@ test.describe("Inicio", () => {
     // tap en el mapa para fijar destino
     await page.locator(".leaflet-container").last().click({ position: { x: 150, y: 100 } });
     await page.getByRole("button", { name: "Crear salida" }).click();
-    // navega a "Mi viaje" del evento nuevo
+    // confirmación explícita de que quedó guardada → voy a Mi viaje del evento nuevo
+    await expect(page.getByText("¡Salida creada!")).toBeVisible();
+    await page.getByRole("button", { name: "Ir a mi viaje" }).click();
     await expect(page.getByText("Picnic en Palermo")).toBeVisible();
   });
 });
@@ -303,6 +305,7 @@ test.describe("Preferencias por defecto (PR-B2)", () => {
     await page.getByPlaceholder("Asado, oficina, cumple…").fill("Prueba defaults");
     await page.locator(".leaflet-container").last().click({ position: { x: 150, y: 100 } });
     await page.getByRole("button", { name: "Crear salida" }).click();
+    await page.getByRole("button", { name: "Ir a mi viaje" }).click();
     // ya en Mi viaje del evento nuevo: el rol "Necesito lugar" está activo
     await expect(page.getByRole("tab", { name: "Necesito lugar" })).toHaveAttribute("aria-selected", "true");
   });

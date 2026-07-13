@@ -1484,6 +1484,26 @@ button:focus-visible {
   50% { transform: translateY(-8px) rotate(3deg); }
 }
 
+/* --- confirmación al crear una salida (sabés que quedó guardada) --- */
+.createdOk {
+  align-items: center;
+  text-align: center;
+  padding: 24px 8px 8px;
+}
+.createdArt {
+  font-size: 52px;
+  line-height: 1;
+  animation: popIn 0.4s ease-out;
+}
+.createdTitle {
+  margin: 6px 0 2px;
+}
+@keyframes popIn {
+  0% { transform: scale(0.4); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 /* --- círculo de caminata en el mapa: latido suave --- */
 .walkCircle {
   animation: walkPulse 2.6s ease-in-out infinite;

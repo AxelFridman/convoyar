@@ -3,7 +3,6 @@ import type { Ride, RideStop } from "../engine/types";
 import type { AppState, EventDoc } from "../state/model";
 import { useT, useHhmm } from "../state/store";
 import { legVehicle } from "../state/vehicles";
-import { suggestedPerPassenger } from "../state/fare";
 import { IconWalk } from "./Icons";
 
 export function legMember(s: AppState, legId: string) {
@@ -53,12 +52,6 @@ export function RideCard({
   const plate = veh?.plate;
   // clamp a 0: un assignment viejo (p. ej. tras editar el garage) no debe mostrar negativos.
   const free = Math.max(0, (veh?.capacity ?? 0) - ride.passengerLegIds.length);
-  // Aporte de nafta sugerido por pasajero (informativo, PR-C2).
-  const fare = suggestedPerPassenger(
-    ride.routeKm,
-    ride.passengerLegIds.length,
-    state.settings.fuelPricePerL ?? 0
-  );
 
   return (
     <div className={`ride ${ride.manual ? "ride-manual" : ""}`}>
@@ -109,12 +102,6 @@ export function RideCard({
           );
         })}
       </ol>
-      {fare > 0 && (
-        <div className="fareHint" title={T("fare.note")}>
-          💵 {T("fare.suggested", { amount: `$${fare}` })}
-          <span className="sub"> · {T("fare.perPassenger")}</span>
-        </div>
-      )}
       {footer}
     </div>
   );

@@ -209,6 +209,9 @@ function VehicleCard({
   onRemove: () => void;
 }) {
   const T = useT();
+  // Los cambios ya se persisten al tipear; "Guardar" es una confirmación explícita
+  // para que quede claro que el vehículo quedó agregado/guardado.
+  const [saved, setSaved] = useState(false);
   return (
     <div className="card vehCard">
       <div className="row spread vehCardHead">
@@ -257,6 +260,16 @@ function VehicleCard({
           {T("trip.smokeFree")}
         </Chip>
       </div>
+      <button
+        type="button"
+        className={`btn btn-block ${saved ? "btn-ghost" : "btn-primary"}`}
+        onClick={() => {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 1600);
+        }}
+      >
+        {saved ? `✓ ${T("garage.saved")}` : T("garage.save")}
+      </button>
     </div>
   );
 }
