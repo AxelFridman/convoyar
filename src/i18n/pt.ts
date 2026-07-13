@@ -490,5 +490,8 @@ export const pt: Record<TKey, string> = {
   "landing.footerBlurb": "O Convoyar organiza as caronas do seu grupo: você indica quem vai e nós resolvemos quem leva quem.",
   "landing.footerPrivacy": "Privacidade",
   "landing.footerTerms": "Termos",
-  "landing.footerRights": "Grátis e para todos."
+  "landing.footerRights": "Grátis e para todos.",
+  "legal.back": "Voltar",
+  "legal.privacyTitle": "Política de Privacidade",
+  "legal.termsTitle": "Termos e Condições"
 };

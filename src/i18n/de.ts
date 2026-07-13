@@ -490,5 +490,8 @@ export const de: Record<TKey, string> = {
   "landing.footerBlurb": "Convoyar organisiert die Fahrgemeinschaften deiner Gruppe: du sagst, wer mitfährt, und wir lösen, wer wen fährt.",
   "landing.footerPrivacy": "Datenschutz",
   "landing.footerTerms": "AGB",
-  "landing.footerRights": "Kostenlos und für alle."
+  "landing.footerRights": "Kostenlos und für alle.",
+  "legal.back": "Zurück",
+  "legal.privacyTitle": "Datenschutzerklärung",
+  "legal.termsTitle": "Nutzungsbedingungen"
 };

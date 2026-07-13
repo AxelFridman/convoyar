@@ -490,7 +490,10 @@ export const es = {
   "landing.footerBlurb": "Convoyar coordina los viajes compartidos de tu grupo: vos decís quién viaja y nosotros resolvemos quién lleva a quién.",
   "landing.footerPrivacy": "Privacidad",
   "landing.footerTerms": "Términos",
-  "landing.footerRights": "Gratis y para todos."
+  "landing.footerRights": "Gratis y para todos.",
+  "legal.back": "Volver",
+  "legal.privacyTitle": "Política de Privacidad",
+  "legal.termsTitle": "Términos y Condiciones"
 };
 
 export type TKey = keyof typeof es;

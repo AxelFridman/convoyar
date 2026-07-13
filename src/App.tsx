@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { StoreProvider, useStore, useT } from "./state/store";
 import Home from "./screens/Home";
 import Explore from "./screens/Explore";
@@ -8,6 +8,7 @@ import Admin from "./screens/Admin";
 import Profile from "./screens/Profile";
 import Onboarding from "./screens/Onboarding";
 import Auth from "./screens/Auth";
+import Legal, { type LegalDoc } from "./screens/Legal";
 import { hasSupabase } from "./services/supabaseClient";
 import { Sheet } from "./components/UI";
 import { iAmPaused } from "./state/reputation";
@@ -165,10 +166,45 @@ function TabBtn({ on, label, onClick, children }: { on: boolean; label: string; 
   );
 }
 
+/** Páginas legales públicas: mapea el pathname a un documento (o null). */
+function legalDocFor(pathname: string): LegalDoc | null {
+  const p = (pathname.replace(/\/+$/, "") || "/").toLowerCase();
+  if (p === "/privacidad" || p === "/privacy") return "privacidad";
+  if (p === "/terminos" || p === "/terms") return "terminos";
+  return null;
+}
+
+/**
+ * Ruteo mínimo sin librería: si el pathname es una página legal la mostramos en
+ * lugar de la app —son públicas, no dependen de sesión ni de Supabase—. El resto
+ * cae en la app normal (Shell). Navegamos con history.pushState y escuchamos
+ * `popstate` (atrás del navegador).
+ */
+function Root() {
+  const [path, setPath] = useState<string>(() =>
+    typeof window !== "undefined" ? window.location.pathname : "/"
+  );
+
+  useEffect(() => {
+    const onPop = () => setPath(window.location.pathname);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  const navigate = useCallback((to: string) => {
+    if (typeof window !== "undefined") window.history.pushState({}, "", to);
+    setPath(to);
+  }, []);
+
+  const doc = legalDocFor(path);
+  if (doc) return <Legal doc={doc} navigate={navigate} />;
+  return <Shell />;
+}
+
 export default function App() {
   return (
     <StoreProvider>
-      <Shell />
+      <Root />
     </StoreProvider>
   );
 }
