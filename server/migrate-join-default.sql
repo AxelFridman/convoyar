@@ -14,17 +14,7 @@ alter table public.orgs alter column link_enabled set default true;
 -- Habilitar en los grupos YA creados (los que nadie tocó el toggle).
 update public.orgs set link_enabled = true where link_enabled is distinct from true;
 
--- create_org ahora crea el grupo con el link habilitado explícitamente.
-create or replace function public.create_org(p_name text)
-returns text language plpgsql security definer set search_path = public as $$
-declare mid text; oid text;
-begin
-  mid := public.current_member_id();
-  if mid is null then raise exception 'no auth'; end if;
-  oid := 'org-' || replace(gen_random_uuid()::text, '-', '');
-  insert into public.orgs(id, name, join_code, link_enabled)
-    values (oid, coalesce(nullif(trim(p_name), ''), 'Mi grupo'),
-            upper(substr(md5(random()::text), 1, 6)), true);
-  insert into public.org_members(org_id, member_id, is_admin) values (oid, mid, true);
-  return oid;
-end $$;
+-- (La creación de grupos con el link habilitado la define create_org en
+--  migrate-org-destination.sql, que ya lo crea con link_enabled = true. No
+--  redefinimos create_org acá para que las migraciones sean independientes del
+--  orden en que las corras.)
