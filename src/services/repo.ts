@@ -88,6 +88,7 @@ interface EventRow {
   visibility: EventVisibility;
   created_by: string;
   origin_name: string | null;
+  recurrence: { days: number[] } | null;
 }
 interface LegRow {
   id: string;
@@ -210,7 +211,8 @@ function toEvent(row: EventRow): EventDoc {
     destinationName: row.destination_name ?? undefined,
     visibility: row.visibility,
     createdBy: row.created_by,
-    originName: row.origin_name ?? undefined
+    originName: row.origin_name ?? undefined,
+    recurrence: row.recurrence && Array.isArray(row.recurrence.days) ? row.recurrence : undefined
   };
 }
 
@@ -334,7 +336,8 @@ function eventToRow(e: EventDoc) {
     destination_name: e.destinationName ?? null,
     visibility: e.visibility,
     created_by: e.createdBy,
-    origin_name: e.originName ?? null
+    origin_name: e.originName ?? null,
+    recurrence: e.recurrence ?? null
   };
 }
 
@@ -673,6 +676,28 @@ export async function rpcSetOrgDestination(
     p_name: name ?? null
   });
   if (error) throw error;
+}
+/** Publica una salida PÚBLICA en un paso (sin elegir grupo): la crea en la org
+ *  personal del usuario, del lado servidor. Devuelve el id del evento. */
+export async function rpcCreatePublicTrip(input: {
+  title: string;
+  dateISO: string;
+  destination: LatLng;
+  destinationName?: string;
+  originName?: string;
+  recurrence?: { days: number[] };
+}): Promise<string> {
+  const { data, error } = await db().rpc("create_public_trip", {
+    p_title: input.title,
+    p_date: input.dateISO,
+    p_dest_lat: input.destination.lat,
+    p_dest_lng: input.destination.lng,
+    p_dest_name: input.destinationName ?? null,
+    p_origin_name: input.originName ?? null,
+    p_recurrence: input.recurrence ?? null
+  });
+  if (error) throw error;
+  return data as string;
 }
 export async function rpcJoinOrgByCode(code: string): Promise<string> {
   const { data, error } = await db().rpc("join_org_by_code", { p_code: code });

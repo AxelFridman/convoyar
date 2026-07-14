@@ -143,12 +143,14 @@ describe("repo · mappers de eventos, requests, reviews, settings", () => {
       destination_name: null,
       visibility: "public",
       created_by: "m1",
-      origin_name: null
+      origin_name: null,
+      recurrence: null
     });
     expect(e.dateISO).toBe("2026-03-04T10:00:00.000Z");
     expect(e.destination).toEqual({ lat: -38, lng: -57 });
     expect(e.destinationName).toBeUndefined();
     expect(e.originName).toBeUndefined();
+    expect(e.recurrence).toBeUndefined();
   });
 
   it("toJoinRequest: created_at→at, decided_at null→undefined", () => {

@@ -38,6 +38,7 @@ import {
   rpcAddMemberByEmail,
   rpcBlockMember,
   rpcCreateOrg,
+  rpcCreatePublicTrip,
   rpcDeleteAccount,
   rpcJoinOrgByCode,
   rpcSetOrgDestination,
@@ -350,6 +351,18 @@ interface Store {
   createOrg: (name: string, destination?: { loc: LatLng; name?: string }) => Promise<void>;
   /** Fija/edita el destino común del grupo (solo admin). */
   setOrgDestination: (orgId: string, loc: LatLng, name?: string) => Promise<void>;
+  /** Publica una salida PÚBLICA en un paso (sin elegir grupo): vive en tu espacio
+   *  personal, visible en Explorar. Crea tu leg (conductor/pasajero). Devuelve el id. */
+  publishPublicTrip: (input: {
+    origin: LatLng;
+    originName?: string;
+    destination: LatLng;
+    destinationName?: string;
+    role: "driver" | "passenger";
+    dateISO: string;
+    recurrence?: { days: number[] };
+    vehicleId?: string;
+  }) => Promise<string>;
   /** Se une a un grupo por código/link; tira si el código no existe o el link
    *  está deshabilitado (la UI muestra "código inválido / link deshabilitado"). */
   joinOrgByCode: (code: string) => Promise<void>;
@@ -878,6 +891,86 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [refreshRemote]
   );
 
+  const publishPublicTrip = useCallback(
+    async (input: {
+      origin: LatLng;
+      originName?: string;
+      destination: LatLng;
+      destinationName?: string;
+      role: "driver" | "passenger";
+      dateISO: string;
+      recurrence?: { days: number[] };
+      vehicleId?: string;
+    }) => {
+      const meId = stateRef.current.meId;
+      const title = input.destinationName?.trim() || input.originName?.trim() || "Viaje";
+      const evDate = new Date(input.dateISO);
+      const evMin = evDate.getHours() * 60 + evDate.getMinutes();
+      // Ventana amplia alrededor del horario (la hora es la de LLEGADA al destino).
+      const window = { start: Math.max(0, evMin - 90), end: Math.min(1439, evMin + 90) };
+      const mkLeg = (eventId: string): Leg => ({
+        id: `leg-${meId}-${eventId}`,
+        memberId: meId,
+        eventId,
+        role: input.role,
+        window,
+        origin: input.origin,
+        vehicleId: input.role === "driver" ? input.vehicleId : undefined,
+        maxWalkMin: input.role === "passenger" ? 10 : undefined,
+        needs: input.role === "passenger" ? [] : undefined
+      });
+
+      if (hasSupabase && supabase) {
+        const eventId = await rpcCreatePublicTrip({
+          title,
+          dateISO: input.dateISO,
+          destination: input.destination,
+          destinationName: input.destinationName,
+          originName: input.originName,
+          recurrence: input.recurrence
+        });
+        await refreshRemote(); // trae el evento + la org personal recién asegurada
+        dispatch({ type: "setLeg", leg: mkLeg(eventId) }); // se espeja a la base
+        return eventId;
+      }
+      // Demo local: espacio personal determinístico + evento público + mi leg.
+      const orgId = `org-personal-${meId}`;
+      if (!stateRef.current.orgs.some((o) => o.id === orgId)) {
+        dispatch({
+          type: "addOrg",
+          org: {
+            id: orgId,
+            name: "Mis viajes",
+            joinCode: genJoinCode(),
+            memberIds: [meId],
+            adminIds: [meId],
+            meetingPoints: [],
+            linkEnabled: false
+          }
+        });
+      }
+      const eventId = `ev${Date.now().toString(36)}`;
+      dispatch({
+        type: "addEvent",
+        event: {
+          id: eventId,
+          orgId,
+          title,
+          dateISO: input.dateISO,
+          destination: input.destination,
+          destinationName: input.destinationName,
+          visibility: "public",
+          createdBy: meId,
+          originName: input.originName,
+          recurrence: input.recurrence
+        }
+      });
+      dispatch({ type: "setLeg", leg: mkLeg(eventId) });
+      return eventId;
+    },
+    [refreshRemote]
+  );
+
   const joinOrgByCode = useCallback(
     async (code: string) => {
       const clean = code.trim();
@@ -1047,6 +1140,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     sendMessage,
     createOrg,
     setOrgDestination,
+    publishPublicTrip,
     joinOrgByCode,
     addMemberByEmail,
     setOrgLink,

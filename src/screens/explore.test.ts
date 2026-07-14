@@ -1,5 +1,8 @@
 // Filtros de fecha de Explorar (regresión del fix "finde en domingo").
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+// Explore ahora importa MapPicker → leaflet, que toca `window` al cargarse.
+// En este test de función pura no hay DOM: mockeamos leaflet (igual que smoke.test).
+vi.mock("leaflet", () => ({ default: {} }));
 import { inRange } from "./Explore";
 
 // Helper: fecha local a las 12:00 (evita líos de medianoche/UTC en el test).

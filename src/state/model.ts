@@ -111,6 +111,10 @@ export interface EventDoc {
   createdBy: string;
   /** Texto libre de origen para eventos públicos (ej. "CABA → Mar del Plata"). */
   originName?: string;
+  /** Recurrencia semanal opcional (salidas públicas): días en que se repite
+   *  (0=Dom … 6=Sáb). Ausente = una sola vez (usa dateISO). El horario es el de
+   *  dateISO. Es metadato de agenda/visualización; el cálculo sigue por fecha. */
+  recurrence?: { days: number[] };
 }
 
 export type JoinRequestStatus = "pending" | "approved" | "rejected";

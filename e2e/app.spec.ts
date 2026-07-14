@@ -436,3 +436,23 @@ test.describe("Moderación (reportar / bloquear)", () => {
     await expect(page.getByText("Finde en Mar del Plata")).toHaveCount(0);
   });
 });
+
+test.describe("Salida pública en un paso", () => {
+  test("publicar un viaje desde Explorar (sin elegir grupo)", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("tab", { name: "Explorar" }).click();
+    // Abrir el form de publicar (único botón "Publicar viaje" hasta que abre el sheet).
+    await page.getByRole("button", { name: "Publicar viaje" }).click();
+    await expect(page.getByText("¿Llevás gente o buscás lugar?")).toBeVisible();
+    // Origen y destino: tocar los dos mapas del form.
+    const maps = page.locator(".leaflet-container");
+    await maps.nth(0).click({ position: { x: 120, y: 90 } });
+    await maps.nth(1).click({ position: { x: 150, y: 90 } });
+    // Publicar (el botón del sheet es el último con ese nombre).
+    await page.getByRole("button", { name: "Publicar viaje" }).last().click();
+    await expect(page.getByText("¡Viaje publicado!")).toBeVisible();
+    await page.getByRole("button", { name: "Ir a mi viaje" }).click();
+    // Quedé en Mi viaje del evento nuevo (mi rol quedó preseleccionado).
+    await expect(page.getByRole("tab", { name: "Llevo gente" })).toBeVisible();
+  });
+});
