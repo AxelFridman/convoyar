@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useStore, useT } from "../state/store";
 import {
+  canReview,
   hueOf,
   initialsOf,
   isBlocked,
@@ -202,34 +203,40 @@ export function MemberProfile({ memberId, allowRate }: { memberId: string; allow
         </>
       )}
 
-      {allowRate && m.id !== state.meId && (
-        <div className="rateBox">
-          <h4 className="eyebrow">{T("profile.rateTitle", { name: m.name })}</h4>
-          {sent ? (
-            <p className="sub">{T("profile.rateDone")}</p>
-          ) : (
-            <>
-              <StarsInput value={stars} onChange={setStars} />
-              <input
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder={T("profile.rateComment")}
-              />
-              <button
-                type="button"
-                className="btn btn-primary btn-sm"
-                disabled={stars === 0}
-                onClick={() => {
-                  rateMember(m.id, stars, comment);
-                  setSent(true);
-                }}
-              >
-                {T("profile.rateSend")}
-              </button>
-            </>
-          )}
-        </div>
-      )}
+      {allowRate &&
+        m.id !== state.meId &&
+        // Solo se puede reseñar a alguien con quien viajaste (co-viajero): mismo
+        // criterio que el server (RLS share_trip). Si no, una nota lo explica.
+        (canReview(state, state.meId, m.id) ? (
+          <div className="rateBox">
+            <h4 className="eyebrow">{T("profile.rateTitle", { name: m.name })}</h4>
+            {sent ? (
+              <p className="sub">{T("profile.rateDone")}</p>
+            ) : (
+              <>
+                <StarsInput value={stars} onChange={setStars} />
+                <input
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder={T("profile.rateComment")}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  disabled={stars === 0}
+                  onClick={() => {
+                    rateMember(m.id, stars, comment);
+                    setSent(true);
+                  }}
+                >
+                  {T("profile.rateSend")}
+                </button>
+              </>
+            )}
+          </div>
+        ) : (
+          <p className="sub rateNeedTrip">{T("profile.rateNeedTrip")}</p>
+        ))}
 
       {/* Moderación: reportar (pausa server-side) / bloquear (personal). No propia. */}
       {m.id !== state.meId && (

@@ -272,6 +272,7 @@ export const es = {
   "profile.rateComment": "Comentario (opcional)",
   "profile.rateSend": "Enviar reseña",
   "profile.rateDone": "¡Gracias! Reseña guardada.",
+  "profile.rateNeedTrip": "Podés calificar a personas con las que ya viajaste.",
   "profile.with": "con {name}",
   "profile.replayOnboarding": "Ver la introducción otra vez",
   "settings.title": "Ajustes",

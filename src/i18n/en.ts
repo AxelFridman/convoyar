@@ -272,6 +272,7 @@ export const en: Record<TKey, string> = {
   "profile.rateComment": "Comment (optional)",
   "profile.rateSend": "Send review",
   "profile.rateDone": "Thanks! Review saved.",
+  "profile.rateNeedTrip": "You can rate people you've already traveled with.",
   "profile.with": "with {name}",
   "profile.replayOnboarding": "Replay the intro",
   "settings.title": "Settings",

@@ -272,6 +272,7 @@ export const de: Record<TKey, string> = {
   "profile.rateComment": "Kommentar (optional)",
   "profile.rateSend": "Bewertung senden",
   "profile.rateDone": "Danke! Bewertung gespeichert.",
+  "profile.rateNeedTrip": "Du kannst Personen bewerten, mit denen du schon gefahren bist.",
   "profile.with": "mit {name}",
   "profile.replayOnboarding": "Einführung erneut ansehen",
   "settings.title": "Einstellungen",

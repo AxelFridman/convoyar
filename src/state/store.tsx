@@ -28,7 +28,7 @@ import { solveMatching, validateMatch, applyManualMove } from "../engine/matchin
 import type { DriverLeg, LatLng, MatchInput, MatchResult, PassengerLeg } from "../engine/types";
 import { minutesToHHMM } from "../engine/geo";
 import { systemNotify } from "../services/notify";
-import { participantsOf } from "./reputation";
+import { canReview, participantsOf } from "./reputation";
 import { legVehicle } from "./vehicles";
 import { translate, type Lang, type TKey } from "../i18n";
 import { hasSupabase, supabase } from "../services/supabaseClient";
@@ -780,6 +780,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const rateMember = useCallback((toMemberId: string, stars: number, comment?: string) => {
     const s = stateRef.current;
+    // Solo co-viajeros (mismo criterio que RLS share_trip): evita una reseña
+    // optimista local que el server rechazaría. La UI ya gatea; esto es red de seguridad.
+    if (!canReview(s, s.meId, toMemberId)) return;
     const review: Review = {
       id: `rv-${Date.now().toString(36)}`,
       fromMemberId: s.meId,

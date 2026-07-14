@@ -6,6 +6,7 @@ import { solveMatching } from "../engine/matching";
 import { MockRoutingProvider } from "../engine/routing";
 import {
   canAdminEvent,
+  canReview,
   initialsOf,
   isParticipant,
   memberSince,
@@ -15,6 +16,7 @@ import {
   ratingOf,
   tripCountOf
 } from "./reputation";
+import type { AppState } from "./model";
 
 describe("reputación", () => {
   const s = buildSeed();
@@ -47,6 +49,65 @@ describe("reputación", () => {
     expect(initialsOf("Mariana K.")).toBe("MK");
     expect(initialsOf("Vos")).toBe("VO");
     expect(initialsOf("")).toBe("?");
+  });
+});
+
+describe("canReview: reseñas solo entre co-viajeros", () => {
+  const s = buildSeed();
+
+  it("historial: puedo calificar a quien viajé, no a un extraño ni a mí mismo", () => {
+    expect(canReview(s, "m0", "m2")).toBe(true); // m0 ↔ m2 vinculados en el historial
+    expect(canReview(s, "m2", "m0")).toBe(true); // simétrico
+    expect(canReview(s, "m0", "c2")).toBe(false); // Joaquín (nuevo): nunca viajamos
+    expect(canReview(s, "m0", "m0")).toBe(false); // nunca a uno mismo
+  });
+
+  it("asignación: compartir un auto habilita la reseña; un leg suelto no", () => {
+    const stats = {
+      passengers: 1,
+      assigned: 1,
+      drivers: 1,
+      driversUsed: 1,
+      totalDetourMin: 0,
+      avgDetourMin: 0,
+      passengerDirectKm: 0,
+      co2SavedKg: 0,
+      computeMs: 0
+    };
+    const state: Pick<AppState, "assignments" | "legs" | "tripHistory"> = {
+      tripHistory: [],
+      legs: [
+        { id: "L-d", memberId: "m0", eventId: "evX", role: "driver", window: { start: 0, end: 60 } },
+        { id: "L-p", memberId: "c2", eventId: "evX", role: "passenger", window: { start: 0, end: 60 } },
+        { id: "L-o", memberId: "m8", eventId: "evX", role: "passenger", window: { start: 0, end: 60 } }
+      ],
+      assignments: {
+        evX: {
+          computedAt: "2026-01-01T00:00:00Z",
+          violations: [],
+          result: {
+            rides: [
+              {
+                driverLegId: "L-d",
+                passengerLegIds: ["L-p"],
+                stops: [],
+                departureMin: 0,
+                baseMin: 0,
+                routeMin: 0,
+                detourMin: 0,
+                baseKm: 0,
+                routeKm: 0
+              }
+            ],
+            unassigned: [],
+            stats
+          }
+        }
+      }
+    };
+    expect(canReview(state, "m0", "c2")).toBe(true); // conductor + pasajero del mismo auto
+    expect(canReview(state, "c2", "m0")).toBe(true); // simétrico
+    expect(canReview(state, "m0", "m8")).toBe(false); // m8 quedó fuera del ride
   });
 });
 

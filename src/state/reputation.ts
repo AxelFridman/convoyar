@@ -42,6 +42,45 @@ export function tripsOf(state: Pick<AppState, "tripHistory">, memberId: string):
     .sort((a, b) => b.dateISO.localeCompare(a.dateISO));
 }
 
+/** ¿`a` y `b` compartieron un auto en la misma salida, según una asignación
+ *  calculada? (conductor + sus pasajeros del mismo `ride`). */
+function sharedRide(state: Pick<AppState, "assignments" | "legs">, a: string, b: string): boolean {
+  const memberOfLeg = (legId: string): string | undefined =>
+    state.legs.find((l) => l.id === legId)?.memberId;
+  for (const eid of Object.keys(state.assignments)) {
+    for (const ride of state.assignments[eid].result.rides) {
+      const ids = new Set<string>();
+      const driver = memberOfLeg(ride.driverLegId);
+      if (driver) ids.add(driver);
+      for (const plid of ride.passengerLegIds) {
+        const pax = memberOfLeg(plid);
+        if (pax) ids.add(pax);
+      }
+      if (ids.has(a) && ids.has(b)) return true;
+    }
+  }
+  return false;
+}
+
+/** ¿Puedo dejarle una reseña a este miembro? Solo si **viajamos juntos**: quedó
+ *  registrado en el historial (co-viajeros) o compartimos un auto en una
+ *  asignación calculada. Nunca a uno mismo. Es el mismo criterio que enforcea el
+ *  server (`share_trip` en migrate-review-gate.sql) para que un extraño no pueda
+ *  bombardear ★ a nadie. */
+export function canReview(
+  state: Pick<AppState, "assignments" | "legs" | "tripHistory">,
+  meId: string,
+  targetId: string
+): boolean {
+  if (!meId || !targetId || meId === targetId) return false;
+  const linkedInHistory = state.tripHistory.some(
+    (t) =>
+      (t.memberId === meId && t.withMemberId === targetId) ||
+      (t.memberId === targetId && t.withMemberId === meId)
+  );
+  return linkedInHistory || sharedRide(state, meId, targetId);
+}
+
 /** "hace 2 años", "3 months ago"… relativo a `now` (inyectable para tests). */
 export function memberSince(joinedISO: string, lang: Lang, now: Date = new Date()): string {
   const joined = new Date(joinedISO);
