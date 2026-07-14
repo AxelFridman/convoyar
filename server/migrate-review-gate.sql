@@ -3,6 +3,10 @@
 -- Correr en Supabase → SQL Editor, en PROD **y** en DEV. Idempotente.
 -- Correr DESPUÉS de schema.sql + rls.sql + migrate-moderation.sql
 -- (usa current_member_id / current_member_active de esas migraciones).
+-- ⚠️ ORDEN: esta migración debe correr SIEMPRE ÚLTIMA de las de reviews. Si por
+--    cualquier motivo re-corrés migrate-moderation.sql (que redefine
+--    reviews_insert_self SIN share_trip), volvé a correr ESTA después: si no, el
+--    gate anti-★-bombing queda pisado por la versión permisiva.
 --
 -- Problema que arregla: la política vieja `reviews_insert_self` solo chequeaba
 -- `from_member_id = current_member_id()`, así que CUALQUIER usuario podía dejarle
@@ -22,6 +26,12 @@ create or replace function public.share_trip(p_a text, p_b text)
 returns boolean
 language sql stable security definer set search_path = public as $$
   select
+    -- Solo respondemos sobre viajes PROPIOS (uno de los dos tiene que ser el que
+    -- pregunta): evita que la función se use como oráculo para espiar si dos
+    -- terceros viajaron juntos. La policy de reviews siempre pasa from=yo, así que
+    -- no la afecta.
+    (p_a = public.current_member_id() or p_b = public.current_member_id())
+    and (
     -- (1) vínculo ya registrado en el historial de viajes (en cualquier dirección)
     exists (
       select 1 from public.trip_history th
@@ -50,7 +60,7 @@ language sql stable security definer set search_path = public as $$
                     select jsonb_array_elements_text(coalesce(ride -> 'passengerLegIds', '[]'::jsonb))
                   ) )
         )
-    );
+    ));
 $$;
 
 grant execute on function public.share_trip(text, text) to authenticated;

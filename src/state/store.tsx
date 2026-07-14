@@ -472,6 +472,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         } catch (rpcErr) {
           console.warn("[store] ensure_personal_org falló (se ignora)", rpcErr);
         }
+        // Materializa los viajes pasados (evento con fecha cumplida + asignación) en
+        // el historial, para que el perfil muestre viajes reales. Idempotente y
+        // best-effort: si la RPC no existe todavía o falla, se ignora. Va ANTES de
+        // loadRemote para que la hidratación levante las filas recién creadas.
+        try {
+          const { error: matErr } = await client.rpc("materialize_my_trips");
+          if (matErr) console.warn("[store] materialize_my_trips devolvió error (se ignora)", matErr);
+        } catch (matErr) {
+          console.warn("[store] materialize_my_trips falló (se ignora)", matErr);
+        }
         const remote = await loadRemote(meId, s.user.email ?? undefined);
         if (cancelled) return;
         // Preservamos lo local (avisos, org activa) igual que el refresh realtime.

@@ -1,9 +1,10 @@
 # Roadmap — de MVP local a producto real
 
 > Estado al 2026-07: **Fase 1 completa** y **Fase 2 conectada** — Supabase real (auth email +
-> contraseña, orgs, realtime, RLS; migraciones corridas en dev y prod). Falta el *flip* de
-> producción a `convoyar.com` (hoy corre un preview live), push nativo y las tiendas.
-> Cada fase deja la app funcionando; ninguna requiere reescritura.
+> contraseña, orgs, realtime, RLS; migraciones corridas en dev y prod). **Producción live en
+> `convoyar.com`** (PWA instalable). Falta: push nativo y la prueba cerrada de Google Play (12
+> testers × 14 días, ver `docs/lanzamiento/12-testers-cerrada.md`). Cada fase deja la app
+> funcionando; ninguna requiere reescritura.
 
 ## Fase 1 — MVP local ✅ (esto que estás viendo)
 
@@ -44,11 +45,15 @@ Realtime, capa free). Estado ítem por ítem:
 7. [ ] **Matching en server** (opcional): el motor es puro TS → corre en una Edge Function tal
    cual (`solveMatching(input, provider)`). Conviene para eventos de 100+, para no recalcular en
    N clientes, y para no filtrar domicilios en el modo público (nota de privacidad del doc 01).
-8. [ ] **Historial real**: al pasar la fecha del evento con asignación, materializar
-   `TripRecord`s (hoy el historial es seed) y habilitar reseñas solo entre co-viajeros.
-9. [ ] **Cablear en la UI** las RPC ya escritas de invitaciones (email / link con toggle) y de
-   moderación (reportar / bloquear): existen en `server/` pero el cliente sólo usa el código de
-   invitación y `ensure_personal_org`.
+8. [x] **Reseñas solo entre co-viajeros** (`migrate-review-gate.sql`): `share_trip()` + RLS
+   endurecida; `canReview` en el cliente (`reputation.ts`) gatea el form. Un extraño ya no puede
+   bombardear ★. **Historial real** (`migrate-trip-history.sql`): `materialize_my_trips()` (RPC
+   idempotente, se llama al hidratar) materializa `TripRecord`s de eventos pasados con asignación,
+   para que el perfil real muestre viajes (antes el historial era solo seed).
+9. [x] **Invitaciones y moderación cableadas end-to-end**: link self-serve con toggle
+   (`set_org_link` → `Home.tsx`), invitar por email (`add_member_by_email`), unirse por código y
+   deep-link `?join=`, reportar (pausa server-side) y bloquear/desbloquear (`People.tsx`), en los
+   6 idiomas. (El ROADMAP viejo las daba por pendientes; ya están.)
 
 ## Fase 3 — Ruteo y escala
 
