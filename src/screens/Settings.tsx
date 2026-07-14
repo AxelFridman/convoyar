@@ -138,7 +138,7 @@ export default function Settings({ onBack }: { onBack: () => void }) {
         <PrefRow label={T("prefs.assignments")} on={prefs.assignments} onToggle={(v) => setPref("assignments", v)} />
         <PrefRow label={T("prefs.requests")} on={prefs.requests} onToggle={(v) => setPref("requests", v)} />
         <PrefRow label={T("prefs.chat")} on={prefs.chat} onToggle={(v) => setPref("chat", v)} />
-        <PrefRow label={T("prefs.email")} on={prefs.email} onToggle={(v) => setPref("email", v)} />
+        {/* "resumen por email" oculto: todavía no se envían emails de resumen. */}
       </div>
       {!state.settings.notifPermission && (
         <div className="field row spread">

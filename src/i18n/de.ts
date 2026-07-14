@@ -187,7 +187,7 @@ export const de: Record<TKey, string> = {
   "profile.notifsOk": "Aktiviert",
   "profile.reset": "Demo zurücksetzen",
   "profile.resetConfirm": "Das löscht alle lokalen Daten und lädt die Beispieldaten neu. Weiter?",
-  "profile.about": "Gebaut mit React + Leaflet + OpenStreetMap. Eigene Matching-Engine, simuliertes Routing (OSRM-Adapter bereit). Daten gespeichert in {mode}.",
+  "profile.about": "Convoyar koordiniert Fahrgemeinschaften mit OpenStreetMap-Karten. Mit Sorgfalt gemacht, damit gemeinsam ankommen leicht ist.",
 
   "notif.title": "Mitteilungen",
   "notif.empty": "Noch nichts.",

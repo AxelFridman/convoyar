@@ -28,7 +28,8 @@ export const PLANS: Record<PlanId, PlanSpec> = {
     label: "Free",
     maxOrgs: 1,
     maxMembersPerOrg: 30,
-    metricsExport: false,
+    // Todo es gratis: exportar métricas está habilitado para todos (no hay upsell).
+    metricsExport: true,
     showsAds: true,
     priceHint: "$0"
   },

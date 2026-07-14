@@ -187,7 +187,7 @@ export const es = {
   "profile.notifsOk": "Activadas",
   "profile.reset": "Reiniciar demo",
   "profile.resetConfirm": "Esto borra todos los datos locales y vuelve a cargar los de ejemplo. ¿Seguimos?",
-  "profile.about": "Hecho con React + Leaflet + OpenStreetMap. Motor de matching propio, ruteo simulado (adaptador OSRM listo). Datos guardados en {mode}.",
+  "profile.about": "Convoyar coordina viajes compartidos con mapas de OpenStreetMap. Hecho con cariño para que llegar juntos sea fácil.",
 
   "notif.title": "Avisos",
   "notif.empty": "Nada por ahora.",

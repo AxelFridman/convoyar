@@ -4,6 +4,7 @@ import { isBlocked, isParticipant, myRequestFor, pendingRequestsFor } from "../s
 import { MemberProfile, PersonLine } from "../components/People";
 import { Sheet } from "../components/UI";
 import { IconCar, IconCheck, IconGlobe, IconPin, IconUsers } from "../components/Icons";
+import { hasSupabase } from "../services/supabaseClient";
 import { localeOf, type TKey } from "../i18n";
 
 export type DateRange = "all" | "today" | "weekend" | "week";
@@ -168,7 +169,9 @@ export default function Explore({
               <div className="requestState">
                 <span className="spinnerDot" aria-hidden="true" />
                 <span>{T("explore.pending")}</span>
-                <span className="sub">{T("explore.demoNote")}</span>
+                {/* La nota "el organizador responde solo" es SÓLO de la demo local.
+                    En la app real la respuesta la da una persona (no mostrarla). */}
+                {!hasSupabase && <span className="sub">{T("explore.demoNote")}</span>}
               </div>
             )}
             {!mine && joined && (

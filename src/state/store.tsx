@@ -463,7 +463,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           state: {
             ...remote,
             notifications: stateRef.current.notifications,
-            activeOrgId: stateRef.current.activeOrgId || remote.activeOrgId
+            // Conservar la org activa local SOLO si existe entre las remotas; si no
+            // (típico en el primer login: el estado inicial es el seed con "org1"),
+            // usar la que trae el backend. Evita el Home vacío indebido.
+            activeOrgId: remote.orgs.some((o) => o.id === stateRef.current.activeOrgId)
+              ? stateRef.current.activeOrgId
+              : remote.activeOrgId
           }
         });
         setHydrated(true);
