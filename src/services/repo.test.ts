@@ -53,7 +53,10 @@ describe("repo · mapper toOrg", () => {
     name: "Club",
     join_code: "ABC123",
     link_enabled: null as boolean | null,
-    meeting_points: [{ id: "mp1", name: "Plaza", lat: -34.6, lng: -58.4 }]
+    meeting_points: [{ id: "mp1", name: "Plaza", lat: -34.6, lng: -58.4 }],
+    destination_lat: null as number | null,
+    destination_lng: null as number | null,
+    destination_name: null as string | null
   };
   const orgMembers = [
     { org_id: "o1", member_id: "m1", is_admin: true },
@@ -75,6 +78,16 @@ describe("repo · mapper toOrg", () => {
   it("meeting_points {lat,lng} → {loc}", () => {
     const o = M.toOrg(orgRow, orgMembers);
     expect(o.meetingPoints).toEqual([{ id: "mp1", name: "Plaza", loc: { lat: -34.6, lng: -58.4 } }]);
+  });
+
+  it("destino común: null → undefined (nunca {0,0}); con valores → LatLng + nombre", () => {
+    expect(M.toOrg(orgRow, orgMembers).destination).toBeUndefined();
+    const withDest = M.toOrg(
+      { ...orgRow, destination_lat: -34.6, destination_lng: -58.4, destination_name: "El club" },
+      orgMembers
+    );
+    expect(withDest.destination).toEqual({ lat: -34.6, lng: -58.4 });
+    expect(withDest.destinationName).toBe("El club");
   });
 });
 

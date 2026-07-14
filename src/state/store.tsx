@@ -25,7 +25,7 @@ import { buildSeed } from "../seed";
 import { loadState, saveState, clearState } from "../services/storage";
 import { MockRoutingProvider } from "../engine/routing";
 import { solveMatching, validateMatch, applyManualMove } from "../engine/matching";
-import type { DriverLeg, MatchInput, MatchResult, PassengerLeg } from "../engine/types";
+import type { DriverLeg, LatLng, MatchInput, MatchResult, PassengerLeg } from "../engine/types";
 import { minutesToHHMM } from "../engine/geo";
 import { systemNotify } from "../services/notify";
 import { participantsOf } from "./reputation";
@@ -40,6 +40,7 @@ import {
   rpcCreateOrg,
   rpcDeleteAccount,
   rpcJoinOrgByCode,
+  rpcSetOrgDestination,
   rpcLeaveOrg,
   rpcReportMember,
   rpcSetOrgLink,
@@ -344,8 +345,11 @@ interface Store {
   rateMember: (toMemberId: string, stars: number, comment?: string) => void;
   /** Publica un mensaje en el chat de un convoy (demo: alguien responde solo). */
   sendMessage: (eventId: string, body: string) => void;
-  /** Crea un grupo nuevo (quedás admin) y lo deja activo. */
-  createOrg: (name: string) => Promise<void>;
+  /** Crea un grupo nuevo (quedás admin) y lo deja activo. `destination` = nodo común
+   *  al que van todas las salidas del grupo (opcional). */
+  createOrg: (name: string, destination?: { loc: LatLng; name?: string }) => Promise<void>;
+  /** Fija/edita el destino común del grupo (solo admin). */
+  setOrgDestination: (orgId: string, loc: LatLng, name?: string) => Promise<void>;
   /** Se une a un grupo por código/link; tira si el código no existe o el link
    *  está deshabilitado (la UI muestra "código inválido / link deshabilitado"). */
   joinOrgByCode: (code: string) => Promise<void>;
@@ -832,10 +836,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createOrg = useCallback(
-    async (name: string) => {
+    async (name: string, destination?: { loc: LatLng; name?: string }) => {
       const clean = name.trim() || "Mi grupo";
       if (hasSupabase && supabase) {
-        const orgId = await rpcCreateOrg(clean);
+        const orgId = await rpcCreateOrg(
+          clean,
+          destination ? { lat: destination.loc.lat, lng: destination.loc.lng, name: destination.name } : undefined
+        );
         await refreshRemote(orgId);
       } else {
         const meId = stateRef.current.meId;
@@ -847,10 +854,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           adminIds: [meId],
           meetingPoints: [],
           // Compartir el código funciona por defecto (igual que el RPC del server).
-          linkEnabled: true
+          linkEnabled: true,
+          destination: destination?.loc,
+          destinationName: destination?.name
         };
         dispatch({ type: "addOrg", org });
         dispatch({ type: "setActiveOrg", orgId: org.id });
+      }
+    },
+    [refreshRemote]
+  );
+
+  const setOrgDestination = useCallback(
+    async (orgId: string, loc: LatLng, name?: string) => {
+      if (hasSupabase && supabase) {
+        await rpcSetOrgDestination(orgId, loc, name);
+        await refreshRemote(orgId);
+      } else {
+        const org = stateRef.current.orgs.find((o) => o.id === orgId);
+        if (org) dispatch({ type: "updateOrg", org: { ...org, destination: loc, destinationName: name } });
       }
     },
     [refreshRemote]
@@ -1024,6 +1046,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     rateMember,
     sendMessage,
     createOrg,
+    setOrgDestination,
     joinOrgByCode,
     addMemberByEmail,
     setOrgLink,

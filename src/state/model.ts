@@ -90,6 +90,10 @@ export interface Org {
   /** Link/código self-serve (tipo Google Drive): ON = cualquiera con el código se
    *  une solo; OFF = solo el admin agrega a mano por email. Ausente = OFF. */
   linkEnabled?: boolean;
+  /** Destino COMÚN del grupo (el nodo al que todos van: el club, el colegio, la
+   *  cancha). Las salidas/ramas del grupo lo heredan por defecto. Opcional. */
+  destination?: LatLng;
+  destinationName?: string;
 }
 
 /** private = solo la org. public = descubrible en Explorar; se entra pidiendo lugar. */

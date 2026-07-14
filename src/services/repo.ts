@@ -68,6 +68,9 @@ interface OrgRow {
   join_code: string;
   link_enabled: boolean | null;
   meeting_points: { id: string; name: string; lat: number; lng: number }[] | null;
+  destination_lat: number | null;
+  destination_lng: number | null;
+  destination_name: string | null;
 }
 interface OrgMemberRow {
   org_id: string;
@@ -187,7 +190,13 @@ function toOrg(row: OrgRow, orgMembers: OrgMemberRow[]): Org {
     linkEnabled: row.link_enabled ?? false,
     memberIds: mine.map((om) => om.member_id),
     adminIds: mine.filter((om) => om.is_admin).map((om) => om.member_id),
-    meetingPoints
+    meetingPoints,
+    // Destino común del grupo (nodo). undefined si no se fijó; NUNCA {0,0}.
+    destination:
+      row.destination_lat != null && row.destination_lng != null
+        ? { lat: row.destination_lat, lng: row.destination_lng }
+        : undefined,
+    destinationName: row.destination_name ?? undefined
   };
 }
 
@@ -638,10 +647,32 @@ export async function writeAction(action: Action, stateBefore: AppState): Promis
  * `hasSupabase`. Propagan el error de Postgres para que la UI muestre el motivo
  * (código inválido, link deshabilitado, email inexistente, no-admin…).
  */
-export async function rpcCreateOrg(name: string): Promise<string> {
-  const { data, error } = await db().rpc("create_org", { p_name: name });
+export async function rpcCreateOrg(
+  name: string,
+  dest?: { lat: number; lng: number; name?: string }
+): Promise<string> {
+  const { data, error } = await db().rpc("create_org", {
+    p_name: name,
+    p_dest_lat: dest?.lat ?? null,
+    p_dest_lng: dest?.lng ?? null,
+    p_dest_name: dest?.name ?? null
+  });
   if (error) throw error;
   return data as string;
+}
+/** Fija/edita el destino común del grupo (solo admin). */
+export async function rpcSetOrgDestination(
+  orgId: string,
+  loc: LatLng,
+  name?: string
+): Promise<void> {
+  const { error } = await db().rpc("set_org_destination", {
+    p_org: orgId,
+    p_lat: loc.lat,
+    p_lng: loc.lng,
+    p_name: name ?? null
+  });
+  if (error) throw error;
 }
 export async function rpcJoinOrgByCode(code: string): Promise<string> {
   const { data, error } = await db().rpc("join_org_by_code", { p_code: code });

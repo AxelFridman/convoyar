@@ -223,20 +223,32 @@ export default function Home({
 /** Botones "Crear grupo" y "Unirse con un código" + sus sheets. Autónomo:
  *  se usa en el empty state de Home y en cualquier lugar que ofrezca grupos. */
 function GroupActions() {
-  const { createOrg, joinOrgByCode } = useStore();
+  const { state, createOrg, joinOrgByCode } = useStore();
   const T = useT();
   const [mode, setMode] = useState<null | "create" | "join">(null);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [err, setErr] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Destino común del grupo (nodo al que todos van). Opcional.
+  const [destLoc, setDestLoc] = useState<LatLng | null>(null);
+  const [destName, setDestName] = useState("");
+  const center = useMemo(
+    () => state.members.find((m) => m.id === state.meId)?.home ?? { lat: -34.6, lng: -58.45 },
+    [state]
+  );
 
   const doCreate = async () => {
     if (!name.trim() || busy) return;
     setBusy(true);
     try {
-      await createOrg(name.trim());
+      await createOrg(
+        name.trim(),
+        destLoc ? { loc: destLoc, name: destName.trim() || undefined } : undefined
+      );
       setName("");
+      setDestLoc(null);
+      setDestName("");
       setMode(null);
     } finally {
       setBusy(false);
@@ -274,6 +286,23 @@ function GroupActions() {
             <span>{T("home.groupName")}</span>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder={T("home.groupNamePlaceholder")} />
           </label>
+          {/* Destino común del grupo: el nodo al que todos van. Las salidas lo heredan. */}
+          <div className="field">
+            <span>{T("home.groupDest")}</span>
+            <p className="sub">{T("home.groupDestHint")}</p>
+            <input
+              value={destName}
+              onChange={(e) => setDestName(e.target.value)}
+              placeholder={T("home.groupDestPlaceholder")}
+            />
+            <MapPicker
+              center={destLoc ?? center}
+              zoom={12}
+              markers={destLoc ? [{ loc: destLoc, kind: "destination" }] : []}
+              onTap={setDestLoc}
+              height={180}
+            />
+          </div>
           <button type="button" className="btn btn-primary btn-block" disabled={!name.trim() || busy} onClick={doCreate}>
             {T("home.createGroupBtn")}
           </button>
@@ -469,8 +498,11 @@ function CreateEvent({ onDone }: { onDone: (eventId: string) => void }) {
     d.setHours(12, 0, 0, 0);
     return d.toISOString().slice(0, 16);
   });
-  const [dest, setDest] = useState<LatLng | null>(null);
-  const [destName, setDestName] = useState("");
+  // Las salidas de un grupo HEREDAN su destino común (nodo). Se puede cambiar por salida.
+  const activeOrg = state.orgs.find((o) => o.id === state.activeOrgId);
+  const [dest, setDest] = useState<LatLng | null>(activeOrg?.destination ?? null);
+  const [destName, setDestName] = useState(activeOrg?.destinationName ?? "");
+  const inheritedDest = !!activeOrg?.destination;
   const [visibility, setVisibility] = useState<EventVisibility>("private");
   // Id de la salida recién creada: pasa a la pantalla de confirmación (así el
   // usuario sabe que quedó guardada y decide ir a su viaje o crear otra).
@@ -553,10 +585,10 @@ function CreateEvent({ onDone }: { onDone: (eventId: string) => void }) {
       </div>
       <div className="field">
         <span>{T("home.destination")}</span>
-        <p className="sub">{T("home.tapMap")}</p>
+        <p className="sub">{inheritedDest ? T("home.destInherited") : T("home.tapMap")}</p>
         <MapPicker
-          center={center}
-          zoom={11}
+          center={dest ?? center}
+          zoom={inheritedDest ? 13 : 11}
           markers={dest ? [{ loc: dest, kind: "destination" }] : []}
           onTap={setDest}
           height={200}
