@@ -1,9 +1,9 @@
-# Arquitectura de Convoyar
+# Convoyar Architecture
 
-> Para la guía operativa (comandos, invariantes, trampas) ver [../AGENTS.md](../AGENTS.md).
-> Este documento explica el **diseño**: por qué las piezas son como son y cómo se hablan.
+> For the operational guide (commands, invariants, gotchas) see [../AGENTS.md](../AGENTS.md).
+> This document explains the **design**: why the pieces are the way they are and how they talk to each other.
 
-## Vista de 10.000 metros
+## The 10,000-meter view
 
 ```
 ┌─────────────────────────────── UI (React) ───────────────────────────────┐
@@ -14,26 +14,26 @@
 ┌──────────────▼────────────────── state/ ──────────────────────────────────┐
 │  model.ts   AppState v4 (orgs, members, events, legs, assignments,        │
 │             joinRequests, reviews, tripHistory, notifications, settings)  │
-│  store.tsx  reducer + acciones + runMatch/manualMove/cancelDriver         │
-│             + flujo público: requestJoin/decideRequest/rateMember         │
-│  reputation.ts  helpers puros (rating, historial, permisos)               │
+│  store.tsx  reducer + actions  + runMatch/manualMove/cancelDriver         │
+│             + public flow:   requestJoin/decideRequest/rateMember         │
+│  reputation.ts  pure helpers (rating, history, permissions)               │
 └──────┬──────────────────────────────┬─────────────────────────────────────┘
        │ persist (debounce 250ms)     │ buildMatchInput(state, eventId)
 ┌──────▼──────┐              ┌────────▼──────────── engine/ ────────────────┐
 │ services/   │              │  types.ts     MatchInput → MatchResult       │
-│ storage     │              │  matching.ts  greedy + mejora local + warm   │
+│ storage     │              │  matching.ts  greedy + local search + warm   │
 │ notify      │              │  routing.ts   RoutingProvider (Mock | OSRM)  │
-│ billing     │              │  geo.ts       haversine, caminata, RNG       │
+│ billing     │              │  geo.ts       haversine, walking,  RNG       │
 │ export      │              └──────────────────────────────────────────────┘
 └─────────────┘
 ```
 
-Tres capas con dependencias en un solo sentido: **UI → state → engine**.
-El motor no sabe que existe React; la UI no sabe cómo se resuelve el matching.
+Three layers with dependencies flowing in a single direction: **UI → state → engine**.
+The engine doesn't know React exists; the UI doesn't know how matching is solved.
 
-## El motor (src/engine)
+## The engine (src/engine)
 
-**Contrato** — lo único que un backend futuro debe respetar:
+**Contract** — the only thing a future backend must honor:
 
 ```ts
 solveMatching(
@@ -42,124 +42,128 @@ solveMatching(
 ) → { rides: Ride[], unassigned: Unassigned[], stats: MatchStats }
 ```
 
-- Es un **CVRPTW a pequeña escala** (vehículos con capacidad + ventanas de tiempo).
-  Para el tamaño objetivo (≤ ~100 personas por evento) alcanza con greedy por costo de
-  inserción + pasadas de mejora local; 90 pax + 20 autos < 1 s con el provider mock.
-- `options.warmStart` recibe el resultado anterior y el solver intenta conservar
-  asignaciones válidas → **recálculo incremental** (cancela un conductor, entra un
-  pasajero: se mueve lo mínimo). Lo usan `cancelDriver` y `decideRequest`.
-- `validateMatch` re-verifica todas las restricciones duras sobre un resultado; la UI
-  lo corre siempre y muestra `Violation[]` (solo pueden aparecer tras un override manual).
-- `applyManualMove` implementa el "mover a mano" del admin sin recomputar todo.
-- **RoutingProvider** aísla el ruteo: `MockRoutingProvider` (haversine ×1.3 a 26 km/h)
-  para desarrollo/demo, `OsrmRoutingProvider` (servicio `table` de OSRM) para
-  producción. El motor pide **una sola matriz** de distancias por cálculo, así que el
-  costo de red no explota con el tamaño del evento.
+- It's a **small-scale CVRPTW** (vehicles with capacity + time windows).
+  For the target size (≤ ~100 people per event) a greedy insertion-cost heuristic
+  + local-improvement passes is enough; 90 pax + 20 cars < 1 s with the mock provider.
+- `options.warmStart` receives the previous result and the solver tries to keep
+  valid assignments → **incremental recompute** (a driver cancels, a passenger
+  joins: it moves the minimum). Used by `cancelDriver` and `decideRequest`.
+- `validateMatch` re-checks every hard constraint on a result; the UI
+  always runs it and shows `Violation[]` (these can only appear after a manual override).
+- `applyManualMove` implements the admin's "move by hand" without recomputing everything.
+- **RoutingProvider** isolates routing: `MockRoutingProvider` (haversine ×1.3 at 26 km/h)
+  for development/demo, `OsrmRoutingProvider` (OSRM's `table` service) for
+  production. The engine requests **a single matrix** of distances per computation, so
+  network cost doesn't blow up with event size.
 
-### Razones de no-asignación
+### Non-assignment reasons
 
-`UnassignedReason` es un enum cerrado (`sin_conductores | necesidades | capacidad |
-desvio | ventana | caminata | manual`) y cada valor tiene traducción. La regla de
-producto "si no hay match, se dice claramente por qué" está cableada en el tipo.
+`UnassignedReason` is a closed enum (`sin_conductores | necesidades | capacidad |
+desvio | ventana | caminata | manual`) and every value has a translation. The product
+rule "if there's no match, say clearly why" is wired into the type.
 
-## El estado (src/state)
+## The state (src/state)
 
-- **Una sola fuente de verdad** (`AppState`) en un `useReducer`; las pantallas no
-  tienen estado de dominio propio, solo estado de UI efímero (sheets abiertos, forms).
-- **Persistencia**: dos modos según `hasSupabase` (`services/supabaseClient.ts`).
-  - **Con backend:** la verdad vive en Postgres (Supabase). `services/repo.ts` hace `loadRemote`
-    (arma el `AppState` desde las tablas) y `writeAction` (escribe por acción); localStorage
-    queda como **cache** para abrir rápido y offline. Sync por Realtime.
-  - **Local/demo:** debounce de 250 ms a localStorage con fallback en memoria (iframes/incógnito),
-    clave versionada `convoyar:v4`; el hydrate exige `version === 4` y si no, re-seedea.
-  Un cambio de modelo sube clave+versión **y** requiere su migración Postgres en `server/`.
-- **`stateRef`**: los callbacks del store leen `stateRef.current` para no capturar
-  estado viejo, pero un `dispatch` no se refleja hasta el próximo render. Por eso
-  toda secuencia "modifico legs y calculo" pasa los legs explícitos vía
-  `legsOverride` (ver `cancelDriver`, `decideRequest`, `scheduleSimulatedReply`).
-- **Notificaciones por diff**: `diffNotifs(prev, next)` compara asignaciones y genera
-  avisos "te asignamos / tu viaje cambió / quedaste sin lugar (motivo)". No hay push
-  real; `services/notify.ts` usa la Notification API del navegador si hay permiso.
+- **A single source of truth** (`AppState`) in a `useReducer`; screens hold no
+  domain state of their own, only ephemeral UI state (open sheets, forms).
+- **Persistence**: two modes depending on `hasSupabase` (`services/supabaseClient.ts`).
+  - **With backend:** the truth lives in Postgres (Supabase). `services/repo.ts` does `loadRemote`
+    (builds the `AppState` from the tables) and `writeAction` (writes per action); localStorage
+    stays a **cache** for fast, offline startup. Sync via Realtime.
+  - **Local/demo:** 250 ms debounce to localStorage with an in-memory fallback (iframes/incognito),
+    versioned key `convoyar:v4`; hydrate requires `version === 4` and re-seeds otherwise.
+  A model change bumps key+version **and** requires its Postgres migration in `server/`.
+- **`stateRef`**: store callbacks read `stateRef.current` so they don't capture
+  stale state, but a `dispatch` isn't reflected until the next render. That's why
+  every "modify legs then compute" sequence passes the legs explicitly via
+  `legsOverride` (see `cancelDriver`, `decideRequest`, `scheduleSimulatedReply`).
+- **Diff-based notifications**: `diffNotifs(prev, next)` compares assignments and generates
+  "you were assigned / your trip changed / you lost your seat (reason)" alerts. There's no
+  real push yet; `services/notify.ts` uses the browser's Notification API when permission is granted.
 
-## Backend (Supabase) — cómo se conecta
+## Backend (Supabase) — how it connects
 
-El backend está **conectado**. `services/supabaseClient.ts` expone `supabase` (el cliente) y
-`hasSupabase` (true con env vars en dev/prod; false en tests, E2E y `build:single`). Ese único
-interruptor decide todo: con él prendido, `store.tsx` arranca la sesión (`onAuthStateChange`),
-crea la org personal del usuario nuevo (RPC `ensure_personal_org`), carga con `loadRemote` y se
-suscribe a Realtime (`subscribeRealtime`); con él apagado, corre la demo local de siempre.
+The backend is **connected**. `services/supabaseClient.ts` exposes `supabase` (the client) and
+`hasSupabase` (true with env vars in dev/prod; false in tests, E2E and `build:single`). That single
+switch decides everything: with it on, `store.tsx` starts the session (`onAuthStateChange`),
+creates the new user's personal org (RPC `ensure_personal_org`), loads via `loadRemote` and
+subscribes to Realtime (`subscribeRealtime`); with it off, the usual local demo runs.
 
-- **Auth**: email + contraseña (`services/auth.ts`). `meId` = member ligado a `auth.uid()`.
-- **Datos**: `services/repo.ts` mapea `AppState` ⇄ tablas (snake_case ⇄ camelCase) y escribe por
-  acción (`writeAction`). Schema y policies en `server/` (`schema.sql`, `rls.sql`); las migraciones
-  (`migrate-v3-to-v4`, `-personal-org`, `-orgs`, `-moderation`) ya se corrieron en dev y prod.
-  RLS activo en todas las tablas.
-- **Realtime**: las tablas compartidas están en la publicación `supabase_realtime`; un cambio en
-  la base recarga el estado del cliente sin recargar la página.
-- **Privacidad del motor**: los domicilios (`member_home`) son self-only por RLS. Para el modo
-  público con desconocidos conviene correr el matching en una Edge Function (motor TS puro) y
-  devolver sólo puntos de encuentro + ETAs, nunca las casas (pendiente; ver lanzamiento 01/03).
+- **Auth**: email + password (`services/auth.ts`). `meId` = member linked to `auth.uid()`.
+- **Data**: `services/repo.ts` maps `AppState` ⇄ tables (snake_case ⇄ camelCase) and writes per
+  action (`writeAction`). Schema and policies in `server/` (`schema.sql`, `rls.sql`); the migrations
+  (`migrate-v3-to-v4`, `-personal-org`, `-orgs`, `-moderation`, `-review-gate`, `-trip-history`) have already run in dev and prod.
+  RLS active on every table.
+- **Realtime**: the shared tables are in the `supabase_realtime` publication; a change in
+  the database reloads the client's state without reloading the page.
+- **Engine privacy**: home addresses (`member_home`) are self-only via RLS. For the public
+  mode with strangers, matching should run in an Edge Function (the pure TS engine) and
+  return only meeting points + ETAs, never the homes (pending; see the launch/ docs 01 and 03).
 
-## Modo público (tipo BlaBlaCar)
+## Public mode (BlaBlaCar-style)
 
-Decisiones de diseño:
+Design decisions:
 
-- **`visibility` vive en el evento, no en la org.** Una org privada puede publicar
-  una salida puntual (ej. "Escapada al Delta") sin exponer nada más.
-- **`JoinRequest` es append-only** con `status`; la "última solicitud gana"
-  (`myRequestFor` ordena por `at`). Eso permite re-pedir tras un rechazo sin borrar
-  historia.
-- **Reputación derivada, nunca almacenada**: `ratingOf`/`tripCountOf` recorren
-  `reviews`/`tripHistory` en el momento. No hay contadores cacheados que se
-  desincronicen. A escala real esto se materializa en el backend, no en el cliente.
-- **Al aceptar** una solicitud: se crea un `Leg` pasajero razonable
-  (`defaultPassengerLeg`: origen = su casa, caminata 10', ventana [hora evento − 90',
-  hora evento]) y, si ya había asignación calculada, se recalcula con `warmStart`
-  para moverse lo mínimo. El aceptado puede después editar su leg desde MyTrip
-  (ya es participante).
-- **Permisos**: `canAdminEvent` = creador del evento ∨ admin de la org (los eventos
-  públicos de otros no te muestran Admin). `isParticipant` = miembro de la org ∨
-  solicitud aprobada (gate de MyTrip).
-- **Organizador ajeno — real con backend, simulado sin él.** Con Supabase, la solicitud, la
-  decisión y la aprobación son reales entre personas distintas y llegan por Realtime. En modo
-  local/demo (`!hasSupabase`), `scheduleSimulatedReply` aprueba solo a los ~4 s (leg + matching
-  + notificación) y un sweep on-mount resuelve pendientes de sesiones anteriores. La simulación
-  no se borró: está **gateada con `if (hasSupabase) return`**, y la UI lo declara en modo demo
-  ("el organizador responde solo").
+- **`visibility` lives on the event, not on the org.** A private org can publish
+  a one-off trip (e.g. "Delta getaway") without exposing anything else.
+- **`JoinRequest` is append-only** with a `status`; "the latest request wins"
+  (`myRequestFor` orders by `at`). This allows re-requesting after a rejection without
+  erasing history.
+- **Reputation is derived, never stored**: `ratingOf`/`tripCountOf` walk
+  `reviews`/`tripHistory` on the fly. There are no cached counters that can
+  drift out of sync. Reviews are gated to co-travelers only (`canReview` on the client plus the `share_trip` RLS check on the server), and the real trip history is materialized in the backend via the `materialize_my_trips` RPC, not computed on the client.
+- **On accepting** a request: a reasonable passenger `Leg` is created
+  (`defaultPassengerLeg`: origin = their home, 10' walk, window [event time − 90',
+  event time]) and, if an assignment had already been computed, it's re-run with `warmStart`
+  to move the minimum. The accepted person can then edit their leg from MyTrip
+  (they're now a participant).
+- **Permissions**: `canAdminEvent` = event creator ∨ org admin (other people's public
+  events don't show you Admin). `isParticipant` = org member ∨
+  approved request (the MyTrip gate).
+- **Someone else's organizer — real with the backend, simulated without it.** With Supabase, the
+  request, the decision and the approval are real between different people and arrive via Realtime.
+  In local/demo mode (`!hasSupabase`), `scheduleSimulatedReply` auto-approves after ~4 s (leg + matching
+  + notification) and an on-mount sweep resolves pending requests from earlier sessions. The simulation
+  wasn't deleted: it's **gated with `if (hasSupabase) return`**, and the UI states so in demo mode
+  ("the organizer replies on its own").
 
 ## i18n
 
-Diccionarios planos en `src/i18n/` — **6 idiomas** (es/en/pt/de/it/fr) con el tipo
-`TKey = keyof typeof es`: una clave que falte en cualquier idioma es error de compilación.
-Interpolación `{var}` por split/join (sin dependencias). Plurales: si `vars.n === 1` y existe
-`clave_one`, `translate` la usa automáticamente. Suficiente para los 6 actuales; si algún día
-hay idiomas con plurales complejos, reemplazar por `Intl.PluralRules` en `translate` (un solo
-punto de cambio).
+Flat dictionaries in `src/i18n/` — **6 languages** (es/en/pt/de/it/fr) with the type
+`TKey = keyof typeof es`: a key missing in any language is a compile error.
+`{var}` interpolation via split/join (no dependencies). Plurals: if `vars.n === 1` and a
+`clave_one` key exists, `translate` uses it automatically. Enough for the current 6; if one day
+there are languages with complex plurals, swap in `Intl.PluralRules` inside `translate` (a single
+point of change).
 
-## Monetización (apagada, cableada)
+## Monetization (off, wired)
 
-`services/billing.ts`: planes `free/pro/org` con límites y `can(plan, feature)`;
-`AdSlot` renderiza null salvo `ADS_ENABLED=true`; `purchase()` es stub con los puntos
-de integración documentados (Stripe web / RevenueCat en stores). El único gate activo
-hoy es `metricsExport` (export CSV/JSON en Admin) para que el rail se pueda probar.
+`services/billing.ts`: `free/pro/org` plans with limits and `can(plan, feature)`;
+`AdSlot` renders null unless `ADS_ENABLED=true`; `purchase()` is a stub with the
+integration points documented (Stripe on web / RevenueCat in the stores). The only gate active
+today is `metricsExport` (CSV/JSON export in Admin) so the rail can be exercised.
 
-## Distribución
+## Distribution
 
-- **Web/PWA**: `dist/` estático con manifest + service worker (cache de shell y de
-  tiles, límite 250) → instalable, tolera mala señal. Deploy en Cloudflare Pages
-  (proyecto `convoyar-web`); hoy corre un preview live, el flip de `convoyar.com` está pendiente.
-- **Un archivo**: `dist-single/index.html` (~400 KB) vía vite-plugin-singlefile (siempre local).
-- **Stores**: Capacitor 8 (`app.convoyar`). **Android ya scaffoldeado** (`android/` agregado y
-  sincronizado con el build de prod); falta keystore + `.aab` + cuenta Play. iOS pendiente.
-  Push nativo: enganchar `@capacitor/push-notifications` donde hoy está `services/notify.ts`.
+- **Web/PWA**: static `dist/` with a manifest + service worker (shell and tile cache,
+  limit 250) → installable, tolerant of poor signal. **Live in production at convoyar.com**
+  (installable PWA). Deploy is via Cloudflare Pages direct upload (project `convoyar-web`):
+  `npm run deploy` → `wrangler pages deploy dist --project-name convoyar-web --branch main`.
+- **Single file**: `dist-single/index.html` (~400 KB) via vite-plugin-singlefile (always local).
+- **Stores**: Capacitor 8 (`app.convoyar`). **Android: signed AAB v3** (versionCode 3 / 1.0.2)
+  built and synced with the prod build, in Google Play **closed testing** (the 12 testers × 14 days
+  requirement is in progress). iOS still pending. Native push: hook `@capacitor/push-notifications`
+  where `services/notify.ts` sits today (blocked on human FCM/APNs credentials).
 
 ## Testing
 
-| Capa | Herramienta | Qué cubre |
+| Layer | Tool | What it covers |
 |---|---|---|
-| Motor | vitest (`engine/matching.test.ts`) | restricciones duras, warmStart, escala 90+20, determinismo |
-| Estado/dominio | vitest (`state/public.test.ts`) | reputación, permisos, consistencia del seed v4 |
-| Integración | vitest (`state/integration.test.ts`) | seed → buildMatchInput → motor sin violaciones |
-| Render | vitest (`state/smoke.test.tsx`) | cada pantalla renderiza con el seed |
-| Flujos reales | Playwright (`e2e/app.spec.ts`) | matching, explorar→pedir→aceptado, solicitudes admin, ratings, tema/idioma |
-| Visual | Playwright (`e2e/screenshots.spec.ts`) | capturas dark/light a docs/screenshots |
+| Engine | vitest (`engine/matching.test.ts`) | hard constraints, warmStart, 90+20 scale, determinism |
+| State/domain | vitest (`state/public.test.ts`) | reputation, permissions, v4 seed consistency |
+| Integration | vitest (`state/integration.test.ts`) | seed → buildMatchInput → engine with no violations |
+| Render | vitest (`state/smoke.test.tsx`) | every screen renders with the seed |
+| Real flows | Playwright (`e2e/app.spec.ts`) | matching, explore→request→accepted, admin requests, ratings, theme/language |
+| Visual | Playwright (`e2e/screenshots.spec.ts`) | dark/light screenshots to docs/screenshots |
+
+**Suite:** 129 unit tests + 31 Playwright e2e, green alongside `npm run typecheck` and `npm run build`. The web bundle is a single ~945 KB chunk (~280 KB gzip).

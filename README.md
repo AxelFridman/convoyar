@@ -1,106 +1,108 @@
 # Convoyar 🚗
 
-**Logística colaborativa para organizaciones**: coordina quién lleva a quién en asados, oficinas, comunidades y eventos de 10 a 90+ personas. Matching óptimo con restricciones reales, mapas OpenStreetMap y cero APIs pagas. Y además, **viajes públicos tipo BlaBlaCar**: salidas abiertas donde la gente pide lugar y el organizador acepta o rechaza mirando reputación ★, historial y antigüedad.
+**Collaborative logistics for organizations**: coordinate who drives whom to barbecues, offices, communities and events of 10 to 90+ people. Optimal matching with real constraints, OpenStreetMap maps and zero paid APIs. Plus, **BlaBlaCar-style public trips**: open departures where people request a seat and the organizer accepts or rejects based on ★ reputation, history and seniority.
 
-Demo de fábrica incluida: *La Banda del Asado* (26 personas, 8 autos, 5 puntos de encuentro en CABA) con el "Asado del sábado" listo para calcular, más la *Comunidad Convoyar* con viajes públicos a Mar del Plata y La Plata, y 3 solicitudes esperando tu decisión en la "Escapada al Delta".
+Factory demo included: *La Banda del Asado* (26 people, 8 cars, 5 meeting points in CABA) with the "Saturday asado" ready to compute, plus the *Comunidad Convoyar* community with public trips to Mar del Plata and La Plata, and 3 requests awaiting your decision on the "Escapada al Delta".
 
-| Inicio | Explorar | Onboarding | Mi viaje |
+| Home | Explore | Onboarding | My trip |
 |---|---|---|---|
-| ![Inicio](docs/screenshots/01-home.png) | ![Explorar](docs/screenshots/02-explore.png) | ![Onboarding](docs/screenshots/12-onboarding-bienvenida.png) | ![Mi viaje](docs/screenshots/05b-ventana-horaria.png) |
+| ![Home](docs/screenshots/01-home.png) | ![Explore](docs/screenshots/02-explore.png) | ![Onboarding](docs/screenshots/12-onboarding-bienvenida.png) | ![My trip](docs/screenshots/05b-ventana-horaria.png) |
 
-| Solicitudes | Resultados + confetti | Chat del convoy | Perfil |
+| Requests | Results + confetti | Convoy chat | Profile |
 |---|---|---|---|
-| ![Solicitudes](docs/screenshots/04-solicitudes.png) | ![Resultados](docs/screenshots/07-resultados.png) | ![Chat](docs/screenshots/15-chat.png) | ![Perfil](docs/screenshots/08-perfil.png) |
+| ![Requests](docs/screenshots/04-solicitudes.png) | ![Results](docs/screenshots/07-resultados.png) | ![Chat](docs/screenshots/15-chat.png) | ![Profile](docs/screenshots/08-perfil.png) |
 
-> 🤖 **¿Sos un agente de IA?** Empezá por [AGENTS.md](AGENTS.md). Diseño en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), estado vivo en [docs/TODO.md](docs/TODO.md), qué falta para escalar en [docs/GROWTH.md](docs/GROWTH.md).
+> 🤖 **Are you an AI agent?** Start with [AGENTS.md](AGENTS.md). Design in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); live status and scale backlog in [docs/ROADMAP.md](docs/ROADMAP.md).
 >
-> 🚀 **Estado de lanzamiento:** el backend real ya está **conectado** (Supabase: alta/login con **email + contraseña**, orgs, realtime, RLS activo, migraciones corridas en dev y prod). Falta el *flip* de producción a `convoyar.com` (hoy corre un preview live) y publicar en las tiendas. Guía operativa paso a paso en [docs/lanzamiento/](docs/lanzamiento/); migraciones SQL en [server/](server/).
+> 🚀 **Launch status:** **LIVE in production at [convoyar.com](https://convoyar.com)** (installable PWA). The real backend is **connected** (Supabase: sign-up/login with **email + password**, orgs, realtime, RLS active, migrations run in dev and prod). Deploy is a direct Cloudflare Pages upload (`npm run deploy`). Android: a **signed AAB (v3)** is in Google Play **closed testing**. Step-by-step operational guide in [docs/launch/](docs/launch/); SQL migrations in [server/](server/).
 
 ---
 
-## Correr en 3 comandos
+## Run in 3 commands
 
 ```bash
 npm install
-npm run dev        # abre http://localhost:5173
-npm test           # unit + integración (motor · público · i18n · auth · garage · smoke)
+npm run dev        # opens http://localhost:5173
+npm test           # unit + integration (engine · public · i18n · auth · garage · smoke)
 ```
 
-Otros comandos:
+Other commands:
 
 ```bash
-npm run test:e2e      # 22 flujos E2E con Playwright (levanta su server en :5199)
+npm run test:e2e      # 31 E2E flows with Playwright (spins up its own server on :5199)
 npm run typecheck     # tsc --noEmit
-npm run build         # → dist/         (deploy web / PWA / Capacitor)
-npm run build:single  # → dist-single/  (UN solo index.html autocontenido)
-npm run preview       # sirve dist/ localmente
+npm run build         # → dist/         (web / PWA / Capacitor deploy)
+npm run build:single  # → dist-single/  (a SINGLE self-contained index.html)
+npm run preview       # serves dist/ locally
+npm run deploy        # wrangler → Cloudflare Pages (convoyar-web)
 ```
 
 ---
 
-## Qué hace
+## What it does
 
-- **Onboarding guiado**: wizard de bienvenida (idioma → nombre → email → tu casa → ¿auto? → notificaciones) para que un usuario nuevo entienda todo en un minuto.
-- **Roles por evento**: cada miembro elige conductor / pasajero / no voy, con ventana horaria.
-- **Garage**: cargá varios vehículos (con alias tipo "el Gol"/"la moto") y elegí **con cuál llevás en cada salida** — el motor toma la capacidad del vehículo elegido.
-- **Restricciones duras** (nunca se violan): capacidad del auto, desvío máximo del conductor, radio de caminata del pasajero, ventanas horarias, necesidades (♿ silla de ruedas, 🐕 mascotas, 👶 sillita).
-- **Configurable en el espacio Y el tiempo**: el **radio de caminata** se dibuja en vivo como un círculo en el mapa; la **ventana horaria** como un timeline con la hora del evento marcada. Ambos se mueven con sliders.
-- **Preferencias blandas** (solo desempatan, jamás descartan): mismo subgrupo, auto libre de humo.
-- **Puntos de encuentro**: si al pasajero le conviene caminar a una parada conocida (estación, plaza), el motor lo propone con minutos de caminata.
-- **Salidas públicas o privadas (tipo BlaBlaCar)**: un evento privado es solo de la org; uno público aparece en **Explorar** (con filtros por fecha: hoy / este finde / próximos 7 días) para toda la comunidad. Pedís lugar con un tap; el organizador ve tu **puntuación ★, cuántos viajes hiciste, hace cuánto te uniste, tus reseñas y tu mensaje**, y te acepta o rechaza. Al aceptarte, entrás al cálculo automáticamente.
-- **Reputación y logros**: reseñas de 1–5 estrellas, historial, perfil público con antigüedad, **insignias** (primer viaje, cinco estrellas, garage…) y barra de "completá tu perfil".
-- **Aporte de nafta sugerido** (informativo, sin cobros): estima cuánto acercarle al conductor, para arreglar entre las personas.
-- **Simple por fuera, potente por dentro**: lo core siempre visible; la configuración avanzada (cuenta, idioma, tema, formato de hora, preferencias de viaje por defecto, aporte de nafta) vive en **Ajustes**, a un tap.
-- **Cuentas reales**: alta e inicio de sesión con **email + contraseña** (Supabase Auth) y recuperación de contraseña. Cada usuario nuevo arranca con su **org personal** ("Mis viajes"); en modo demo local (sin backend) la app abre directo con la org de fábrica, sin login.
-- **Grupos privados**: ilimitados y gratis. Se comparte un **código de invitación**; el modelo de backend soporta además invitar por **email** y por **link con toggle** (estilo Drive, apagado por defecto).
-- **Comunicaciones**: **chat por convoy** entre participantes y preferencias de aviso por tipo (asignaciones / solicitudes / chat / email).
-- **Moderación**: **reportar** (pausa a la persona reportada hasta que un humano revise) y **bloquear** (personal: dejás de ver a quien bloqueás). Sin verificación de identidad por ahora.
-- **Admin**: armar/rearmar convoys, mover pasajeros a mano (con aviso si rompe una restricción), aceptar/rechazar solicitudes, cancelar conductor (recálculo incremental con `warmStart`), métricas (asignados, autos, desvío, CO₂) y export CSV/JSON.
-- **Celebraciones tipo Duolingo**: confetti al conseguir convoy y al armarlos, micro-interacciones, empty states ilustrados.
-- **6 idiomas** (🇦🇷 es · 🇺🇸 en · 🇧🇷 pt · 🇩🇪 de · 🇮🇹 it · 🇫🇷 fr), modo oscuro/claro, mobile-first.
+- **Guided onboarding**: a welcome wizard (language → name → email → your home → car? → notifications) so a new user understands everything in a minute.
+- **Roles per event**: each member picks driver / passenger / not going, with a time window.
+- **Garage**: add several vehicles (with nicknames like "el Gol"/"la moto") and pick **which one you drive on each departure** — the engine takes the chosen vehicle's capacity.
+- **Hard constraints** (never violated): car capacity, driver's max detour, passenger's walking radius, time windows, needs (♿ wheelchair, 🐕 pets, 👶 child seat).
+- **Configurable in space AND time**: the **walking radius** is drawn live as a circle on the map; the **time window** as a timeline with the event time marked. Both move with sliders.
+- **Soft preferences** (only break ties, never discard): same subgroup, smoke-free car.
+- **Meeting points**: if it suits a passenger to walk to a known stop (station, square), the engine proposes it with walking minutes.
+- **Public or private departures (BlaBlaCar-style)**: a private event belongs to the org only; a public one appears in **Explore** (with date filters: today / this weekend / next 7 days) for the whole community. A public trip is published **in one step** from Explore ("Publish trip"). You request a seat with a tap; the organizer sees your **★ score, how many trips you've done, how long ago you joined, your reviews and your message**, and accepts or rejects. On acceptance, you enter the computation automatically.
+- **Reputation, reviews & achievements**: 1–5 star reviews **only between people who actually shared a trip** (materialized real trip history), public profile with seniority, **badges** (first trip, five stars, garage…) and a "complete your profile" bar.
+- **Simple outside, powerful inside**: the core is always visible; advanced config (account, language, theme, time format, default trip preferences) lives in **Settings**, one tap away.
+- **Real accounts**: sign-up and login with **email + password** (Supabase Auth) and password recovery, plus sign out and **delete account** (right to be forgotten). Every new user starts with their **personal org** ("My trips"); in local demo mode (no backend) the app opens straight into the factory org, no login.
+- **Private groups**: unlimited and free. Share an **invite code**, invite by **email**, or turn on a **self-serve invite link with a toggle** (Drive-style, off by default); **deep links** (`?join=CODE`), an **org switcher**, leave org and admins are all shipped, in 6 languages.
+- **Communications**: **per-convoy chat** between participants and per-type notification preferences (assignments / requests / chat / email).
+- **Moderation**: **report** (pauses the reported person server-side until a human reviews) and **block** (personal: you stop seeing whoever you block), **wired end-to-end**. No identity verification yet.
+- **Recurring trips**: private groups share a **common destination** (trips inherit the node) and can set **weekly recurrence** days, shown in the UI (cloning each occurrence is on the roadmap).
+- **Admin**: build/rebuild convoys, move passengers by hand (with a warning if it breaks a constraint), accept/reject requests, cancel a driver (incremental recompute with `warmStart`), metrics (assigned, cars, detour, CO₂) and CSV/JSON export.
+- **Duolingo-style celebrations**: confetti when you get a convoy and when you build them, micro-interactions, illustrated empty states.
+- **6 languages** (🇦🇷 es · 🇺🇸 en · 🇧🇷 pt · 🇩🇪 de · 🇮🇹 it · 🇫🇷 fr), dark/light mode, mobile-first.
 
-## Qué es real y qué es mock
+## What's real and what's mock
 
-| Área | Estado |
+| Area | Status |
 |---|---|
-| Motor de matching (CVRPTW a pequeña escala) | **Real.** Módulo independiente en `src/engine/`, sin dependencias de UI. 90 pax + 20 autos en <1 s. |
-| Backend / multi-dispositivo | **Real y conectado (Supabase).** Cliente en `src/services/supabaseClient.ts`; lectura/escritura y realtime en `src/services/repo.ts`. El interruptor `hasSupabase` prende el backend en dev/prod y lo apaga en tests, E2E y `build:single` (que siguen 100 % locales). |
-| Auth | **Real: email + contraseña** (Supabase Auth), en `src/services/auth.ts` (alta, login, reset). En modo demo local no hay login: arranca con `meId "m0"`. |
-| Modo público: solicitudes, aceptar/rechazar, reputación, historial | **Real** (lógica y UI completas). Con backend, las solicitudes entre personas reales sincronizan por **Realtime**. En modo demo local, el organizador ajeno "responde" solo a los ~4 s (`scheduleSimulatedReply` en `store.tsx`, **sólo activo si `!hasSupabase`**). |
-| Ruteo | **Mock por defecto** (`MockRoutingProvider`: haversine ×1.3 a 26 km/h). Adaptador **OSRM real ya escrito** (`OsrmRoutingProvider`), swap de 1 línea (ver abajo). |
-| Mapas | **Real**: Leaflet + tiles de OpenStreetMap (atribución incluida, obligatoria). |
-| Chat del convoy | **Real** (UI + estado; con backend sincroniza por Realtime). La auto-respuesta simulada sólo corre en modo demo local. |
-| Persistencia | Con backend: **Postgres en Supabase** (multi-dispositivo). En modo demo: localStorage (clave `convoyar:v4`) con fallback en memoria, un dispositivo. |
-| Moderación (reportar / bloquear) | **Modelo en el backend** (`server/migrate-moderation.sql`: reportar pausa hasta revisión humana, bloquear es personal). Falta cablear la UI. Sin verificación de identidad por ahora. |
-| Push notifications | **Pendiente.** Hoy: avisos in-app + Notification API del navegador (app abierta). Credenciales de Firebase listas; push nativo por hacer → [docs/lanzamiento/07](docs/lanzamiento/07-push-notifications.md). |
-| Monetización | **Cableada y apagada** (100 % gratis, ver abajo). |
+| Matching engine (small-scale CVRPTW) | **Real.** Standalone module in `src/engine/`, no UI dependencies. 90 pax + 20 cars in <1 s. |
+| Backend / multi-device | **Real and connected (Supabase).** Client in `src/services/supabaseClient.ts`; read/write and realtime in `src/services/repo.ts`. The `hasSupabase` switch turns the backend on in dev/prod and off in tests, E2E and `build:single` (which stay 100% local). |
+| Auth | **Real: email + password** (Supabase Auth), in `src/services/auth.ts` (sign-up, login, reset). In local demo mode there's no login: starts with `meId "m0"`. |
+| Public mode: requests, accept/reject, reputation, history | **Real** (logic and UI complete). With the backend, requests between real people sync over **Realtime**. In local demo mode, the other organizer "replies" on its own after ~4 s (`scheduleSimulatedReply` in `store.tsx`, **only active if `!hasSupabase`**). |
+| Reviews & trip history | **Real, gated to co-travelers only** (`canReview` + `share_trip` RLS); real trip history materialized via the `materialize_my_trips` RPC. Migrations `migrate-review-gate.sql` and `migrate-trip-history.sql` are run in dev and prod. |
+| Routing | **Mock by default** (`MockRoutingProvider`: haversine ×1.3 at 26 km/h). A real **OSRM adapter is already written** (`OsrmRoutingProvider`), 1-line swap (see below). |
+| Maps | **Real**: Leaflet + OpenStreetMap tiles (attribution included, mandatory). |
+| Convoy chat | **Real** (UI + state; with the backend it syncs over Realtime). The simulated auto-reply only runs in local demo mode. |
+| Persistence | With the backend: **Postgres on Supabase** (multi-device). In demo mode: localStorage (key `convoyar:v4`) with in-memory fallback, single device. |
+| Moderation (report / block) | **Real, wired end-to-end** (`server/migrate-moderation.sql`): a report pauses the reported person server-side until human review; block/unblock is personal. No identity verification yet. |
+| Push notifications | **Pending.** Today: in-app alerts + browser Notification API (app open). Native push blocked on human-provided FCM/APNs credentials → [docs/launch/07](docs/launch/07-push-notifications.md). |
+| Monetization | **Wired and off** (100% free, see below). |
 
-## Arquitectura
+## Architecture
 
 ```
 src/
-  engine/       ← EL MOTOR. Cero imports de React/DOM. Portable a un worker o backend.
-    types.ts      contrato: MatchInput → MatchResult (+ Violation[])
-    matching.ts   solveMatching / validateMatch / applyManualMove (warmStart incremental)
-    routing.ts    interfaz RoutingProvider + Mock + OSRM (una llamada matrix() por evento)
-    geo.ts        haversine, caminata, RNG determinístico
-  state/        store (context + useReducer), modelo v4, reputación, garage, logros, persistencia debounced
-  screens/      Inicio · Explorar (público) · Mi viaje · Resultados · Admin · Perfil · Auth (login)
-  components/   People (avatar/estrellas/perfil), MapPicker (Leaflet), RideCard, Chat, UI kit, íconos
-  services/     supabaseClient (hasSupabase) · repo (AppState ⇄ Supabase + realtime) · auth (email+pass) · storage (cache local) · billing · notify · export
-  i18n/         6 idiomas (es/en/pt/de/it/fr) con interpolación {var} y plurales (_one)
-  seed.ts       demo determinística: org privada + comunidad pública (Buenos Aires)
-server/         SQL ejecutable: schema · rls · migraciones (v3→v4, org personal, orgs, moderación) · edge-functions
-e2e/            Playwright: flujos reales + generador de capturas
-docs/           ARCHITECTURE.md · ROADMAP.md · TODO.md · GROWTH.md · lanzamiento/ · screenshots/
+  engine/       ← THE ENGINE. Zero React/DOM imports. Portable to a worker or backend.
+    types.ts      contract: MatchInput → MatchResult (+ Violation[])
+    matching.ts   solveMatching / validateMatch / applyManualMove (incremental warmStart)
+    routing.ts    RoutingProvider interface + Mock + OSRM (one matrix() call per event)
+    geo.ts        haversine, walking, deterministic RNG
+  state/        store (context + useReducer), v4 model, reputation, garage, achievements, debounced persistence
+  screens/      Home · Explore (public) · My trip · Results · Admin · Profile · Auth (login)
+  components/   People (avatar/stars/profile), MapPicker (Leaflet), RideCard, Chat, UI kit, icons
+  services/     supabaseClient (hasSupabase) · repo (AppState ⇄ Supabase + realtime) · auth (email+pass) · storage (local cache) · billing · notify · export
+  i18n/         6 languages (es/en/pt/de/it/fr) with {var} interpolation and plurals (_one)
+  seed.ts       deterministic demo: private org + public community (Buenos Aires)
+server/         executable SQL: schema · rls · migrations (v3→v4, personal org, orgs, moderation, review gate, trip history) · edge-functions
+e2e/            Playwright: real flows + screenshot generator
+docs/           ARCHITECTURE.md · ROADMAP.md · HUMAN-TODOS.md · BRAND.md · launch/ · legal/ · screenshots/
 ```
 
-**Contrato del motor** (lo único que un backend futuro necesita respetar):
-`solveMatching({ drivers, passengers, meetingPoints?, options? }, provider) → { rides, unassigned }`, donde cada `Ride` trae paradas ordenadas con ETA y desvío, y cada no-asignado trae un `UnassignedReason` legible (`capacidad`, `desvio`, `ventana`, `caminata`, `necesidades`, `sin_conductores`, `manual`).
+**Engine contract** (the only thing a future backend must respect):
+`solveMatching({ drivers, passengers, meetingPoints?, options? }, provider) → { rides, unassigned }`, where each `Ride` carries ordered stops with ETA and detour, and each unassigned entry carries a readable `UnassignedReason` (`capacidad`, `desvio`, `ventana`, `caminata`, `necesidades`, `sin_conductores`, `manual`).
 
-## Ruteo real con OSRM (self-hosted, gratis)
+## Real routing with OSRM (self-hosted, free)
 
-1. Levantá OSRM con datos de tu región (ejemplo Argentina):
+1. Spin up OSRM with data for your region (Argentina example):
 
 ```bash
 wget https://download.geofabrik.de/south-america/argentina-latest.osm.pbf
@@ -110,58 +112,58 @@ docker run -t -v $(pwd):/data ghcr.io/project-osrm/osrm-backend osrm-customize /
 docker run -t -i -p 5000:5000 -v $(pwd):/data ghcr.io/project-osrm/osrm-backend osrm-routed --algorithm mld /data/argentina-latest.osrm
 ```
 
-2. Swap del provider en `src/state/store.tsx` (línea ~213):
+2. Swap the provider in `src/state/store.tsx` (line ~418):
 
 ```ts
 // const provider = useMemo(() => new MockRoutingProvider(), []);
 const provider = useMemo(() => new OsrmRoutingProvider("http://localhost:5000"), []);
 ```
 
-El motor hace **una sola** llamada `matrix()` por cálculo (servicio `table` de OSRM), así que escala bien.
+The engine makes a **single** `matrix()` call per computation (OSRM's `table` service), so it scales well.
 
-Geocoding futuro (buscar direcciones por texto): [Nominatim](https://nominatim.org/) self-hosted, mismo espíritu OSM. Hoy el origen se elige tocando el mapa, así que no hace falta.
+Future geocoding (search addresses by text): self-hosted [Nominatim](https://nominatim.org/), same OSM spirit. Today the origin is picked by tapping the map, so it's not needed.
 
 ## Deploy
 
-**Web (estático):** `npm run build` y subí `dist/` a Netlify / Vercel / GitHub Pages / cualquier nginx. Es una PWA: manifest + service worker con cache de shell y de tiles (límite 250) → instalable y usable con conexión pobre.
+**Web (static):** `npm run build` and upload `dist/` to any static host (Netlify / Vercel / GitHub Pages / plain nginx). It's a PWA: manifest + service worker caching the shell and tiles (limit 250) → installable and usable on a poor connection. In production it's **LIVE at convoyar.com**, deployed via a direct Cloudflare Pages upload (`npm run deploy` → `wrangler pages deploy dist --project-name convoyar-web --branch main`).
 
-**Un solo archivo:** `npm run build:single` genera `dist-single/index.html` autocontenido (~380 KB). Sirve para mandar por mail/Drive o demos. Solo necesita internet para los tiles del mapa.
+**Single file:** `npm run build:single` generates a self-contained `dist-single/index.html` (~520 KB). Handy for emailing/Drive or demos. Only needs internet for map tiles.
 
-**Android (Capacitor):** ya **scaffoldeado**. Capacitor 8 (`@capacitor/core|cli|android`) instalado, plataforma `android/` agregada y sincronizada con el build de producción, íconos/splash generados y firma de release preconfigurada por `android/keystore.properties`. Falta lo que sólo puede hacer el dueño: generar y respaldar la keystore, el `.aab` firmado y la cuenta de Google Play. Paso a paso en [docs/lanzamiento/05](docs/lanzamiento/05-google-play.md).
+**Android (Capacitor):** a **signed AAB (v3, versionCode 3 / 1.0.2, package `convoyar.app`)** is in Google Play **closed testing** (12 testers × 14 days requirement in progress). Capacitor 8 (`@capacitor/core|cli|android`) is installed, the `android/` platform is synced with the production build, icons/splash are generated, and release signing is configured via `android/keystore.properties`. Step-by-step in [docs/launch/05](docs/launch/05-google-play.md).
 
 ```bash
-npm run build && npx cap sync android   # recompila la web (prod) y la copia al proyecto nativo
-npx cap open android                     # Android Studio → firmar → .aab para Play Store
+npm run build && npx cap sync android   # rebuild the web (prod) and copy it into the native project
+npx cap open android                     # Android Studio → sign → .aab for the Play Store
 ```
 
-**iOS:** pendiente (requiere macOS/Xcode). `npx cap add ios` cuando toque → [docs/lanzamiento/06](docs/lanzamiento/06-app-store-ios.md).
+**iOS:** pending (requires macOS/Xcode). `npx cap add ios` when the time comes → [docs/launch/06](docs/launch/06-app-store-ios.md).
 
-Para push nativas: `@capacitor/push-notifications` + FCM/APNs, enganchando donde hoy está `services/notify.ts` → [docs/lanzamiento/07](docs/lanzamiento/07-push-notifications.md).
+For native push: `@capacitor/push-notifications` + FCM/APNs, hooking in where `services/notify.ts` is today → [docs/launch/07](docs/launch/07-push-notifications.md).
 
-## Monetización (apagada por diseño)
+## Monetization (off by design)
 
-Todo el rail está en `src/services/billing.ts`:
+The whole rail lives in `src/services/billing.ts`:
 
-- Planes `free / pro / org` con límites (`maxOrgs`, `maxMembersPerOrg`, `metricsExport`) y gate `can(plan, feature)`. En Admin, exportar métricas con plan free muestra el upsell (podés probarlo hoy).
-- `ADS_ENABLED = false` → el componente `AdSlot` no renderiza nada. Encendé el flag y decidí red (AdMob vía Capacitor en móvil, o el proveedor web que quieras).
-- `purchase(plan)` es un stub con los puntos de integración anotados: **Stripe** (web) o **RevenueCat** (compras in-app multiplataforma).
+- `free / pro / org` plans with limits (`maxOrgs`, `maxMembersPerOrg`, `metricsExport`) and a `can(plan, feature)` gate. In Admin, exporting metrics on the free plan shows the upsell (you can try it today).
+- `ADS_ENABLED = false` → the `AdSlot` component renders nothing. Flip the flag and pick a network (AdMob via Capacitor on mobile, or whatever web provider you want).
+- `purchase(plan)` is a stub with the integration points annotated: **Stripe** (web) or **RevenueCat** (cross-platform in-app purchases).
 
-Nada de esto afecta la funcionalidad actual: hoy es 100 % gratis y sin anuncios.
+None of this affects current functionality: today it's 100% free and ad-free.
 
 ## Roadmap
 
-1. **MVP local** ✅ — motor + UI completa + modo público tipo BlaBlaCar + onboarding + 6 idiomas + chat + deleite visual. Un dispositivo, ruteo mock con adaptador OSRM listo.
-2. **Sync real (Supabase)** ✅ **conectado** — orgs, **auth email + contraseña**, realtime, org personal por usuario, solicitudes entre personas reales; migraciones corridas en dev+prod, RLS activo, el motor se mudó respetando el contrato. Falta: **flip de producción a `convoyar.com`** (hoy corre un preview live) y **push nativo**. Guía en [docs/lanzamiento/](docs/lanzamiento/).
-3. **Tiendas y escala** — Android scaffoldeado (falta keystore + `.aab` + cuenta Play); iOS pendiente; push; luego OSRM propio, geocoding Nominatim, métricas históricas, confianza (moderación ya modelada en el backend; verificación de identidad más adelante).
+1. **Local MVP** ✅ — engine + full UI + BlaBlaCar-style public mode + onboarding + 6 languages + chat + visual delight. Single device, mock routing with the OSRM adapter ready.
+2. **Real sync (Supabase)** ✅ **connected** — orgs, **email + password auth**, realtime, per-user personal org, requests between real people; migrations run in dev+prod, RLS active, the engine moved over respecting the contract. **LIVE at convoyar.com.** Still pending: **native push**. Guide in [docs/launch/](docs/launch/).
+3. **Stores & scale** — Android AAB v3 signed and in Google Play closed testing (iOS pending); native push; then self-hosted OSRM, Nominatim geocoding, recurrence cloning, analytics/funnel, matching in an Edge Function, convoy states, cross-device in-app notifications, and optional identity verification later. Moderation is already shipped end-to-end.
 
-Detalle técnico en [docs/ROADMAP.md](docs/ROADMAP.md) · qué falta para "nivel Silicon Valley" en [docs/GROWTH.md](docs/GROWTH.md) · cómo lanzar en [docs/lanzamiento/](docs/lanzamiento/).
+Technical detail in [docs/ROADMAP.md](docs/ROADMAP.md) · how to launch in [docs/launch/](docs/launch/).
 
-## Decisiones que tomé distinto al spec (y por qué)
+## Decisions I made differently from the spec (and why)
 
-- **"Mover pasajero" con selector en vez de drag-and-drop**: en pantallas táctiles chicas el drag entre tarjetas largas es frustrante; un sheet con la lista de autos (capacidad visible) es más rápido y accesible. La lógica (`applyManualMove` + aviso de violaciones) es la misma.
-- **Local-first primero, backend después (cumplido)**: el MVP arrancó 100 % cliente-side (gratis de operar, sin bloqueos), y el contrato del motor permitió **mudarse a Supabase sin tocar la UI** — que es exactamente lo que pasó. El modo local sigue vivo (interruptor `hasSupabase`) para tests, `build:single` y demos offline.
-- **PWA primero, stores después**: mismo código; `dist/` ya es instalable como PWA y **Android ya está scaffoldeado** con Capacitor (falta la parte del dueño: keystore, `.aab`, cuenta Play).
+- **"Move passenger" with a picker instead of drag-and-drop**: on small touch screens dragging between long cards is frustrating; a sheet with the list of cars (capacity visible) is faster and more accessible. The logic (`applyManualMove` + violation warning) is the same.
+- **Local-first first, backend later (done)**: the MVP started 100% client-side (free to run, no blockers), and the engine contract let it **move to Supabase without touching the UI** — which is exactly what happened. Local mode is still alive (`hasSupabase` switch) for tests, `build:single` and offline demos.
+- **PWA first, stores later**: same code; `dist/` is already installable as a PWA and **LIVE at convoyar.com**, and Android ships as a **signed AAB (v3)** in Google Play closed testing.
 
-## Licencia
+## License
 
-MIT. Tiles © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright) (la atribución en el mapa no se quita).
+MIT. Tiles © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (the on-map attribution stays).

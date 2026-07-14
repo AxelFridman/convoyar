@@ -1,56 +1,58 @@
-# `server/` — base de datos y backend de Convoyar
+# `server/` — Convoyar's database and backend
 
-> **Convoyar arranca sin esto.** Hoy la app corre 100 % en el navegador, un dispositivo,
-> con el estado en `localStorage`. Este directorio es para cuando quieras **multi-dispositivo
-> real**: que dos personas en dos teléfonos vean la misma salida, login con email de verdad,
-> sync en vivo. La guía paso a paso (con capturas mentales de cada dashboard) está en
-> **[`../docs/lanzamiento/`](../docs/lanzamiento/)** — empezá por su README.
+> **This is live in production.** Convoyar runs at convoyar.com (installable PWA) on a
+> real multi-user Supabase backend: email+password auth, RLS, and realtime sync — two
+> people on two phones see the same trip. It's gated by `hasSupabase`: locally (and in
+> test/e2e) the app still runs 100 % in the browser, on a single device, with state in
+> `localStorage` (the deterministic demo, untouched). This directory is the database and
+> backend that power the connected mode. The step-by-step guide (with mental screenshots
+> of every dashboard) is in **[`../docs/launch/`](../docs/launch/)** — start with its README.
 
-## Qué hay acá
+## What's in here
 
-| Archivo | Qué es |
+| File | What it is |
 |---|---|
-| `schema.sql` | El schema Postgres completo, derivado 1:1 de [`src/state/model.ts`](../src/state/model.ts) (AppState v3). |
-| `rls.sql` | Row Level Security: las reglas de "cada uno ve/toca lo suyo". **No es opcional en producción.** |
-| `seed.sql` | Seed mínimo de humo para probar la conexión en dev (NO para producción). |
-| `edge-functions/match/` | Ejemplo de Edge Function que corre el motor de matching server-side (privacidad del modo público). Esqueleto documentado. |
-| `docker-compose.yml` | Un Postgres local para desarrollar sin tocar la nube. |
+| `schema.sql` | The full Postgres schema, derived 1:1 from [`src/state/model.ts`](../src/state/model.ts) (AppState v3). |
+| `rls.sql` | Row Level Security: the "everyone sees/touches only their own" rules. **Not optional in production.** |
+| `seed.sql` | Minimal smoke seed to test the connection in dev (NOT for production). |
+| `edge-functions/match/` | Example Edge Function that runs the matching engine server-side (public-mode privacy). Documented skeleton. |
+| `docker-compose.yml` | A local Postgres to develop without touching the cloud. |
 
-## Camino recomendado: Supabase (gestionado, free tier)
+## Recommended path: Supabase (managed, free tier)
 
-No hace falta administrar un servidor. Supabase te da Postgres + Auth + Realtime:
+No need to run a server yourself. Supabase gives you Postgres + Auth + Realtime:
 
-1. Creá el proyecto y cargá el schema → **[docs/lanzamiento/01](../docs/lanzamiento/01-supabase-base-de-datos.md)**
-   (podés pegar `schema.sql` y `rls.sql` en el SQL Editor, o usar la CLI: `supabase db push`).
-2. Auth por email/OTP → **[docs/lanzamiento/02](../docs/lanzamiento/02-auth-real.md)**.
-3. Conectar la app (reemplazar `services/storage.ts` por un repo remoto, sin tocar el motor)
-   → **[docs/lanzamiento/03](../docs/lanzamiento/03-conectar-la-app.md)**.
+1. Create the project and load the schema → **[docs/launch/01](../docs/launch/01-supabase-database.md)**
+   (you can paste `schema.sql` and `rls.sql` into the SQL Editor, or use the CLI: `supabase db push`).
+2. Email + password auth → **[docs/launch/02](../docs/launch/02-auth.md)**.
+3. Connect the app (replace `services/storage.ts` with a remote repo, without touching the engine)
+   → **[docs/launch/03](../docs/launch/03-connect-app.md)**.
 
-El contrato que un backend debe respetar es el del motor:
-`buildMatchInput(state, eventId) → MatchInput` y de vuelta `MatchResult`
-(ver [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)).
+The contract a backend must honor is the engine's:
+`buildMatchInput(state, eventId) → MatchInput` and back `MatchResult`
+(see [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)).
 
-## Camino alternativo: Postgres propio
+## Alternative path: your own Postgres
 
-`schema.sql` y `rls.sql` son Postgres estándar — no hay lock-in de Supabase en los datos:
+`schema.sql` and `rls.sql` are standard Postgres — there's no Supabase lock-in on the data:
 
 ```bash
-# levantar un Postgres local
+# bring up a local Postgres
 docker compose -f server/docker-compose.yml up -d
 
-# cargar schema + rls + seed
+# load schema + rls + seed
 psql "postgres://convoyar:convoyar@localhost:5432/convoyar" -f server/schema.sql
 psql "postgres://convoyar:convoyar@localhost:5432/convoyar" -f server/rls.sql
 psql "postgres://convoyar:convoyar@localhost:5432/convoyar" -f server/seed.sql
 ```
 
-> Nota: `rls.sql` referencia `auth.users` y `auth.uid()` (namespace de Supabase). Contra un
-> Postgres pelado, o creás un esquema `auth` mínimo o adaptás las policies a tu capa de auth.
-> Para desarrollo local sin auth podés cargar solo `schema.sql` + `seed.sql`.
+> Note: `rls.sql` references `auth.users` and `auth.uid()` (Supabase namespace). Against a
+> bare Postgres, either create a minimal `auth` schema or adapt the policies to your auth
+> layer. For local development without auth you can load just `schema.sql` + `seed.sql`.
 
-## Secretos — regla de oro
+## Secrets — golden rule
 
-**Nunca** commitees claves reales. El `.gitignore` ya ignora `.env` y `server/.env`.
-La `service_role` de Supabase (y cualquier password de DB) va SOLO en variables de entorno
-del servidor / secrets de la función, jamás en el front ni en el bundle. Ver la tabla de
-claves en [docs/lanzamiento/01 (Paso 2)](../docs/lanzamiento/01-supabase-base-de-datos.md).
+**Never** commit real keys. The `.gitignore` already ignores `.env` and `server/.env`.
+The Supabase `service_role` (and any DB password) go ONLY in server environment variables /
+function secrets, never in the front end or the bundle. See the keys table in
+[docs/launch/01 (Step 2)](../docs/launch/01-supabase-database.md).

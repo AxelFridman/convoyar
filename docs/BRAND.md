@@ -1,40 +1,40 @@
-# marca.md — Convoyar
+# BRAND.md — Convoyar
 
-> Guía de marca + copy de tiendas (ASO) + prompts de diseño.
-> Autor: Diseño & Growth. Fuente única de verdad para nombre, tono, copy de stores y arte.
+> Brand guide + store copy (ASO) + design prompts.
+> Author: Design & Growth. Single source of truth for the name, tone, store copy and art.
 
-**Nombre definitivo: `Convoyar`.** (Cierra la duda que quedó anotada en `docs/equipo/ux.md`:
-el código, el `manifest`, el `package.json` y el `index.html` ya dicen *Convoyar*; lo que
-decía *Caravana* eran notas internas viejas. De acá en más, en producto y tiendas: **Convoyar**.)
+**Final name: `Convoyar`.** (This settles the question that was noted in `docs/ROADMAP.md`:
+the code, the `manifest`, the `package.json` and the `index.html` already say *Convoyar*; the
+things that said *Caravana* were old internal notes. From here on, in product and stores: **Convoyar**.)
 
 ---
 
-## (a) Identidad
+## (a) Identity
 
 ### Tagline
-- **Principal (corto):** *Armamos tu convoy.*
-- **Extendido (una línea):** *Armamos tu convoy: quién lleva a quién, resuelto.*
+- **Primary (short):** *Armamos tu convoy.*
+- **Extended (one line):** *Armamos tu convoy: quién lleva a quién, resuelto.*
 - **EN:** *We build your convoy — who drives whom, sorted.*
 
-### Propuesta de valor (una línea)
+### Value proposition (one line)
 - **ES:** Vos decís quién viaja; Convoyar resuelve **quién lleva a quién**, con puntos de encuentro y horarios que cierran.
 - **EN:** You say who's going; Convoyar figures out **who drives whom**, with meeting points and timing that just fit.
 
-### Tono de voz
-Pensá en una **buena señal vial**: se entiende de un vistazo, no grita, y te deja tranquilo.
+### Tone of voice
+Think of a **good road sign**: you get it at a glance, it doesn't shout, and it puts you at ease.
 
-- **Claro antes que ingenioso.** Cada pantalla y cada frase se entienden en 3 segundos.
-- **Cálido y de igual a igual.** Español rioplatense natural ("sumate", "arreglás", "listo"),
-  sin acartonarse y sin abusar del lunfardo. Hablamos de "tu grupo", "tu convoy", "los tuyos".
-- **Comunitario y honesto.** Es coordinarse entre conocidos para llegar juntos. No prometemos
-  de más: no somos una empresa de transporte, somos la logística que faltaba.
-- **Optimista y sobrio.** Deleite medido (un pop, un confeti en el momento justo), nunca ruido.
-- **Inclusivo y gratis.** "Para todos" es literal: gratis de usar y barato de operar.
+- **Clear before clever.** Every screen and every sentence reads in 3 seconds.
+- **Warm and peer-to-peer.** Natural Rioplatense Spanish ("sumate", "arreglás", "listo"),
+  never stiff and without overdoing the slang. We talk about "tu grupo", "tu convoy", "los tuyos".
+- **Community-minded and honest.** It's people who know each other coordinating to arrive together.
+  We don't over-promise: we're not a transport company, we're the logistics that were missing.
+- **Optimistic and understated.** Measured delight (a pop, a bit of confetti at just the right moment), never noise.
+- **Inclusive and free.** "For everyone" is literal: free to use and cheap to operate.
 
-**Sí:** "Sumate al convoy", "Tu lugar quedó listo", "¿Quién arranca?".
-**No:** "¡Revolucioná tu movilidad!", "La plataforma líder", jerga corporativa, signos de más.
+**Do:** "Sumate al convoy", "Tu lugar quedó listo", "¿Quién arranca?".
+**Don't:** "¡Revolucioná tu movilidad!", "La plataforma líder", corporate jargon, extra punctuation.
 
-### Boilerplate corto
+### Short boilerplate
 - **ES:** Convoyar es la app que coordina los viajes compartidos de tu grupo. Vos decís quién
   viaja; nosotros resolvemos quién lleva a quién, con puntos de encuentro y horarios que cierran.
   Para clubes, oficinas, escuelas, familias y salidas. Gratis y para todos.
@@ -42,35 +42,35 @@ Pensá en una **buena señal vial**: se entiende de un vistazo, no grita, y te d
   we work out who drives whom, with meeting points and times that fit. For clubs, offices,
   schools, families and events. Free, and for everyone.
 
-### Sistema visual (referencia rápida)
-- **Estética:** señalética vial argentina — baldosas redondeadas, rutas con eje discontinuo,
-  chevrones/curvas, lectura instantánea.
-- **Color de marca (tokens de `src/styles.css`):**
-  | Rol | Oscuro | Claro |
+### Visual system (quick reference)
+- **Aesthetic:** Argentine road signage — rounded tiles, roads with a dashed centerline,
+  chevrons/curves, instant readability.
+- **Brand color (tokens from `src/styles.css`):**
+  | Role | Dark | Light |
   |---|---|---|
-  | Fondo | `#14181D` | `#F2F0EA` |
-  | Superficie | `#1D232B` | `#FFFFFF` |
-  | Acento (naranja) | `#FFB53F` | `#E09416` |
-  | OK (verde) | `#46B878` | `#1E8A52` |
-  | Texto | `#ECF1F5` | `#1C2129` |
-- **Lenguaje de mapa (¡respetarlo!):** **origen = naranja**, **destino = verde** (así están los
-  markers en la app). El ícono y las ilustraciones usan ese mismo código de color a propósito.
-- **Tipografía:** system fonts (San Francisco / Segoe UI / Roboto). Titulares 800, apretados
-  (`letter-spacing` negativo). No dependemos de fuentes externas.
+  | Background | `#14181D` | `#F2F0EA` |
+  | Surface | `#1D232B` | `#FFFFFF` |
+  | Accent (orange) | `#FFB53F` | `#E09416` |
+  | OK (green) | `#46B878` | `#1E8A52` |
+  | Text | `#ECF1F5` | `#1C2129` |
+- **Map language (respect it!):** **origin = orange**, **destination = green** (that's how the
+  markers are in the app). The icon and the illustrations use that same color code on purpose.
+- **Typography:** system fonts (San Francisco / Segoe UI / Roboto). Headlines at 800, tight
+  (negative `letter-spacing`). We don't depend on external fonts.
 
 ---
 
-## (b) Copy de tiendas (ASO) — 6 idiomas
+## (b) Store copy (ASO) — 6 languages
 
-> **Límites que importan** (respetalos al pegar en cada consola):
-> - **Google Play:** nombre ≤ **30**, descripción corta ≤ **80**, descripción larga ≤ **4000**.
->   Play **no** tiene campo de keywords: rankea con el texto, así que las palabras clave van
->   naturalmente en la descripción.
-> - **App Store:** nombre ≤ **30**, subtítulo ≤ **30**, **keywords ≤ 100** (separadas por coma,
->   sin espacios), descripción ≤ **4000**.
-> - El **subtítulo (App Store)** puede salir de acortar la "descripción corta".
+> **Limits that matter** (respect them when pasting into each console):
+> - **Google Play:** name ≤ **30**, short description ≤ **80**, long description ≤ **4000**.
+>   Play does **not** have a keywords field: it ranks on the text, so keywords go naturally
+>   into the description.
+> - **App Store:** name ≤ **30**, subtitle ≤ **30**, **keywords ≤ 100** (comma-separated,
+>   no spaces), description ≤ **4000**.
+> - The **subtitle (App Store)** can come from shortening the "short description".
 
-### 🇦🇷 Español (es-419) — idioma por defecto
+### 🇦🇷 Español (es-419) — default language
 - **Título:** `Convoyar: viajes en grupo`
 - **Descripción corta (≤80):** `Coordiná el convoy de tu grupo: quién lleva a quién, resuelto.`
 - **Subtítulo App Store (≤30):** `Quién lleva a quién, resuelto`
@@ -231,23 +231,23 @@ Pensá en una **buena señal vial**: se entiende de un vistazo, no grita, y te d
 
 ---
 
-## (c) Prompts de diseño (para IA de imágenes o artista)
+## (c) Design prompts (for image AI or an artist)
 
-> Cómo usarlos: pegá el prompt en Midjourney / DALL·E / Ideogram, o dáselo a un artista.
-> **Todo el arte es vectorial y plano (flat vector), sin degradés cargados, sin 3D, sin sombras
-> realistas.** Entregable final: **SVG** (o PNG a la resolución indicada). Los SVG que ya están
-> en el repo (`public/icon.svg`, `resources/*.svg`, `resources/ilustraciones/*.svg`, `public/og.svg`)
-> sirven como **placeholder funcional y como referencia de estilo** — reemplazalos por arte final
-> si querés subir el nivel, manteniendo paleta, motivo y proporciones.
+> How to use them: paste the prompt into Midjourney / DALL·E / Ideogram, or hand it to an artist.
+> **All the art is flat vector, no heavy gradients, no 3D, no realistic shadows.** Final
+> deliverable: **SVG** (or PNG at the indicated resolution). The SVGs already in the repo
+> (`public/icon.svg`, `resources/*.svg`, `resources/ilustraciones/*.svg`, `public/og.svg`)
+> serve as a **functional placeholder and a style reference** — replace them with final art
+> if you want to raise the bar, keeping the palette, motif and proportions.
 >
-> **Paleta a citar siempre:** fondo `#14181D`, superficie `#1D232B`, naranja `#FFB53F`,
-> verde `#46B878`, claro `#ECF1F5`. Regla de oro del motivo: **origen naranja, destino verde**.
+> **Palette to always cite:** background `#14181D`, surface `#1D232B`, orange `#FFB53F`,
+> green `#46B878`, light `#ECF1F5`. Golden rule of the motif: **origin orange, destination green**.
 
-### 1. Ícono de app → `public/icon.svg` + `resources/icon.svg`
-- **Dónde va:** ícono de la PWA/manifest y fuente para `capacitor-assets` (Android/iOS).
-- **Tamaños:** legible a **48px** y nítido a **1024×1024**. `public/icon.svg` cuadrado con
-  esquinas redondeadas; `resources/icon.svg` **1024×1024 a sangre** (sin redondear) y con el
-  motivo dentro de la **zona segura central (~66%)** para sobrevivir el recorte adaptativo de Android.
+### 1. App icon → `public/icon.svg` + `resources/icon.svg`
+- **Where it goes:** the PWA/manifest icon and the source for `capacitor-assets` (Android/iOS).
+- **Sizes:** legible at **48px** and crisp at **1024×1024**. `public/icon.svg` is a square with
+  rounded corners; `resources/icon.svg` is **1024×1024 full-bleed** (no rounding) with the motif
+  inside the **central safe zone (~66%)** so it survives Android's adaptive cropping.
 - **Prompt:**
   > App icon, flat vector, minimal, Argentine road-signage style. Rounded-square dark tile
   > (background #14181D). A single road ribbon sweeps diagonally from lower-left to upper-right
@@ -256,47 +256,48 @@ Pensá en una **buena señal vial**: se entiende de un vistazo, no grita, y te d
   > Bold, clean shapes, high contrast, no text, no gradients, no shadows, legible at 48px.
   > 1:1, centered, generous safe margin.
 
-### 2. Splash / pantalla de carga → `resources/splash.svg`
-- **Dónde va:** fuente para `capacitor-assets` (genera todos los splash). **2732×2732**, cuadrado,
-  el contenido en la **banda central** porque se recorta al centro para cada relación de aspecto.
+### 2. Splash / loading screen → `resources/splash.svg`
+- **Where it goes:** the source for `capacitor-assets` (it generates every splash). **2732×2732**,
+  square, with the content in the **central band** because it gets cropped to the center for each
+  aspect ratio.
 - **Prompt:**
   > Mobile splash screen, flat vector, brand dark background (#14181D) with a very subtle warm glow.
   > Centered: the Convoyar app-icon tile (dark rounded square with a road ribbon + dashed centerline
   > and a convoy of orange, light and green markers). Below it, the wordmark "Convoyar" in a bold
   > geometric sans-serif (weight 800, tight tracking, light color #ECF1F5) and a small orange tagline
   > "Armamos tu convoy" (#FFB53F). Calm, premium, lots of breathing room, no clutter.
-- **Nota de fuente:** el wordmark del SVG usa fuentes del sistema (`Segoe UI`/`Helvetica`/`Arial`).
-  Si tu pipeline de rasterizado no tiene esa fuente, **convertí el texto a paths (outline)** antes
-  de generar los binarios, o pasale a `capacitor-assets` un PNG ya rasterizado.
+- **Font note:** the SVG wordmark uses system fonts (`Segoe UI`/`Helvetica`/`Arial`). If your
+  rasterizing pipeline doesn't have that font, **convert the text to paths (outline)** before
+  generating the binaries, or hand `capacitor-assets` an already-rasterized PNG.
 
-### 3. Ilustraciones de empty state → `resources/ilustraciones/*.svg`
-- **Formato común:** SVG horizontal ~**320×200** (ratio ~1.6), línea fina (stroke-width ~4–6),
-  esquinas/uniones redondeadas, sobrio. **La línea neutra usa `currentColor`** (hereda el color
-  del texto → se adapta a claro/oscuro); los acentos usan naranja `#FFB53F` y verde `#46B878`.
-  Fondo transparente. Uso previsto: **inline** en el DOM (para que `currentColor` funcione),
-  envuelto en un contenedor con `color: var(--muted)`.
-- **`home-sin-grupo.svg`** (Home sin organización):
+### 3. Empty-state illustrations → `resources/ilustraciones/*.svg`
+- **Common format:** horizontal SVG ~**320×200** (ratio ~1.6), thin line (stroke-width ~4–6),
+  rounded corners/joins, understated. **The neutral line uses `currentColor`** (it inherits the
+  text color → adapts to light/dark); the accents use orange `#FFB53F` and green `#46B878`.
+  Transparent background. Intended use: **inline** in the DOM (so `currentColor` works),
+  wrapped in a container with `color: var(--muted)`.
+- **`home-sin-grupo.svg`** (Home with no organization):
   > Flat line illustration, horizontal, road-signage style. An empty blank road-sign on a post next
   > to a dashed road curving away; a single orange location dot (with a faint ring) alone on the road,
   > and a small orange "+" badge on the sign corner. Neutral lines in currentColor; orange accent
   > #FFB53F. Meaning: "you're not in a group yet — start or join one." Minimal, warm, transparent bg.
-- **`explore-vacio.svg`** (Explorar sin viajes públicos):
+- **`explore-vacio.svg`** (Explore with no public trips):
   > Flat line illustration, horizontal. A compass with a north needle in orange (#FFB53F) and a faint
   > south half, over a subtle map of dashed roads with no pins. Neutral lines in currentColor.
   > Meaning: "looking around, nothing to explore yet." Calm, minimal, transparent bg.
-- **`sin-viajes.svg`** (Sin convoyes armados):
+- **`sin-viajes.svg`** (No convoys built yet):
   > Flat line illustration, horizontal. An empty road in one-point perspective vanishing to the
   > horizon, with a dashed centerline; an orange origin dot (#FFB53F) near the bottom and a small
   > green destination square (#46B878) at the horizon — route ready, no convoy yet. Neutral lines
   > in currentColor. Meaning: "no rides built yet." Minimal, transparent bg.
 
-### 4. Imagen Open Graph → `public/og.svg`
-- **Dónde va:** preview del link de invitación ("sumate a mi grupo en Convoyar") al compartir por
-  WhatsApp / redes. **1200×630.** Referida desde `<meta property="og:image">` y `twitter:image`.
-- **⚠️ Importante:** WhatsApp, Facebook y la mayoría de los scrapers **no renderizan SVG** como
-  `og:image`. Este SVG es la **fuente**: exportalo a **PNG (o JPG) 1200×630** y apuntá el meta-tag
-  al PNG. (Si más adelante querés un OG dinámico con el nombre del grupo y el código, se puede
-  generar server-side; este estático sirve para todos los links.)
+### 4. Open Graph image → `public/og.svg`
+- **Where it goes:** the preview for the invite link ("join my group on Convoyar") when shared on
+  WhatsApp / social. **1200×630.** Referenced from `<meta property="og:image">` and `twitter:image`.
+- **⚠️ Important:** WhatsApp, Facebook and most scrapers **do not render SVG** as an `og:image`.
+  This SVG is the **source**: export it to **PNG (or JPG) 1200×630** and point the meta tag at the
+  PNG. (If later you want a dynamic OG with the group name and code, it can be generated server-side;
+  this static one works for every link.)
 - **Prompt:**
   > Open Graph banner, 1200x630, flat vector, brand dark background (#14181D) with a warm glow on the
   > right and a subtle dashed road crossing the scene. Left: small orange eyebrow "CONVOYAR", a big
@@ -307,14 +308,14 @@ Pensá en una **buena señal vial**: se entiende de un vistazo, no grita, y te d
 
 ---
 
-## Pendientes para el dueño (assets)
-- Los SVG del repo son **placeholder funcional de alta calidad** (marca coherente, válidos, se ven
-  bien en claro y oscuro). Si querés arte final más elaborado, reemplazalos usando los prompts de
-  arriba, **manteniendo paleta, motivo (origen naranja → destino verde) y proporciones**.
-- Correr **`capacitor-assets`** para generar los binarios de ícono/splash desde `resources/` (no lo
-  corrí yo; no toqué `android/`).
-- Para el ícono adaptativo de Android, si querés separar capas, partí `resources/icon.svg` en
-  **foreground** (solo la ruta + convoy, fondo transparente) y **background** (el color `#14181D`).
-- Exportar `public/og.svg` a **PNG 1200×630** y cablear los meta-tags `og:image`/`twitter:image`
-  (queda coordinado con Growth: G9 en `docs/equipo/growth.md`).
-- El wordmark del splash usa fuentes del sistema: si el rasterizado no las tiene, **outline a paths**.
+## Owner to-dos (assets)
+- The repo's SVGs are a **high-quality functional placeholder** (coherent brand, valid, look good
+  in light and dark). If you want more elaborate final art, replace them using the prompts above,
+  **keeping the palette, motif (origin orange → destination green) and proportions**.
+- Run **`capacitor-assets`** to generate the icon/splash binaries from `resources/` (I didn't run
+  it; I didn't touch `android/`).
+- For Android's adaptive icon, if you want to split layers, break `resources/icon.svg` into a
+  **foreground** (just the road + convoy, transparent background) and a **background** (the `#14181D` color).
+- Export `public/og.svg` to **PNG 1200×630** and wire up the `og:image`/`twitter:image` meta tags
+  (coordinated with Growth: G9 in `docs/ROADMAP.md`).
+- The splash wordmark uses system fonts: if the rasterizer doesn't have them, **outline to paths**.

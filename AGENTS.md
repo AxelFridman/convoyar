@@ -1,164 +1,168 @@
-# AGENTS.md — Guía para agentes de IA que trabajen en Convoyar
+# AGENTS.md — Guide for AI agents working on Convoyar
 
-> Leé esto entero antes de tocar código. Son 5 minutos y te ahorra romper invariantes
-> que los tests no siempre atrapan. Documentos hermanos: [docs/TODO.md](docs/TODO.md)
-> (**estado vivo del trabajo — empezá por ahí para retomar**), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-> (diseño en profundidad), [docs/ROADMAP.md](docs/ROADMAP.md) (qué falta) y
-> [docs/lanzamiento/](docs/lanzamiento/) (**guía operativa paso a paso para lanzar de
-> verdad**: Supabase, auth, deploy web, Play Store, App Store, push, monetización, OSRM,
-> analytics). El schema Postgres ejecutable y sus migraciones (ya corridas en dev+prod) viven en [server/](server/).
+> Read this whole thing before touching code. It's 5 minutes and saves you from breaking
+> invariants that the tests don't always catch. Sibling docs: [docs/ROADMAP.md](docs/ROADMAP.md)
+> (**live state of the work + what's left, plus the code-PR tracker — start here to pick up**),
+> [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (in-depth design) and
+> [docs/launch/](docs/launch/) (**step-by-step operational guide to actually ship**:
+> Supabase, auth, web deploy, Play Store, App Store, push, monetization, OSRM,
+> analytics). The executable Postgres schema and its migrations (already run in dev+prod) live in [server/](server/).
 >
-> Metodología de trabajo: una branch `feat/*` por bloque de trabajo → PR → merge.
-> Toda feature a medias queda anotada en docs/TODO.md antes de cerrar la sesión.
+> Working method: one `feat/*` branch per block of work → PR → merge.
+> Every half-finished feature gets noted in docs/ROADMAP.md before closing the session.
 >
-> **Secretos:** `.env` y `server/.env` están gitignoreados. NUNCA commitees claves reales
-> (Supabase `service_role`, passwords). GitHub push protection está activo y rechaza el push.
+> **Secrets:** `.env` and `server/.env` are gitignored. NEVER commit real keys
+> (Supabase `service_role`, passwords). GitHub push protection is active and rejects the push.
 
-## Qué es esto
+## What this is
 
-PWA mobile-first de **logística colaborativa**: organizaciones (asados, oficinas, clubes)
-coordinan "quién lleva a quién" con un motor de matching propio (CVRPTW a pequeña escala),
-y además hay un **modo público tipo BlaBlaCar**: viajes descubribles donde la gente pide
-lugar y el organizador acepta/rechaza mirando reputación, historial y antigüedad.
+Mobile-first PWA for **collaborative logistics**: organizations (barbecues, offices, clubs)
+coordinate "who drives whom" with a home-grown matching engine (small-scale CVRPTW),
+plus a **public BlaBlaCar-style mode**: discoverable trips where people request a seat
+and the organizer accepts/rejects based on reputation, history, and seniority.
 
 Stack: React 18 + TypeScript + Vite + Leaflet/OSM + **Supabase** (Postgres + Auth + Realtime).
-**Cero APIs pagas de mapas/ruteo** (requisito duro): mapas OSM, ruteo mock u OSRM self-hosted.
+**Zero paid map/routing APIs** (hard requirement): OSM maps, mock routing or self-hosted OSRM.
 
-**Backend real conectado.** El interruptor `hasSupabase` (`services/supabaseClient.ts`) elige el modo:
-- **Con backend** (dev/prod, hay env vars `VITE_SUPABASE_*`): auth **email + contraseña**,
-  datos en Supabase, sync por **Realtime**, `meId` derivado de la sesión, y cada usuario
-  arranca con su **org personal** ("Mis viajes", RPC `ensure_personal_org`).
-- **Local/demo** (`npm test`, E2E, `build:single`, o sin env vars): estado en localStorage
-  (`convoyar:v4`) con fallback en memoria, un dispositivo, `meId` fijo (`m0`), sin login, con
-  la simulación del organizador ajeno. Este modo se mantiene a propósito (tests y demos offline).
+**Real backend connected.** The `hasSupabase` switch (`services/supabaseClient.ts`) picks the mode:
+- **With backend** (dev/prod, `VITE_SUPABASE_*` env vars present): **email + password** auth,
+  data in Supabase, sync via **Realtime**, `meId` derived from the session, and every user
+  starts with their **personal org** ("My trips", `ensure_personal_org` RPC).
+- **Local/demo** (`npm test`, E2E, `build:single`, or no env vars): state in localStorage
+  (`convoyar:v4`) with an in-memory fallback, single device, fixed `meId` (`m0`), no login, with
+  the simulated third-party organizer. This mode is kept on purpose (tests and offline demos).
 
-## Comandos
+## Commands
 
 ```bash
-npm run dev          # dev server (Vite, puerto 5173)
-npm test             # vitest: motor + integración + smoke + modo público
-npm run test:e2e     # Playwright (levanta su propio server en :5199)
+npm run dev          # dev server (Vite, port 5173)
+npm test             # vitest: engine + integration + smoke + public mode
+npm run test:e2e     # Playwright (spins up its own server on :5199)
 npm run typecheck    # tsc --noEmit
 npm run build        # → dist/ (web/PWA/Capacitor)
-npm run build:single # → dist-single/index.html autocontenido
+npm run build:single # → dist-single/index.html self-contained
 ```
 
-**Definición de "terminado": los cuatro primeros comandos en verde.** Si agregás
-pantallas, sumá smoke test; si agregás lógica de estado, sumá unit test; si agregás
-flujo de usuario, sumá E2E.
+**Definition of "done": the first four commands green.** If you add
+screens, add a smoke test; if you add state logic, add a unit test; if you add a
+user flow, add an E2E test.
 
-## Mapa del código (dónde vive cada cosa)
+## Code map (where everything lives)
 
 ```
 src/
-  engine/       ★ EL MOTOR. Puro, sin React/DOM/imports de UI. NO le agregues deps.
-    types.ts      Contrato MatchInput → MatchResult. Leelo antes que nada.
+  engine/       ★ THE ENGINE. Pure, no React/DOM/UI imports. Do NOT add deps to it.
+    types.ts      MatchInput → MatchResult contract. Read it before anything else.
     matching.ts   solveMatching / validateMatch / applyManualMove (warmStart = incremental)
-    routing.ts    RoutingProvider: Mock (haversine) + OSRM real (swap de 1 línea en store)
-    geo.ts        haversine, minutos de caminata, RNG determinístico
+    routing.ts    RoutingProvider: Mock (haversine) + real OSRM (1-line swap in store)
+    geo.ts        haversine, walking minutes, deterministic RNG
   state/
-    model.ts      TODO el modelo de datos (AppState v4). Cambios acá = bump de versión + migración.
-    store.tsx     Context + useReducer. Acciones, runMatch, flujo público; con backend: bootstrap
-                  de sesión (onAuthStateChange), loadRemote, suscripción realtime; timers demo (sólo local).
-    reputation.ts Helpers puros de reputación/permisos (ratingOf, canAdminEvent, …)
-    seed.ts       (en src/) Demo determinística: org privada + comunidad pública
-  screens/      Home · Explore (público) · MyTrip · Results · Admin · Profile · Auth (login)
+    model.ts      ALL of the data model (AppState v4). Changes here = version bump + migration.
+    store.tsx     Context + useReducer. Actions, runMatch, public flow; with backend: session
+                  bootstrap (onAuthStateChange), loadRemote, realtime subscription; demo timers (local only).
+    reputation.ts Pure reputation/permission helpers (ratingOf, canAdminEvent, …)
+    seed.ts       (in src/) Deterministic demo: private org + public community
+  screens/      Home · Explore (public) · MyTrip · Results · Admin · Profile · Auth (login)
   components/   People (Avatar/Stars/MemberProfile) · RideCard · Chat · MapPicker · UI kit · Icons
-  services/     supabaseClient (hasSupabase + cliente) · repo (AppState ⇄ Supabase + realtime) ·
-                auth (email+contraseña) · storage (cache local + fallback) · billing (apagado) · notify · export
-  i18n/         es/en/pt/de/it/fr. Plural: clave con sufijo `_one` se usa sola cuando vars.n === 1.
-server/         schema.sql · rls.sql · migraciones (v3→v4, org personal, orgs, moderación) · edge-functions
-e2e/            Playwright: flujos reales + screenshots.spec (capturas a docs/screenshots)
+  services/     supabaseClient (hasSupabase + client) · repo (AppState ⇄ Supabase + realtime) ·
+                auth (email+password) · storage (local cache + fallback) · billing (off) · notify · export
+  i18n/         es/en/pt/de/it/fr. Plural: a key with the `_one` suffix is used alone when vars.n === 1.
+server/         schema.sql · rls.sql · migrations (v3→v4, personal org, orgs, moderation, review-gate, trip-history) · edge-functions
+e2e/            Playwright: real flows + screenshots.spec (captures to docs/screenshots)
 ```
 
-## Invariantes que NO se rompen
+## Invariants that DON'T get broken
 
-1. **El motor no conoce la UI.** `src/engine/` no importa React, ni state/, ni services/.
-   Todo lo que necesita entra por `MatchInput` y el `RoutingProvider`.
-2. **Restricciones duras vs blandas.** Capacidad, desvío máximo, ventana horaria,
-   caminata y necesidades (silla de ruedas, etc.) JAMÁS se violan automáticamente;
-   las preferencias blandas (subgrupo, libre de humo) solo desempatan. Un admin puede
-   forzar a mano, pero la UI muestra la violación (`validateMatch`).
-3. **Nadie queda asignado fuera de sus límites.** Si no hay match factible, la persona
-   queda `unassigned` con un `UnassignedReason` legible. No se "estira" nada.
-4. **Determinismo.** El seed y el motor (con `seed` fijo) son reproducibles; los tests
-   dependen de eso. No metas `Math.random()` sin pasar por el RNG de `geo.ts`.
-5. **i18n completo.** Cero strings de UI hardcodeados: toda clave nueva va en `es` Y `en`
-   (el tipo `TKey` obliga; si TypeScript se queja de la clave, te faltó un idioma).
-6. **Privacidad por diseño.** La casa exacta de un miembro no se muestra a otros; se
-   comparte el punto de encuentro calculado. Mantené eso al agregar pantallas.
-7. **$0 de operación.** Nada de Google Maps/APIs pagas. Mapas = OSM + Leaflet;
-   ruteo = mock o OSRM self-hosted.
+1. **The engine doesn't know the UI.** `src/engine/` doesn't import React, state/, or services/.
+   Everything it needs comes in through `MatchInput` and the `RoutingProvider`.
+2. **Hard vs soft constraints.** Capacity, max detour, time window,
+   walking, and needs (wheelchair, etc.) are NEVER violated automatically;
+   soft preferences (subgroup, smoke-free) only break ties. An admin can
+   force by hand, but the UI shows the violation (`validateMatch`).
+3. **Nobody gets assigned outside their limits.** If there's no feasible match, the person
+   stays `unassigned` with a human-readable `UnassignedReason`. Nothing gets "stretched".
+4. **Determinism.** The seed and the engine (with a fixed `seed`) are reproducible; the tests
+   depend on it. Don't drop in `Math.random()` without going through the RNG in `geo.ts`.
+5. **Complete i18n.** Zero hardcoded UI strings: every new key goes in all six locales
+   (`es`, `en`, `pt`, `de`, `it`, `fr`) — the `TKey` type enforces it; if TypeScript complains
+   about a key, you're missing a language.
+6. **Privacy by design.** A member's exact home is never shown to others; the computed
+   meeting point is what's shared. Keep that when adding screens.
+7. **$0 to operate.** No Google Maps / paid APIs. Maps = OSM + Leaflet;
+   routing = mock or self-hosted OSRM.
 
-## Modelo de datos en 30 segundos (state/model.ts)
+## Data model in 30 seconds (state/model.ts)
 
-- `Org` (miembros, `adminIds`, `joinCode`, puntos de encuentro) → `EventDoc` (**`visibility:
-  "private" | "public"`**, `createdBy`) → `Leg` (respuesta de un miembro a un evento:
-  conductor con desvío máx / pasajero con caminata máx + ventana horaria; `vehicleId?` = qué
-  vehículo del garage lleva). `Member.home?` es **opcional**; el origen real va por viaje (`Leg`).
-- Garage: `Member.vehicles: Vehicle[]` (cada uno con `id`, `alias?`, `capacity`, `features[]`, `smokeFree`).
-- Modo público: `JoinRequest` (pending/approved/rejected) + `Review` (1–5★) +
-  `TripRecord` (historial) + `Member.joinedISO` (antigüedad).
-- `Assignment` = resultado del motor por evento (`state.assignments[eventId]`).
-- **Migración**: `AppState.version === 4` y clave `convoyar:v4`. En modo local, si cambiás el
-  modelo subís versión+clave (el estado viejo se descarta y se re-seedea). **Con el backend ya
-  conectado**, todo cambio de modelo ADEMÁS necesita su migración Postgres en `server/` (ver
-  `migrate-v3-to-v4.sql`, `migrate-personal-org.sql`, `migrate-orgs.sql`, `migrate-moderation.sql`),
-  corrida en dev **y** prod. Las tablas compartidas van a la publicación `supabase_realtime`.
+- `Org` (members, `adminIds`, `joinCode`, meeting points) → `EventDoc` (**`visibility:
+  "private" | "public"`**, `createdBy`) → `Leg` (a member's response to an event:
+  driver with max detour / passenger with max walk + time window; `vehicleId?` = which
+  garage vehicle they bring). `Member.home?` is **optional**; the real origin travels per trip (`Leg`).
+- Garage: `Member.vehicles: Vehicle[]` (each with `id`, `alias?`, `capacity`, `features[]`, `smokeFree`).
+- Public mode: `JoinRequest` (pending/approved/rejected) + `Review` (1–5★, only between
+  co-travelers via `canReview` + the `share_trip` RLS) + `TripRecord` (real trip history,
+  materialized by the `materialize_my_trips` RPC) + `Member.joinedISO` (seniority).
+- `Assignment` = the engine's result per event (`state.assignments[eventId]`).
+- **Migration**: `AppState.version === 4` and the `convoyar:v4` key. In local mode, if you change the
+  model you bump the version+key (old state is discarded and re-seeded). **With the backend now
+  connected**, every model change ALSO needs its Postgres migration in `server/` (see
+  `migrate-v3-to-v4.sql`, `migrate-personal-org.sql`, `migrate-orgs.sql`, `migrate-moderation.sql`,
+  `migrate-review-gate.sql`, `migrate-trip-history.sql`), run in dev **and** prod. Shared tables
+  go into the `supabase_realtime` publication.
 
-## Flujo público (tipo BlaBlaCar) — cómo funciona hoy
+## Public flow (BlaBlaCar-style) — how it works today
 
-- `Explore.tsx` lista eventos `visibility === "public"`. Pedir lugar → `store.requestJoin()`.
-- **Con backend (Supabase):** solicitud, decisión del organizador y aprobación son **reales**
-  entre personas distintas y sincronizan por **Realtime** (`services/repo.ts` `subscribeRealtime`);
-  el store recarga con `loadRemote` al recibir el cambio. La UX es idéntica a la de la demo.
-- **En modo local/demo (`!hasSupabase`):** no hay otro humano, así que el "organizador" de un
-  evento ajeno es simulado: `scheduleSimulatedReply` (store.tsx, **gateado con
-  `if (hasSupabase) return`**) aprueba a los ~4s, crea el `Leg` del aceptado
-  (`defaultPassengerLeg`), corre el matching y notifica. Un sweep on-mount resuelve pendientes
-  de otra sesión. Esta simulación sólo corre sin backend (no se borró: se apaga por el gate).
-- Lado organizador (tus eventos): `RequestsPanel` en Admin — muestra rating, viajes,
-  antigüedad y mensaje del solicitante; `decideRequest()` acepta (crea leg + recalcula
-  con `warmStart` si ya había asignación) o rechaza. Notificación al afectado siempre.
-- Gates: `canAdminEvent` (organizador o admin de la org) para Admin;
-  `isParticipant` (miembro de la org o solicitud aprobada) para MyTrip.
+- `Explore.tsx` lists events with `visibility === "public"`. Request a seat → `store.requestJoin()`.
+- **With backend (Supabase):** the request, the organizer's decision and approval are **real**
+  between different people and sync via **Realtime** (`services/repo.ts` `subscribeRealtime`);
+  the store reloads with `loadRemote` when it receives the change. The UX is identical to the demo's.
+- **In local/demo mode (`!hasSupabase`):** there's no other human, so the "organizer" of
+  someone else's event is simulated: `scheduleSimulatedReply` (store.tsx, **gated with
+  `if (hasSupabase) return`**) approves after ~4s, creates the accepted person's `Leg`
+  (`defaultPassengerLeg`), runs matching, and notifies. An on-mount sweep resolves pending
+  requests from another session. This simulation only runs without a backend (it wasn't deleted:
+  it's switched off by the gate).
+- Organizer side (your events): `RequestsPanel` in Admin — shows the requester's rating, trips,
+  seniority, and message; `decideRequest()` accepts (creates a leg + recomputes with
+  `warmStart` if there was already an assignment) or rejects. The affected person is always notified.
+- Gates: `canAdminEvent` (organizer or org admin) for Admin;
+  `isParticipant` (org member or approved request) for MyTrip.
 
-## Trampas conocidas (te van a morder si no las sabés)
+## Known gotchas (they'll bite you if you don't know them)
 
-- **`stateRef.current` en callbacks del store**: los `dispatch` no actualizan `stateRef`
-  hasta el próximo render. Si encadenás dispatch + lectura de estado en el mismo tick
-  (p. ej. crear un leg y correr matching), pasá los datos por `legsOverride`, no leas
-  el estado. `runMatch`, `cancelDriver`, `decideRequest` y la respuesta simulada ya
-  lo hacen así — copiá ese patrón.
-- **Ventanas horarias en minutos desde las 00:00 del día del evento** (750 = 12:30).
-  `defaultPassengerLeg` deriva la ventana de `event.dateISO`. Si el seed define
-  conductores con ventana [390,435], un pasajero con [330,420] SÍ se superpone.
-- **El puerto 5173 puede estar ocupado por otra app del usuario** — por eso Playwright
-  usa el 5199 con `--strictPort`. No lo "simplifiques" de vuelta a 5173.
-- **`Sheet` cierra al clickear el fondo**; en E2E, cerralo con
+- **`stateRef.current` in store callbacks**: `dispatch` doesn't update `stateRef`
+  until the next render. If you chain dispatch + a state read in the same tick
+  (e.g. create a leg and run matching), pass the data through `legsOverride`, don't read
+  the state. `runMatch`, `cancelDriver`, `decideRequest` and the simulated reply already
+  do it this way — copy that pattern.
+- **Time windows are in minutes from 00:00 of the event day** (750 = 12:30).
+  `defaultPassengerLeg` derives the window from `event.dateISO`. If the seed defines
+  drivers with a [390,435] window, a passenger with [330,420] DOES overlap.
+- **Port 5173 may be taken by another app of the user's** — that's why Playwright
+  uses 5199 with `--strictPort`. Don't "simplify" it back to 5173.
+- **`Sheet` closes when you click the backdrop**; in E2E, close it with
   `page.locator(".sheetBack").click({ position: { x: 10, y: 10 } })`.
-- **npm bloquea postinstall de esbuild** en esta máquina (`allowScripts` en package.json
-  ya lo permite; si un install limpio falla, `npm approve-scripts esbuild`).
+- **npm blocks esbuild's postinstall** on this machine (`allowScripts` in package.json
+  already permits it; if a clean install fails, `npm approve-scripts esbuild`).
 
-## Cómo extender sin romper
+## How to extend without breaking
 
-- **Regla de matching nueva** → tipos en `engine/types.ts`, lógica en `matching.ts`,
-  test en `matching.test.ts`. La UI la expone después; el motor primero.
-- **Pantalla nueva** → screens/ + tab en `App.tsx` + claves i18n (es+en) + smoke test.
-- **Ruteo real** → levantar OSRM (README §OSRM) y cambiar `MockRoutingProvider` por
-  `OsrmRoutingProvider` en `store.tsx` (~línea 230). Una sola llamada `matrix()` por cálculo.
-- **Backend real** → **ya conectado (Supabase).** Las escrituras viven en `services/repo.ts`
-  (`writeAction`) y la carga en `loadRemote`; auth en `services/auth.ts`. Si agregás una acción
-  que muta `AppState`, además del `dispatch` sumá su escritura en `repo.ts` y, si es una tabla
-  nueva, su migración en `server/` + policy RLS + (si se comparte) la publicación realtime.
-- **Monetización** → `services/billing.ts` tiene los rails (planes, gates, `AdSlot`,
-  `purchase()` stub). No inventes otro sistema: encendé ese.
+- **New matching rule** → types in `engine/types.ts`, logic in `matching.ts`,
+  test in `matching.test.ts`. The UI exposes it later; the engine first.
+- **New screen** → screens/ + a tab in `App.tsx` + i18n keys (all six languages) + a smoke test.
+- **Real routing** → stand up OSRM (README §OSRM) and swap `MockRoutingProvider` for
+  `OsrmRoutingProvider` in `store.tsx` (~line 230). A single `matrix()` call per computation.
+- **Real backend** → **already connected (Supabase).** Writes live in `services/repo.ts`
+  (`writeAction`) and loading in `loadRemote`; auth in `services/auth.ts`. If you add an action
+  that mutates `AppState`, besides the `dispatch` add its write in `repo.ts` and, if it's a new
+  table, its migration in `server/` + an RLS policy + (if shared) the realtime publication.
+- **Monetization** → `services/billing.ts` has the rails (plans, gates, `AdSlot`,
+  `purchase()` stub). Don't invent another system: turn that one on.
 
-## Estilo
+## Style
 
-- Español rioplatense en UI y comentarios (el código en inglés). Comentarios solo para
-  invariantes/porqués no obvios, no para narrar el código.
-- CSS artesanal en `styles.css` con variables (`--bg`, `--accent`, …) y estética de
-  "señalética vial argentina". Sin frameworks CSS; respetá los tokens y el modo oscuro
-  (`data-theme` en `<html>`).
-- Componentes chicos y tipados; nada de `any` (el `tsconfig` es estricto).
+- Rioplatense Spanish in UI copy and comments (the code itself is in English). Comments only for
+  invariants / non-obvious whys, not to narrate the code.
+- Handcrafted CSS in `styles.css` with variables (`--bg`, `--accent`, …) and an
+  "Argentine road-signage" aesthetic. No CSS frameworks; respect the tokens and dark mode
+  (`data-theme` on `<html>`).
+- Small, typed components; no `any` (the `tsconfig` is strict).
