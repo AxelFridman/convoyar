@@ -906,8 +906,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const title = input.destinationName?.trim() || input.originName?.trim() || "Viaje";
       const evDate = new Date(input.dateISO);
       const evMin = evDate.getHours() * 60 + evDate.getMinutes();
-      // Ventana amplia alrededor del horario (la hora es la de LLEGADA al destino).
-      const window = { start: Math.max(0, evMin - 90), end: Math.min(1439, evMin + 90) };
+      // En una salida pública el horario es el de SALIDA (punto a punto). El motor
+      // usa la ventana del leg como ventana de SALIDA, así que la anclamos alrededor
+      // de esa hora (no centrada en una llegada) para que la partida caiga ahí.
+      const window = { start: Math.max(0, evMin - 15), end: Math.min(1439, evMin + 45) };
       const mkLeg = (eventId: string): Leg => ({
         id: `leg-${meId}-${eventId}`,
         memberId: meId,

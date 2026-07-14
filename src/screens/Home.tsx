@@ -343,12 +343,29 @@ function GroupActions() {
 /** Panel de invitación: código, toggle de link, compartir, agregar por email
  *  (admin), padrón y salir del grupo. */
 function InvitePanel({ org, isAdmin, onLeft }: { org: Org; isAdmin: boolean; onLeft: () => void }) {
-  const { state, addMemberByEmail, setOrgLink, leaveOrg } = useStore();
+  const { state, addMemberByEmail, setOrgLink, setOrgDestination, leaveOrg } = useStore();
   const T = useT();
   const [email, setEmail] = useState("");
   const [addMsg, setAddMsg] = useState<null | "ok" | "err">(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Editor del destino común del grupo (solo admin).
+  const [destLoc, setDestLoc] = useState<LatLng | null>(org.destination ?? null);
+  const [destNm, setDestNm] = useState(org.destinationName ?? "");
+  const [destSaved, setDestSaved] = useState(false);
+  const destCenter =
+    org.destination ?? state.members.find((m) => m.id === state.meId)?.home ?? { lat: -34.6, lng: -58.45 };
+  const saveDest = async () => {
+    if (!destLoc || busy) return;
+    setBusy(true);
+    try {
+      await setOrgDestination(org.id, destLoc, destNm.trim() || undefined);
+      setDestSaved(true);
+      setTimeout(() => setDestSaved(false), 1600);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const joinUrl =
     typeof window !== "undefined"
@@ -407,6 +424,27 @@ function InvitePanel({ org, isAdmin, onLeft }: { org: Org; isAdmin: boolean; onL
 
       {isAdmin && (
         <>
+          {/* Destino común del grupo: editable después de crear (las salidas lo heredan). */}
+          <div className="field">
+            <span>{T("home.groupDest")}</span>
+            <p className="sub">{T("home.groupDestHint")}</p>
+            <input
+              value={destNm}
+              onChange={(e) => setDestNm(e.target.value)}
+              placeholder={T("home.groupDestPlaceholder")}
+            />
+            <MapPicker
+              center={destLoc ?? destCenter}
+              zoom={12}
+              markers={destLoc ? [{ loc: destLoc, kind: "destination" }] : []}
+              onTap={setDestLoc}
+              height={170}
+            />
+            <button type="button" className="btn btn-ghost btn-sm" disabled={!destLoc || busy} onClick={saveDest}>
+              {destSaved ? `✓ ${T("garage.saved")}` : T("garage.save")}
+            </button>
+          </div>
+
           <div className="prefRow">
             <span>{T("invite.shareLink")}</span>
             <button

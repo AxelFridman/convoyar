@@ -299,7 +299,10 @@ function PublishTrip({ dayShort, onDone }: { dayShort: string[]; onDone: (id: st
         {!canDrive && <p className="sub">{T("trip.needVehicle")}</p>}
       </div>
       <div className="field">
-        <span>{T("publish.from")}</span>
+        <span>
+          {T("publish.from")} {origin && <span className="pill pill-ok">✓</span>}
+        </span>
+        <p className="sub">{T("home.tapMap")}</p>
         <MapPicker
           center={origin ?? homeCenter}
           zoom={12}
@@ -309,8 +312,11 @@ function PublishTrip({ dayShort, onDone }: { dayShort: string[]; onDone: (id: st
         />
       </div>
       <div className="field">
-        <span>{T("publish.to")}</span>
+        <span>
+          {T("publish.to")} {dest && <span className="pill pill-ok">✓</span>}
+        </span>
         <input value={destName} onChange={(e) => setDestName(e.target.value)} placeholder={T("home.destPlaceholder")} />
+        <p className="sub">{T("home.tapMap")}</p>
         <MapPicker
           center={dest ?? homeCenter}
           zoom={11}
@@ -322,8 +328,9 @@ function PublishTrip({ dayShort, onDone }: { dayShort: string[]; onDone: (id: st
       <label className="field">
         <span>{T("publish.when")}</span>
         <input type="datetime-local" className="num" value={when} onChange={(e) => setWhen(e.target.value)} />
-        <p className="sub">{T("home.eventDateHint")}</p>
+        <p className="sub">{T("publish.whenHint")}</p>
       </label>
+      {!canPublish && !busy && <p className="sub center">{T("publish.needBoth")}</p>}
       <div className="field">
         <span>{T("publish.repeat")}</span>
         <div className="chips">
