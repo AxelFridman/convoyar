@@ -841,7 +841,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           memberIds: [meId],
           adminIds: [meId],
           meetingPoints: [],
-          linkEnabled: false
+          // Compartir el código funciona por defecto (igual que el RPC del server).
+          linkEnabled: true
         };
         dispatch({ type: "addOrg", org });
         dispatch({ type: "setActiveOrg", orgId: org.id });

@@ -78,47 +78,59 @@ export default function Settings({ onBack }: { onBack: () => void }) {
 
       {/* Cuenta y email */}
       <h2 className="eyebrow">{T("account.title")}</h2>
-      <div className="field">
-        <span>
-          {T("account.email")}{" "}
-          {email.trim() && (
-            <span className={`pill ${alreadyVerified ? "pill-ok" : "pill-warn"}`}>
-              {alreadyVerified ? `✓ ${T("account.verified")}` : T("account.unverified")}
-            </span>
-          )}
-        </span>
-        <input
-          type="email"
-          inputMode="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            setCodeStage(false);
-            setAuthMsg("");
-          }}
-          placeholder={T("ob.emailPlaceholder")}
-        />
-        {!codeStage ? (
-          <button type="button" className="btn btn-ghost btn-sm" disabled={!email.trim() || alreadyVerified} onClick={startVerify}>
-            {alreadyVerified ? `✓ ${T("account.verified")}` : T("account.sendCode")}
-          </button>
-        ) : (
-          <div className="row gap">
-            <input
-              className="num codeInput"
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder={T("account.codePlaceholder")}
-              maxLength={6}
-              inputMode="numeric"
-            />
-            <button type="button" className="btn btn-primary btn-sm" disabled={code.length < 6} onClick={confirmCode}>
-              {T("account.confirm")}
+      {hasSupabase ? (
+        // Cuenta real: el email viene de tu sesión y ya quedó verificado al crearla.
+        <div className="field">
+          <span>
+            {T("account.email")}{" "}
+            {me.email && <span className="pill pill-ok">✓ {T("account.verified")}</span>}
+          </span>
+          <input type="email" value={me.email ?? ""} readOnly disabled />
+        </div>
+      ) : (
+        // Demo local (sin backend): "verificación" con un código que se muestra en pantalla.
+        <div className="field">
+          <span>
+            {T("account.email")}{" "}
+            {email.trim() && (
+              <span className={`pill ${alreadyVerified ? "pill-ok" : "pill-warn"}`}>
+                {alreadyVerified ? `✓ ${T("account.verified")}` : T("account.unverified")}
+              </span>
+            )}
+          </span>
+          <input
+            type="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setCodeStage(false);
+              setAuthMsg("");
+            }}
+            placeholder={T("ob.emailPlaceholder")}
+          />
+          {!codeStage ? (
+            <button type="button" className="btn btn-ghost btn-sm" disabled={!email.trim() || alreadyVerified} onClick={startVerify}>
+              {alreadyVerified ? `✓ ${T("account.verified")}` : T("account.sendCode")}
             </button>
-          </div>
-        )}
-        {authMsg && <p className="sub">{authMsg}</p>}
-      </div>
+          ) : (
+            <div className="row gap">
+              <input
+                className="num codeInput"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder={T("account.codePlaceholder")}
+                maxLength={6}
+                inputMode="numeric"
+              />
+              <button type="button" className="btn btn-primary btn-sm" disabled={code.length < 6} onClick={confirmCode}>
+                {T("account.confirm")}
+              </button>
+            </div>
+          )}
+          {authMsg && <p className="sub">{authMsg}</p>}
+        </div>
+      )}
 
       {/* Notificaciones */}
       <div className="field">
