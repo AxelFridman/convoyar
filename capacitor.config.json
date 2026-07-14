@@ -1,5 +1,5 @@
 {
-  "appId": "app.convoyar",
+  "appId": "convoyar.app",
   "appName": "Convoyar",
   "webDir": "dist",
   "server": { "androidScheme": "https" }

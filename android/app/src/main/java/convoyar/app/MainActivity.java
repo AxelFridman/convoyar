@@ -1,4 +1,4 @@
-package app.convoyar;
+package convoyar.app;
 
 import com.getcapacitor.BridgeActivity;
 

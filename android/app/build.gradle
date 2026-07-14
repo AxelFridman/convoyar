@@ -13,10 +13,10 @@ if (hasKeystore) {
 }
 
 android {
-    namespace = "app.convoyar"
+    namespace = "convoyar.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.convoyar"
+        applicationId "convoyar.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
